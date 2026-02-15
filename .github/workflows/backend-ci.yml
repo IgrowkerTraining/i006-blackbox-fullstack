@@ -1,0 +1,38 @@
+name: Backend Quality Control
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/backend/**'
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./apps/backend
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js (v24)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Instalar dependencias
+        run: pnpm install
+
+      - name: Verificar formato (Prettier)
+        run: pnpm run format:check
+
+      - name: Ejecutar Linter (ESLint)
+        run: pnpm run lint
