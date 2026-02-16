@@ -1,5 +1,5 @@
-const cors = require("cors");
-const bodyParser = require("body-parser");
+import cors from "cors";
+import bodyParser from "body-parser";
 
 const setupMiddleware = (app) => {
   app.use(cors());
@@ -11,4 +11,4 @@ const setupMiddleware = (app) => {
   });
 };
 
-module.exports = { setupMiddleware };
+export { setupMiddleware };
