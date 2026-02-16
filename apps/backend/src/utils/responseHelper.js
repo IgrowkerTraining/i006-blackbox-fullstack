@@ -1,5 +1,5 @@
 class ResponseHelper {
-  static success(res, data, message = 'Success', statusCode = 200) {
+  static success(res, data, message = "Success", statusCode = 200) {
     return res.status(statusCode).json({
       success: true,
       message,
@@ -7,7 +7,12 @@ class ResponseHelper {
     });
   }
 
-  static error(res, message = 'Internal Server Error', statusCode = 500, error = null) {
+  static error(
+    res,
+    message = "Internal Server Error",
+    statusCode = 500,
+    error = null,
+  ) {
     return res.status(statusCode).json({
       success: false,
       message,
@@ -18,7 +23,7 @@ class ResponseHelper {
   static validationError(res, errors) {
     return res.status(400).json({
       success: false,
-      message: 'Validation failed',
+      message: "Validation failed",
       errors,
     });
   }

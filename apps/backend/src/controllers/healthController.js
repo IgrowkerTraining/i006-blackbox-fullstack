@@ -1,16 +1,17 @@
 class HealthController {
   async check(req, res) {
     try {
-      res.json({ 
-        status: "ok", 
+      res.json({
+        status: "ok",
         timestamp: new Date(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
       });
     } catch (error) {
-      res.status(500).json({ 
-        status: "error", 
+      console.error("Detalle del fallo en Health Check:", error);
+      res.status(500).json({
+        status: "error",
         timestamp: new Date(),
-        error: "Health check failed"
+        error: "Health check failed",
       });
     }
   }
