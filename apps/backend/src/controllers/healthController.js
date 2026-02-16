@@ -17,4 +17,4 @@ class HealthController {
   }
 }
 
-module.exports = new HealthController();
+export default new HealthController();
