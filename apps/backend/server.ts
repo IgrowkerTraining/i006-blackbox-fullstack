@@ -1,7 +1,7 @@
 import express from "express";
-import { setupMiddleware } from "./src/middleware/index.js";
-import apiRoutes from "./src/routes/index.js";
-import config from "./src/config/index.js";
+import { setupMiddleware } from "./src/middleware/index";
+import apiRoutes from "./src/routes/index";
+import config from "./src/config";
 
 const app = express();
 
