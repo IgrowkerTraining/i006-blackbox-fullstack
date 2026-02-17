@@ -22,6 +22,7 @@ model Companies {
 
   // relaciones
   vehicles Vehicles[] // una compañía tiene muchos vehículos
+  drivers  Drivers[]  // una compañía tiene muchos drivers
 }
 
 model Vehicles {
@@ -34,4 +35,17 @@ model Vehicles {
 
   // relaciones
   company Companies @relation(fields: [companyId], references: [id]) // relacion 1:M por companyId
+}
+
+model Drivers {
+  id             String   @id @default(uuid())
+  companyId      String
+  name           String
+  license_number String
+  is_active      Boolean  @default(true)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  // relaciones
+  company Companies @relation(fields: [companyId], references: [id])
 }
