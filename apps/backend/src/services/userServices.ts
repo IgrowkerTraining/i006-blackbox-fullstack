@@ -1,15 +1,15 @@
 import { prisma } from "../../prisma";
 
 const getAll = async () => {
-  const companies = await prisma.company.findMany({
+  const users = await prisma.user.findMany({
     select: {
       id: true,
       name: true,
     },
   });
-  return companies;
+  return users;
 };
 
-export const CompanyServices = {
+export const UserService = {
   getAll,
 };
