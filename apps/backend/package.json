@@ -12,6 +12,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.4.0",
+    "@prisma/client": "^7.4.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^17.3.1",
@@ -28,6 +30,7 @@
     "globals": "^17.3.0",
     "nodemon": "^3.0.1",
     "prettier": "^3.8.1",
+    "prisma": "^7.4.0",
     "ts-node": "^10.9.0",
     "typescript": "^5.0.0"
   },
