@@ -1,12 +1,12 @@
 class Validator {
-  static required(value, fieldName) {
+  static required(value: any, fieldName: string) {
     if (!value || value.trim() === "") {
       return `${fieldName} is required`;
     }
     return null;
   }
 
-  static email(value) {
+  static email(value: any) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(value)) {
       return "Invalid email format";
@@ -14,14 +14,14 @@ class Validator {
     return null;
   }
 
-  static minLength(value, min) {
+  static minLength(value: any, min: number) {
     if (value.length < min) {
       return `Must be at least ${min} characters long`;
     }
     return null;
   }
 
-  static validateRegistration(data) {
+  static validateRegistration(data: any) {
     const errors = [];
 
     const nameError = this.required(data.name, "Name");
@@ -40,7 +40,7 @@ class Validator {
     return errors;
   }
 
-  static validateLogin(data) {
+  static validateLogin(data: any) {
     const errors = [];
 
     const emailError =
