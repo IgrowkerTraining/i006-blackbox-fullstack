@@ -30,6 +30,8 @@ model Vehicle {
   id          String  @id @default(uuid())
   companyId   String
   unit_number String?
+  plate       String?
+  is_active    Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
