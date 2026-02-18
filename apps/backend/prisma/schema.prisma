@@ -13,7 +13,7 @@ datasource db {
   provider = "postgresql"
 }
 
-model Companies {
+model Company {
   id          String   @id @default(uuid())
   name        String?
   usdotNumber String?
@@ -21,11 +21,12 @@ model Companies {
   updatedAt   DateTime @updatedAt
 
   // relaciones
-  vehicles Vehicles[] // una compañía tiene muchos vehículos
-  drivers  Drivers[]  // una compañía tiene muchos drivers
+  vehicles Vehicle[] // una compañía tiene muchos vehículos
+  drivers  Driver[]  // una compañía tiene muchos drivers
+  users User[]
 }
 
-model Vehicles {
+model Vehicle {
   id          String  @id @default(uuid())
   companyId   String
   unit_number String?
@@ -34,10 +35,10 @@ model Vehicles {
   updatedAt DateTime @updatedAt
 
   // relaciones
-  company Companies @relation(fields: [companyId], references: [id]) // relacion 1:M por companyId
+  company Company @relation(fields: [companyId], references: [id]) // relacion 1:M por companyId
 }
 
-model Drivers {
+model Driver {
   id             String   @id @default(uuid())
   companyId      String
   name           String
@@ -47,5 +48,17 @@ model Drivers {
   updated_at     DateTime @updatedAt
 
   // relaciones
-  company Companies @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
+}
+
+model User {
+  id           String   @id @default(uuid())
+  companyId    String
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String
+  createdAt    DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id])
 }
