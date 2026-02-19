@@ -100,11 +100,7 @@ const deleteUser = async (
 
     await UserService.remove(id, companyId);
     res.status(204).send();
-  } catch (error: any) {
-    if (error.message === "User not found or access denied") {
-      return res.status(404).json({ error: "User not found" });
-    }
-
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error deleting user" });
   }
