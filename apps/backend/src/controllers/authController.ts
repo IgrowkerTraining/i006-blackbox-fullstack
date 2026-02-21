@@ -33,7 +33,11 @@ class AuthController {
             error: "companyName is required for the first user",
           });
         }
-        const company = await CompanyServices.register({ name: companyName });
+        const company = await CompanyServices.register({
+          name: companyName,
+          email,
+          passwordHash,
+        });
         companyIdToUse = company.id;
       } else {
         // La compañía ya está registrada, por lo que no se trata del primer usuario
