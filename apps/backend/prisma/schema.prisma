@@ -22,22 +22,24 @@ model Company {
 
   // relaciones
   vehicles Vehicle[] // una compañía tiene muchos vehículos
-  drivers  Driver[]  // una compañía tiene muchos drivers
-  users User[]
+  drivers  Driver[] // una compañía tiene muchos drivers
+  users    User[]
 }
 
 model Vehicle {
   id          String  @id @default(uuid())
   companyId   String
+  driverId    String? @unique
   unit_number String?
   plate       String?
-  is_active    Boolean @default(true)
+  is_active   Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // relaciones
   company Company @relation(fields: [companyId], references: [id]) // relacion 1:M por companyId
+  driver  Driver? @relation(fields: [driverId], references: [id])
 }
 
 model Driver {
@@ -50,7 +52,8 @@ model Driver {
   updated_at     DateTime @updatedAt
 
   // relaciones
-  company Company @relation(fields: [companyId], references: [id])
+  company Company  @relation(fields: [companyId], references: [id])
+  vehicle Vehicle?
 }
 
 model User {
