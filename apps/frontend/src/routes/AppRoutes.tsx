@@ -9,6 +9,7 @@ import AuthLayout from "../components/layout/AuthLayout";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
+import ChoferesPage from "../pages/ChoferesPage";
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -42,6 +43,16 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <Layout>
               <Dashboard />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/choferes"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ChoferesPage />
             </Layout>
           </ProtectedRoute>
         }
