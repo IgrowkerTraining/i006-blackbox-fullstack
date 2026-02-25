@@ -1,10 +1,10 @@
 import express from "express";
-import authRoutes from "./auth";
-import companyRoutes from "./company";
-import vehicleRoutes from "./vehicle";
-import userRoutes from "./user.routes";
-import eventRoutes from "./events";
-import driverRoutes from "./driver.routes";
+import authRoutes from "./auth.js";
+import companyRoutes from "./company.js";
+import vehicleRoutes from "./vehicle.js";
+import userRoutes from "./user.routes.js";
+import eventRoutes from "./events.js";
+import driverRoutes from "./driver.routes.js";
 
 const router = express.Router();
 

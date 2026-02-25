@@ -1,4 +1,4 @@
-import { prisma } from "../../prisma";
+import { prisma } from "../../prisma.js";
 
 // DTOs para Conductores
 interface CreateDriverDto {
@@ -12,54 +12,47 @@ interface UpdateDriverDto {
   is_active?: boolean;
 }
 
-// Obtener todos los conductores de una compania
-const getAll = async (companyId: string) => {
-  const drivers = await prisma.driver.findMany({
-    where: { companyId },
+// Configuración de selección común para incluir el vehículo
+const driverSelect = {
+  id: true,
+  name: true,
+  license_number: true,
+  is_active: true,
+  created_at: true,
+  vehicle: {
     select: {
-      id: true,
-      name: true,
-      license_number: true,
-      is_active: true,
-      created_at: true,
+      unit_number: true,
     },
-    orderBy: { created_at: "desc" }, // Ordenar por más reciente
+  },
+};
+
+// Obtener todos los conductores de una compañía
+const getAll = async (companyId: string) => {
+  return await prisma.driver.findMany({
+    where: { companyId },
+    select: driverSelect,
+    orderBy: { created_at: "desc" },
   });
-  return drivers;
 };
 
 // Obtener conductores activos
 const getAllActive = async (companyId: string) => {
-  const drivers = await prisma.driver.findMany({
+  return await prisma.driver.findMany({
     where: {
       companyId,
-      is_active: true, // Solo mostramos los que no han sido borrados
-    },
-    select: {
-      id: true,
-      name: true,
-      license_number: true,
       is_active: true,
-      created_at: true,
     },
+    select: driverSelect,
     orderBy: { created_at: "desc" },
   });
-  return drivers;
 };
 
 // Obtener un conductor por ID
 const getById = async (id: string, companyId: string) => {
-  const driver = await prisma.driver.findFirst({
+  return await prisma.driver.findFirst({
     where: { id, companyId },
-    select: {
-      id: true,
-      name: true,
-      license_number: true,
-      is_active: true,
-      created_at: true,
-    },
+    select: driverSelect,
   });
-  return driver;
 };
 
 // Crear conductor
@@ -83,13 +76,7 @@ const create = async (data: CreateDriverDto, companyId: string) => {
       companyId: companyId,
       is_active: true,
     },
-    select: {
-      id: true,
-      name: true,
-      license_number: true,
-      is_active: true,
-      created_at: true,
-    },
+    select: driverSelect,
   });
 };
 
@@ -111,7 +98,7 @@ const update = async (id: string, data: UpdateDriverDto, companyId: string) => {
       where: {
         companyId,
         license_number: data.license_number,
-        id: { not: id }, // Excluir al propio conductor
+        id: { not: id },
       },
     });
 
@@ -125,6 +112,7 @@ const update = async (id: string, data: UpdateDriverDto, companyId: string) => {
       license_number: data.license_number,
       is_active: data.is_active,
     },
+    select: driverSelect, // Aseguramos que devuelva la info completa tras actualizar
   });
 };
 
@@ -138,7 +126,6 @@ const remove = async (id: string, companyId: string) => {
     throw new Error("Driver not found");
   }
 
-  // Solo lo marca inactivo
   return await prisma.driver.update({
     where: { id },
     data: {
