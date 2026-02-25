@@ -53,7 +53,23 @@ const getVehiclesById = async (
   };
 };
 
+const register = async (companyData: {
+  name: string;
+  usdotNumber?: string;
+}) => {
+  const company = await prisma.company.create({
+    data: companyData,
+  });
+  return company;
+};
+
+const count = async () => {
+  return await prisma.company.count();
+};
+
 export const CompanyServices = {
   getAll,
   getVehiclesById,
+  register,
+  count,
 };
