@@ -55,7 +55,7 @@ class AuthController {
         // Usuario admin
         const user = await tx.user.create({
           data: {
-            name: `${data.user.firstName} ${data.user.lastName}`,
+            name: `${data.user.name}`,
             email: data.user.email,
             passwordHash,
             role: UserRole.ADMIN, // El primer usuario seria el admin
