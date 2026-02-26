@@ -11,8 +11,7 @@ interface RegisterDTO {
     state: string;
   };
   user: {
-    firstName: string;
-    lastName: string;
+    name: string; // creo que seria mejor dejarlo separado pero esta bien asi por ahora
     email: string;
     password: string;
   };
