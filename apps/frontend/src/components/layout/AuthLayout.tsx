@@ -13,7 +13,7 @@ export default function AuthLayout ({ children }: AuthLayoutProps) {
     sidebar = {null}
     className= "flex items-center justify-center "
     >
-      <div className="w-full max-w-md p-4">{children}</div>
+      <div className="w-full max-w-md p-4 mx-auto">{children}</div>
     </Layout>
   )
 }
