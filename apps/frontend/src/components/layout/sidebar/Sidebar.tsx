@@ -35,6 +35,12 @@ const IconBlackBox = () => (
   </svg>
 );
 
+const LogoHexagon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white flex-shrink-0">
+    <path d="M12 2L20 6v8l-8 4-8-4V6l8-4z" />
+  </svg>
+);
+
 function isActive(pathname: string, to: string): boolean {
   if (to === "/") return pathname === "/";
   return pathname === to || pathname.startsWith(to + "/");
@@ -46,7 +52,13 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 w-64 flex-shrink-0 bg-slate-900">
-      <nav className="flex-1 flex flex-col overflow-y-auto py-2 min-h-0">
+      <div className="flex-shrink-0 flex items-center gap-2 px-4 py-4 border-b border-slate-800">
+        <LogoHexagon />
+        <span className="text-lg font-bold tracking-tight text-white uppercase">
+          BLACKBOX
+        </span>
+      </div>
+      <nav className="flex-1 flex flex-col overflow-y-auto py-[35px] min-h-0">
         <MenuItem
           icon={<IconDashboard />}
           label="Dashboard"
@@ -84,7 +96,7 @@ export const Sidebar: React.FC = () => {
 
       <SidebarUser
         name={user?.name ?? "Usuario"}
-        role="Usuario"
+        role="Patio Manager"
         avatarUrl={user?.avatar}
       />
     </div>

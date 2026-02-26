@@ -1,203 +1,154 @@
-import React, { useState, useEffect } from "react";
-import { User } from "../types";
-import { Button } from "../components/common/Button";
-import { getAIGreeting } from "../services/service";
-import { api } from "../services/api";
-import { useAuth } from "../hooks/useAuth";
+import React from "react";
+
+const IconPlus = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-[#3F51B5]">
+    <path fillRule="evenodd" d="M12 3.75a.75.75 0 01.75.75v6.75h6.75a.75.75 0 010 1.5h-6.75v6.75a.75.75 0 01-1.5 0v-6.75H4.5a.75.75 0 010-1.5h6.75V4.5a.75.75 0 01.75-.75z" clipRule="evenodd" />
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white">
+    <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clipRule="evenodd" />
+  </svg>
+);
+
+const IconAlert = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white">
+    <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+  </svg>
+);
+
+const IconGear = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-white">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+const LogoHexagon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
+    <path d="M12 2L20 6v8l-8 4-8-4V6l8-4z" />
+  </svg>
+);
+
+const activities = [
+  {
+    type: "success" as const,
+    title: "Inspección de Salida: Unidad 505",
+    detail: "Chofer: Mario Hernandez (Sin observaciones)",
+    time: "Hace 15 min",
+  },
+  {
+    type: "warning" as const,
+    title: "Inspección de Llegada: Unidad 302",
+    detail: "Chofer: Julio Fernandez (",
+    detailHighlight: "Exit trasera rota",
+    detailSuffix: ")",
+    time: "Hace 1 hora",
+  },
+  {
+    type: "info" as const,
+    title: "Mantenimiento Registrado: Unidad 505",
+    detail: "Cambio de aceite y filtros (Agendado)",
+    time: "Hace 3 horas",
+  },
+];
 
 const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
-  const [greeting, setGreeting] = useState<string>("Loading greeting...");
-  const [isBackendOnline, setIsBackendOnline] = useState<boolean | null>(null);
-  const [stats] = useState([
-    { label: "Cloud Storage", value: "1.2 TB", icon: "☁️" },
-    { label: "Active Sessions", value: "4", icon: "💻" },
-    { label: "Security Score", value: "98%", icon: "🛡️" },
-    { label: "Network Speed", value: "850 Mbps", icon: "⚡" },
-  ]);
-
-  useEffect(() => {
-    const initDashboard = async () => {
-      const [msg, online] = await Promise.all([
-        getAIGreeting(user?.name || ""),
-        api.checkHealth(),
-      ]);
-      setGreeting(msg);
-      setIsBackendOnline(online);
-    };
-    initDashboard();
-  }, [user?.name]);
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <nav className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2.5}
-              stroke="currentColor"
-              className="w-5 h-5 text-white"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-              />
-            </svg>
-          </div>
-          <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-            NEXUS
+    <div className="min-h-full bg-slate-100 rounded-lg p-6">
+      <div className="mb-6">
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-[#3F51B5] shadow-sm hover:bg-slate-50 transition-colors"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#3F51B5]">
+            <IconPlus />
           </span>
-        </div>
+          Nueva Inspección
+        </button>
+      </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-medium text-white">{user.name}</span>
-            <div className="flex items-center gap-1.5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <p className="text-sm font-medium text-slate-600">Flota Activa</p>
+          <p className="text-3xl font-bold text-slate-800 mt-1">42</p>
+          <p className="text-sm text-green-600 mt-1">↑ 100% Operativa</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <p className="text-sm font-medium text-slate-600">Inspecciones de hoy</p>
+          <p className="text-3xl font-bold text-blue-700 mt-1">14</p>
+          <p className="text-sm text-slate-600 mt-1">8 Salidas / 6 Llegadas</p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <p className="text-sm font-medium text-slate-600">Hallazgos Abiertos</p>
+          <p className="text-3xl font-bold text-amber-600 mt-1">3</p>
+          <p className="text-sm text-slate-600 mt-1">Requieren Atención</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className="lg:col-span-2">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">Actividad reciente en Patio</h2>
+          <div className="space-y-3">
+            {activities.map((item, i) => (
               <div
-                className={`w-1.5 h-1.5 rounded-full ${isBackendOnline ? "bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]" : "bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)]"} animate-pulse`}
-              ></div>
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-                {isBackendOnline ? "Backend Online" : "Backend Offline"}
-              </span>
-            </div>
-          </div>
-          <img
-            src={user.avatar}
-            alt={user.name}
-            className="w-10 h-10 rounded-full border-2 border-slate-800 shadow-lg"
-          />
-          <Button variant="outline" className="hidden sm:flex" onClick={logout}>
-            Log Out
-          </Button>
-        </div>
-      </nav>
-
-      <main className="flex-1 max-w-7xl mx-auto w-full p-6 lg:p-10">
-        <header className="mb-10">
-          <h2 className="text-3xl font-bold text-white mb-2">{greeting}</h2>
-          <p className="text-slate-400">
-            Everything looks optimal in your workspace today.
-          </p>
-        </header>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          {stats.map((stat, i) => (
-            <div
-              key={i}
-              className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl hover:border-indigo-500/50 transition-all duration-300 group"
-            >
-              <div className="text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
-                {stat.icon}
-              </div>
-              <p className="text-slate-500 text-sm font-medium uppercase tracking-wider">
-                {stat.label}
-              </p>
-              <h3 className="text-2xl font-bold text-white mt-1">
-                {stat.value}
-              </h3>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <section className="lg:col-span-2 space-y-6">
-            <h3 className="text-xl font-semibold text-white">System Logs</h3>
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
-              {[
-                {
-                  action: "New login detected",
-                  location: "San Francisco, US",
-                  time: "2 mins ago",
-                  status: "secure",
-                },
-                {
-                  action: "Database sync",
-                  location: "Global-Edge-01",
-                  time: "1 hour ago",
-                  status: "success",
-                },
-                {
-                  action: "Security patch applied",
-                  location: "Auto-update",
-                  time: "3 hours ago",
-                  status: "success",
-                },
-                {
-                  action: "Password rotation reminder",
-                  location: "User node",
-                  time: "5 hours ago",
-                  status: "pending",
-                },
-              ].map((log, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-4 border-b border-slate-800 last:border-0 hover:bg-slate-800/20 transition-colors"
+                key={i}
+                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex gap-4"
+              >
+                <span
+                  className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                    item.type === "success"
+                      ? "bg-green-500"
+                      : item.type === "warning"
+                        ? "bg-amber-500"
+                        : "bg-blue-500"
+                  }`}
                 >
-                  <div className="flex gap-4 items-center">
-                    <div
-                      className={`w-2 h-2 rounded-full ${log.status === "secure" || log.status === "success" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"}`}
-                    ></div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-200">
-                        {log.action}
-                      </p>
-                      <p className="text-xs text-slate-500">{log.location}</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-slate-600 font-medium">
-                    {log.time}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="space-y-6">
-            <h3 className="text-xl font-semibold text-white">
-              Identity Insight
-            </h3>
-            <div className="bg-indigo-600/10 border border-indigo-500/20 p-6 rounded-2xl">
-              <div className="flex items-center gap-4 mb-6">
-                <img
-                  src={user.avatar}
-                  className="w-16 h-16 rounded-2xl"
-                  alt=""
-                />
-                <div>
-                  <h4 className="font-bold text-white text-lg">{user.name}</h4>
-                  <p className="text-indigo-400 text-sm">@{user.username}</p>
+                  {item.type === "success" && <IconCheck />}
+                  {item.type === "warning" && <IconAlert />}
+                  {item.type === "info" && <IconGear />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-slate-800">{item.title}</p>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    {item.detail}
+                    {item.detailHighlight != null && (
+                      <span className="text-amber-600 font-medium">{item.detailHighlight}</span>
+                    )}
+                    {item.detailSuffix}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">{item.time}</p>
                 </div>
               </div>
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Account ID</span>
-                  <span className="text-slate-200 font-mono">{user.id}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Encryption Level</span>
-                  <span className="text-emerald-400 font-bold">SHA-512</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-400">Member Since</span>
-                  <span className="text-slate-200">Feb 2024</span>
-                </div>
-              </div>
-              <Button variant="primary" className="w-full mt-6">
-                Edit Profile
-              </Button>
-            </div>
-          </section>
-        </div>
-      </main>
+            ))}
+          </div>
+        </section>
 
-      <div className="sm:hidden sticky bottom-0 p-4 bg-slate-950 border-t border-slate-800">
-        <Button variant="outline" className="w-full" onClick={logout}>
-          Log Out of Nexus
-        </Button>
+        <section className="pt-[2.75rem] flex flex-col min-h-0">
+          <div className="bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-700 flex-1 min-h-0 flex flex-col">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-white font-semibold">BlackBox Engine</span>
+              <LogoHexagon />
+            </div>
+            <p className="text-sm text-slate-400 mb-4">Análisis de patrones semanales disponible</p>
+            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 mb-4">
+              <span className="inline-block text-xs font-bold text-red-500 uppercase tracking-wide mb-2">
+                Alerta
+              </span>
+              <p className="text-sm text-slate-200">
+                Se detecta recurrencia en fallas de documentación en el turno de la tarde (14:00 -
+                18:00) en los últimos 7 días.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="w-full rounded-lg bg-amber-400 px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-amber-300 transition-colors mt-auto"
+            >
+              Ver Reporte Completo
+            </button>
+          </div>
+        </section>
       </div>
     </div>
   );

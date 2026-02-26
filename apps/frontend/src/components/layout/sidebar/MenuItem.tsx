@@ -21,8 +21,10 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   className = "",
 }) => {
   const baseStyles =
-    "flex items-center gap-3 px-4 py-3 w-full text-left font-medium transition-colors duration-200 text-white";
-  const activeStyles = active ? "bg-slate-700" : "bg-slate-900 hover:bg-slate-800";
+    "flex items-center gap-3 px-4 py-[35px] w-full text-left font-medium transition-colors duration-200";
+  const activeStyles = active
+    ? "bg-[#4E63A8]/50 text-white"
+    : "bg-slate-900 text-white hover:bg-slate-800";
 
   const content = (
     <>
