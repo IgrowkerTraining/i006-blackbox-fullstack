@@ -42,7 +42,7 @@ const createUser = async (req: AuthRequest, res: Response) => {
     const adminRole = req.user?.role;
     if (!adminCompanyId)
       return res.status(401).json({ error: "Not authorized" });
-    if (adminRole !== "ADMIN") {
+    if (adminRole !== UserRole.ADMIN) {
       return res.status(403).json({ message: "Only Admins can create users" });
     }
     const { name, email, password, role } = req.body;
