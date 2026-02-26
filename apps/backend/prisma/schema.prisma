@@ -25,6 +25,7 @@ model Company {
   vehicles Vehicle[] // una compañía tiene muchos vehículos
   drivers  Driver[] // una compañía tiene muchos drivers
   users    User[]
+  operational_events OperationalEvent[]
 }
 
 model Vehicle {
@@ -41,6 +42,8 @@ model Vehicle {
   // relaciones
   company Company @relation(fields: [companyId], references: [id]) // relacion 1:M por companyId
   driver  Driver? @relation(fields: [driverId], references: [id])
+
+  operational_events OperationalEvent[]
 }
 
 model Driver {
@@ -55,6 +58,8 @@ model Driver {
   // relaciones
   company Company  @relation(fields: [companyId], references: [id])
   vehicle Vehicle?
+
+  operational_events OperationalEvent[]
 }
 
 model User {
@@ -68,8 +73,57 @@ model User {
   createdAt    DateTime @default(now())
 
   company Company @relation(fields: [companyId], references: [id])
-  
-  @@unique([id, companyId])
+  operational_events OperationalEvent[]
+}
+
+// Enums para eventos operacionales. Ajustar valores según dominio.
+enum EventType {
+  UNKNOWN
+  ACCIDENT
+  MAINTENANCE
+  INSPECTION
+  OTHER
+}
+
+enum LocationType {
+  UNKNOWN
+  GPS
+  ADDRESS
+}
+
+enum ContextType {
+  UNKNOWN
+  MANUAL
+  AUTOMATIC
+  SENSOR
+}
+
+enum GeneralResult {
+  WITH_OBS
+  WITHOUT_OBS
+}
+
+model OperationalEvent {
+  id                  String        @id @default(uuid())
+  company_id          String
+  vehicle_id          String?
+  driver_id           String?
+  event_type          EventType
+  event_datetime      DateTime
+  location            LocationType?
+  context             ContextType?
+  general_result      GeneralResult?
+  e_signature         String?
+  final_observations  String?
+  is_confirmed        Boolean?
+  created_by_user_id  String
+  created_at          DateTime      @default(now())
+  updated_at          DateTime      @updatedAt
+
+  company Company @relation(fields: [company_id], references: [id])
+  vehicle Vehicle? @relation(fields: [vehicle_id], references: [id])
+  driver  Driver?  @relation(fields: [driver_id], references: [id])
+  createdBy User @relation(fields: [created_by_user_id], references: [id])
 }
 
 enum UserRole {

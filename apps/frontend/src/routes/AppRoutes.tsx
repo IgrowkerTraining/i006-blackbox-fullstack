@@ -3,12 +3,14 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 
-import Layout from "../components/layout/Layout";
+import Layout, { AppLayout } from "../components/layout/Layout";
 import AuthLayout from "../components/layout/AuthLayout";
 
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
+import ChoferesPage from "../pages/ChoferesPage";
+import PlaceholderPage from "../pages/PlaceholderPage";
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -40,9 +42,49 @@ export const AppRoutes: React.FC = () => {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Layout>
+            <AppLayout>
               <Dashboard />
-            </Layout>
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/choferes"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <ChoferesPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/flota"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PlaceholderPage title="Flota" />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/historial"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PlaceholderPage title="Historial" />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/blackbox-engine"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PlaceholderPage title="BlackBox Engine" />
+            </AppLayout>
           </ProtectedRoute>
         }
       />
