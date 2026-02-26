@@ -1,10 +1,13 @@
 import { Request, Response } from "express";
+import { UserService } from "../services/userServices";
+import { EmailService } from "../services/emailService";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import { prisma } from "../../prisma";
 import { generateToken } from "../utils/generateToken";
 import { UserRole } from "../../generated/prisma/enums";
 import { RegisterSchema, LoginSchema } from "../utils/authSchema";
+import crypto from "crypto";
 
 class AuthController {
   register = async (req: Request, res: Response) => {
@@ -31,8 +34,8 @@ class AuthController {
         const company = await tx.company.create({
           data: {
             name: data.company.name,
-            usdotNumber: data.company.usdotNumber,
-            state: data.company.state,
+            usdotNumber: data.company.usdotNumber ?? "",
+            state: data.company.state ?? "",
           },
         });
 
@@ -153,6 +156,74 @@ class AuthController {
       });
     }
   };
+
+  async forgotPassword(req: Request, res: Response) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      const user = await UserService.findByEmail(email);
+      if (!user) {
+        return res.status(200).json({
+          message: "If the email exists, a reset link has been sent",
+        });
+      }
+
+      const resetToken = crypto.randomBytes(32).toString("hex");
+      const resetExpires = new Date(Date.now() + 60 * 60 * 1000);
+
+      await EmailService.sendPasswordResetEmail({
+        to: email,
+        resetToken,
+        userName: user.name,
+      });
+
+      await UserService.setResetPasswordToken(email, resetToken, resetExpires);
+
+      res.status(200).json({
+        message: "If the email exists, a reset link has been sent",
+      });
+    } catch (error: any) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ error: "Failed to process request" });
+    }
+  }
+
+  async resetPassword(req: Request, res: Response) {
+    try {
+      const { token, newPassword } = req.body;
+
+      if (!token || !newPassword) {
+        return res
+          .status(400)
+          .json({ error: "Token and new password are required" });
+      }
+
+      if (newPassword.length < 6) {
+        return res
+          .status(400)
+          .json({ error: "Password must be at least 6 characters" });
+      }
+
+      const user = await UserService.findByResetToken(token);
+      if (!user) {
+        return res.status(400).json({ error: "Invalid or expired token" });
+      }
+
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(newPassword, saltRounds);
+
+      await UserService.updatePassword(user.id, passwordHash);
+
+      res.status(200).json({ message: "Password updated successfully" });
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  }
 }
 
 export default new AuthController();

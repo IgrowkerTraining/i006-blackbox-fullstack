@@ -19,17 +19,17 @@ datasource db {
 }
 
 model Company {
-  id           String   @id @default(uuid())
-  name         String
-  usdotNumber  String?
-  state        String? //faltaba este campo
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(uuid())
+  name        String
+  usdotNumber String?
+  state       String? //faltaba este campo
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // relaciones
-  vehicles Vehicle[] // una compañía tiene muchos vehículos
-  drivers  Driver[] // una compañía tiene muchos drivers
-  users    User[]
+  vehicles           Vehicle[] // una compañía tiene muchos vehículos
+  drivers            Driver[] // una compañía tiene muchos drivers
+  users              User[]
   operational_events OperationalEvent[]
 }
 
@@ -68,19 +68,21 @@ model Driver {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  companyId    String
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         UserRole @default(OPERATOR)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  id                   String    @id @default(uuid())
+  companyId            String
+  name                 String
+  email                String    @unique
+  passwordHash         String
+  role                 UserRole  @default(OPERATOR)
+  isActive             Boolean   @default(true)
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime  @default(now())
 
-  company Company @relation(fields: [companyId], references: [id])
-  
-  @@unique([id, companyId])
+  company            Company            @relation(fields: [companyId], references: [id])
   operational_events OperationalEvent[]
+
+  @@unique([id, companyId])
 }
 
 // Enums para eventos operacionales. Ajustar valores según dominio.
@@ -111,30 +113,30 @@ enum GeneralResult {
 }
 
 model OperationalEvent {
-  id                  String        @id @default(uuid())
-  company_id          String
-  vehicle_id          String?
-  driver_id           String?
-  event_type          EventType
-  event_datetime      DateTime
-  location            LocationType?
-  context             ContextType?
-  general_result      GeneralResult?
-  e_signature         String?
-  final_observations  String?
-  is_confirmed        Boolean?
-  created_by_user_id  String
-  created_at          DateTime      @default(now())
-  updated_at          DateTime      @updatedAt
+  id                 String         @id @default(uuid())
+  company_id         String
+  vehicle_id         String?
+  driver_id          String?
+  event_type         EventType
+  event_datetime     DateTime
+  location           LocationType?
+  context            ContextType?
+  general_result     GeneralResult?
+  e_signature        String?
+  final_observations String?
+  is_confirmed       Boolean?
+  created_by_user_id String
+  created_at         DateTime       @default(now())
+  updated_at         DateTime       @updatedAt
 
-  company Company @relation(fields: [company_id], references: [id])
-  vehicle Vehicle? @relation(fields: [vehicle_id], references: [id])
-  driver  Driver?  @relation(fields: [driver_id], references: [id])
-  createdBy User @relation(fields: [created_by_user_id], references: [id])
+  company   Company  @relation(fields: [company_id], references: [id])
+  vehicle   Vehicle? @relation(fields: [vehicle_id], references: [id])
+  driver    Driver?  @relation(fields: [driver_id], references: [id])
+  createdBy User     @relation(fields: [created_by_user_id], references: [id])
 }
 
 enum UserRole {
-  ADMIN      
-  OPERATOR 
-  COMPLIANCE 
+  ADMIN
+  OPERATOR
+  COMPLIANCE
 }
