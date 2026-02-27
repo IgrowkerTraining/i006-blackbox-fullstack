@@ -25,8 +25,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const title = routeTitles[pathname] ?? "Gestión";
 
   return (
-    <div className="min-h-screen flex bg-slate-950 text-slate-900">
-      <aside className="hidden w-64 flex-shrink-0 flex flex-col min-h-0 md:flex overflow-hidden">
+    <div className="h-screen flex bg-slate-950 text-slate-900 overflow-hidden">
+      <aside className="hidden w-64 flex-shrink-0 flex flex-col h-full min-h-0 md:flex overflow-hidden">
         <Sidebar />
       </aside>
 

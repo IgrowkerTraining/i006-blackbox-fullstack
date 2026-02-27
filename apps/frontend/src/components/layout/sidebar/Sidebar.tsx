@@ -98,6 +98,7 @@ export const Sidebar: React.FC = () => {
         name={user?.name ?? "Usuario"}
         role={user?.role ?? "Usuario"}
         avatarUrl={user?.avatar}
+        className="flex-shrink-0"
       />
     </div>
   );
