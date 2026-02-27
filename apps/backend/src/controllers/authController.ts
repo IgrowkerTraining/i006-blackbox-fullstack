@@ -1,31 +1,15 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import { z } from "zod";
 import { prisma } from "../../prisma";
 import { generateToken } from "../utils/generateToken";
 import { UserRole } from "../../generated/prisma/enums";
-
-interface RegisterDTO {
-  company: {
-    name: string;
-    usdotNumber: string;
-    state: string;
-  };
-  user: {
-    name: string; // creo que seria mejor dejarlo separado pero esta bien asi por ahora
-    email: string;
-    password: string;
-  };
-}
-
-interface LoginDTO {
-  email: string;
-  password: string;
-}
+import { RegisterSchema, LoginSchema } from "../utils/authSchema";
 
 class AuthController {
   register = async (req: Request, res: Response) => {
     try {
-      const data = req.body as RegisterDTO;
+      const data = RegisterSchema.parse(req.body);
 
       // Chequea que el email no exista globalmente
       const existingUser = await prisma.user.findUnique({
@@ -86,7 +70,16 @@ class AuthController {
           role: result.user.role,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Validation failed",
+          errors: error.issues.map((issue) => ({
+            field: issue.path.join("."),
+            message: issue.message,
+          })),
+        });
+      }
       console.error("Registration error:", error);
       return res.status(500).json({
         message: "Registration failed",
@@ -96,7 +89,7 @@ class AuthController {
 
   login = async (req: Request, res: Response) => {
     try {
-      const data = req.body as LoginDTO;
+      const data = LoginSchema.parse(req.body);
       // Buscar usuario por email (incluye la compania porque es saas)
       const user = await prisma.user.findUnique({
         where: { email: data.email },
@@ -144,7 +137,16 @@ class AuthController {
           role: user.role,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Validation failed",
+          errors: error.issues.map((issue) => ({
+            field: issue.path.join("."),
+            message: issue.message,
+          })),
+        });
+      }
       console.error("Login error:", error);
       return res.status(500).json({
         message: "Login failed",
