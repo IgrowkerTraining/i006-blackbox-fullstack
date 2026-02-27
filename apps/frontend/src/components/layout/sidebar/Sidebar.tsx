@@ -52,7 +52,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0 w-64 flex-shrink-0 bg-slate-900" style={{ borderRadius: 0 }}>
-      <div className="flex-shrink-0 flex items-center gap-2 px-4 py-4 bg-white" style={{ borderRadius: 0 }}>
+      <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-white" style={{ borderRadius: 0 }}>
         <LogoHexagon />
         <span className="text-lg font-bold tracking-tight text-black uppercase">
           BLACKBOX
