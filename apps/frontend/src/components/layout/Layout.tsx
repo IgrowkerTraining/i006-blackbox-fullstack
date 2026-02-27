@@ -17,9 +17,9 @@ export const Layout: React.FC<LayoutProps> = ({
   sidebar,
 }) => {
   return (
-    <div className={`min-h-screen flex bg-slate-950 text-slate-200 ${className}`}>
+    <div className={`min-h-screen flex bg-slate-100 text-slate-900 ${className}`}>
       {sidebar === null ? null : (
-        <aside className="hidden w-64 flex-shrink-0 flex flex-col min-h-0 border-r border-slate-800 md:flex">
+        <aside className="hidden w-64 flex-shrink-0 flex flex-col min-h-0 md:flex overflow-hidden">
           {sidebar === undefined ? (
             <div className="p-4">
               <span className="text-sm text-slate-400">
@@ -33,7 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({
       )}
 
       <div className="flex-1 flex flex-col min-h-0 min-w-0">
-        <header className="sticky top-0 z-10 h-14 flex-shrink-0 border-b border-slate-800 bg-slate-950 overflow-hidden">
+        <header className="sticky top-0 z-10 h-14 flex-shrink-0 flex items-stretch bg-gradient-to-r from-[#0B0F12] to-[#0E1B0A] shadow-sm rounded-lg">
           {header === undefined ? (
             <div className="px-4 py-3 flex items-center h-full">
               <span className="text-sm text-slate-400">Header placeholder</span>
@@ -42,7 +42,9 @@ export const Layout: React.FC<LayoutProps> = ({
             header
           )}
         </header>
-        <main className="flex-1 min-h-0 p-4 overflow-auto">{children}</main>
+        <main className="flex-1 min-h-0 p-6 overflow-auto bg-slate-100 text-slate-900">
+          {children}
+        </main>
       </div>
     </div>
   );
@@ -56,6 +58,7 @@ const routeTitles: Record<string, string> = {
   "/flota": "Flota",
   "/historial": "Historial",
   "/blackbox-engine": "BlackBox Engine",
+  "/inspeccion/nueva": "Nueva inspección de Activo",
 };
 
 interface AppLayoutProps {

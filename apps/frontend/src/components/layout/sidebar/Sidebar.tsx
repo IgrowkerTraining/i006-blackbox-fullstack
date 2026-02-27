@@ -36,7 +36,7 @@ const IconBlackBox = () => (
 );
 
 const LogoHexagon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white flex-shrink-0">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 flex-shrink-0 text-black">
     <path d="M12 2L20 6v8l-8 4-8-4V6l8-4z" />
   </svg>
 );
@@ -51,14 +51,14 @@ export const Sidebar: React.FC = () => {
   const { user } = useAuth();
 
   return (
-    <div className="flex flex-col h-full min-h-0 w-64 flex-shrink-0 bg-slate-900">
-      <div className="flex-shrink-0 flex items-center gap-2 px-4 py-4 border-b border-slate-800">
+    <div className="flex flex-col h-full min-h-0 w-64 flex-shrink-0 bg-slate-900" style={{ borderRadius: 0 }}>
+      <div className="flex-shrink-0 flex items-center gap-2 px-4 py-4 bg-white" style={{ borderRadius: 0 }}>
         <LogoHexagon />
-        <span className="text-lg font-bold tracking-tight text-white uppercase">
+        <span className="text-lg font-bold tracking-tight text-black uppercase">
           BLACKBOX
         </span>
       </div>
-      <nav className="flex-1 flex flex-col overflow-y-auto py-[35px] min-h-0">
+      <nav className="flex-1 flex flex-col overflow-y-auto py-6 min-h-0">
         <MenuItem
           icon={<IconDashboard />}
           label="Dashboard"

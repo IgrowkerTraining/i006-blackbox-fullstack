@@ -1,4 +1,6 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../constants/routes";
 
 const IconPlus = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-[#3F51B5]">
@@ -55,12 +57,14 @@ const activities = [
 ];
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   return (
-    <div className="min-h-full bg-slate-100 rounded-lg p-6">
+    <div className="min-h-full">
       <div className="mb-6">
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-[#3F51B5] shadow-sm hover:bg-slate-50 transition-colors"
+          onClick={() => navigate(ROUTES.INSPECCION_NUEVA)}
+          className="inline-flex items-center gap-2 rounded-lg bg-white px-[38px] py-[20px] text-sm font-medium text-[#3F51B5] shadow-sm hover:bg-slate-50 transition-colors border border-slate-200"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#3F51B5]">
             <IconPlus />
@@ -70,17 +74,17 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm pt-[22px] pb-[26px] pl-[27px]">
           <p className="text-sm font-medium text-slate-600">Flota Activa</p>
           <p className="text-3xl font-bold text-slate-800 mt-1">42</p>
           <p className="text-sm text-green-600 mt-1">↑ 100% Operativa</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm pt-[22px] pb-[26px] pl-[27px]">
           <p className="text-sm font-medium text-slate-600">Inspecciones de hoy</p>
           <p className="text-3xl font-bold text-blue-700 mt-1">14</p>
           <p className="text-sm text-slate-600 mt-1">8 Salidas / 6 Llegadas</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm pt-[22px] pb-[26px] pl-[27px]">
           <p className="text-sm font-medium text-slate-600">Hallazgos Abiertos</p>
           <p className="text-3xl font-bold text-amber-600 mt-1">3</p>
           <p className="text-sm text-slate-600 mt-1">Requieren Atención</p>
@@ -89,61 +93,74 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <section className="lg:col-span-2">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">Actividad reciente en Patio</h2>
-          <div className="space-y-3">
-            {activities.map((item, i) => (
-              <div
-                key={i}
-                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex gap-4"
-              >
-                <span
-                  className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                    item.type === "success"
-                      ? "bg-green-500"
-                      : item.type === "warning"
-                        ? "bg-amber-500"
-                        : "bg-blue-500"
-                  }`}
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mt-[45px]">
+            <h2 className="text-lg font-semibold text-slate-800 pl-[27px] pr-5 pt-5 pb-4">Actividad reciente en Patio</h2>
+            <div className="divide-y divide-slate-200">
+              {activities.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex gap-4 pl-[35px] pr-5 py-[20px]"
                 >
-                  {item.type === "success" && <IconCheck />}
-                  {item.type === "warning" && <IconAlert />}
-                  {item.type === "info" && <IconGear />}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-slate-800">{item.title}</p>
-                  <p className="text-sm text-slate-500 mt-0.5">
-                    {item.detail}
-                    {item.detailHighlight != null && (
-                      <span className="text-amber-600 font-medium">{item.detailHighlight}</span>
-                    )}
-                    {item.detailSuffix}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">{item.time}</p>
+                  <span
+                    className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                      item.type === "success"
+                        ? "bg-green-500"
+                        : item.type === "warning"
+                          ? "bg-amber-500"
+                          : "bg-blue-500"
+                    }`}
+                  >
+                    {item.type === "success" && <IconCheck />}
+                    {item.type === "warning" && <IconAlert />}
+                    {item.type === "info" && <IconGear />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-slate-800">{item.title}</p>
+                    <p className="text-sm text-slate-500 mt-0.5">
+                      {item.detail}
+                      {item.detailHighlight != null && (
+                        <span className="text-amber-600 font-medium">{item.detailHighlight}</span>
+                      )}
+                      {item.detailSuffix}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">{item.time}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
         <section className="pt-[2.75rem] flex flex-col min-h-0">
-          <div className="bg-slate-900 rounded-xl p-5 shadow-sm border border-slate-700 flex-1 min-h-0 flex flex-col">
+          <div className="bg-slate-900 rounded-xl px-[25px] py-5 shadow-sm border border-slate-700 flex-1 min-h-0 flex flex-col">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-white font-semibold">BlackBox Engine</span>
+              <span className="text-white font-semibold text-[20px]">BlackBox Engine</span>
               <LogoHexagon />
             </div>
             <p className="text-sm text-slate-400 mb-4">Análisis de patrones semanales disponible</p>
-            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 mb-4">
-              <span className="inline-block text-xs font-bold text-red-500 uppercase tracking-wide mb-2">
+            <div
+              className="rounded-[10px] mb-[30px] p-5"
+              style={{
+                backgroundColor: "#3D3D39",
+                border: "1px solid #505050",
+                boxShadow:
+                  "inset 2px 0 0 rgba(192, 192, 192, 0.35), inset -2px 0 0 rgba(192, 192, 192, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.2)",
+              }}
+            >
+              <span
+                className="inline-block font-bold uppercase tracking-wide mb-2 text-[17px]"
+                style={{ color: "#FF4B4B" }}
+              >
                 Alerta
               </span>
-              <p className="text-sm text-slate-200">
+              <p className="text-[15px] leading-snug text-white">
                 Se detecta recurrencia en fallas de documentación en el turno de la tarde (14:00 -
                 18:00) en los últimos 7 días.
               </p>
             </div>
             <button
               type="button"
-              className="w-full rounded-lg bg-amber-400 px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-amber-300 transition-colors mt-auto"
+              className="w-full rounded-lg bg-amber-400 px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-amber-300 transition-colors"
             >
               Ver Reporte Completo
             </button>
