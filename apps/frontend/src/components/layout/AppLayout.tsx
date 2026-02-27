@@ -25,16 +25,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const title = routeTitles[pathname] ?? "Gestión";
 
   return (
-    <div className="h-screen flex bg-slate-950 text-slate-900 overflow-hidden">
-      <aside className="hidden w-64 flex-shrink-0 flex flex-col h-full min-h-0 md:flex overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-white">
+      <aside className="hidden md:flex w-64 flex-shrink-0 flex-col h-full min-h-0 overflow-hidden">
         <Sidebar />
       </aside>
 
-      <div className="flex-1 flex flex-col min-h-0 min-w-0">
-        <header className="sticky top-0 z-10 h-14 flex-shrink-0 flex items-stretch bg-gradient-to-r from-[#0B0F12] to-[#0E1B0A] shadow-sm rounded-lg">
+      <div className="flex min-w-0 flex-1 flex-col min-h-0">
+        <header className="sticky top-0 z-10 flex h-14 flex-shrink-0 items-stretch rounded-lg bg-black shadow-sm">
           <AppHeader title={title} />
         </header>
-        <main className="flex-1 min-h-0 p-6 overflow-auto bg-slate-100 text-slate-900">
+        <main className="min-h-0 flex-1 overflow-auto p-6 bg-slate-100 text-slate-900">
           {children}
         </main>
       </div>
