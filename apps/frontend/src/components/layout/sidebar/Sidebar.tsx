@@ -96,7 +96,7 @@ export const Sidebar: React.FC = () => {
 
       <SidebarUser
         name={user?.name ?? "Usuario"}
-        role="Patio Manager"
+        role={user?.role ?? "Usuario"}
         avatarUrl={user?.avatar}
       />
     </div>

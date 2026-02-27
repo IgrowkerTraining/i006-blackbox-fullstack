@@ -4,7 +4,7 @@ import { ROUTES } from "../constants/routes";
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 
-import Layout, { AppLayout } from "../components/layout/Layout";
+import AppLayout from "../components/layout/AppLayout";
 import AuthLayout from "../components/layout/AuthLayout";
 
 import Login from "../pages/Login";
