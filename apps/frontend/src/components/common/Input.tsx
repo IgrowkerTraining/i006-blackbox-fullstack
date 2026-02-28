@@ -28,8 +28,8 @@ export const Input: React.FC<InputProps> = ({
         )}
         <input
           className={`
-            w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2.5 
-            ${icon ? "pl-10" : ""} 
+            w-full bg-[var(--page)] border border-slate-700 rounded-lg px-3 py-2.5
+            ${icon ? "pl-10" : ""}
             text-slate-200 placeholder:text-slate-600
             focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500
             transition-all duration-200
