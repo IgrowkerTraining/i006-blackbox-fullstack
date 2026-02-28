@@ -1,25 +1,19 @@
-import React from "react";
-import Layout from "./Layout";
+import React from "react"
+import Layout from "./Layout"
 
 interface AuthLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AuthLayout({ children }: AuthLayoutProps) {
+
+export default function AuthLayout ({ children }: AuthLayoutProps) {
   return (
     <Layout
-      header={null}
-      sidebar={null}
-      // Removes default page background so auth pages can have their own
-      className="bg-[#e8e6e0]"
+    header={null}
+    sidebar = {null}
+    className= "flex items-center justify-center "
     >
-      {/*
-        This div fills the full available height of <main> and centers
-        the auth card both vertically and horizontally.
-      */}
-      <div className="flex items-center justify-center min-h-full w-full">
-        {children}
-      </div>
+      <div className="w-full max-w-md p-4">{children}</div>
     </Layout>
-  );
+  )
 }

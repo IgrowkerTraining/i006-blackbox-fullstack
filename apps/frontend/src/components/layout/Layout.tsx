@@ -16,29 +16,21 @@ export const Layout: React.FC<LayoutProps> = ({
   header,
   sidebar,
 }) => {
-  const hasSidebar = sidebar !== null;
-
   return (
-    <div
-      className={`min-h-screen flex flex-col bg-[var(--page)] text-slate-200 ${className}`}
-    >
-      {header !== null && (
-        <header className="sticky top-0 z-10 h-14 flex-shrink-0 border-b border-slate-800 bg-slate-950 overflow-hidden">
-          {header === undefined ? (
-            <div className="px-4 py-3 flex items-center h-full">
-              <span className="text-sm text-slate-400">Header placeholder</span>
-            </div>
-          ) : (
-            header
-          )}
-        </header>
-      )}
+    <div className={`min-h-screen flex flex-col bg-slate-950 text-slate-200 ${className}`}>
+      <header className="sticky top-0 z-10 h-14 flex-shrink-0 border-b border-slate-800 bg-slate-950 overflow-hidden">
+        {header === undefined ? (
+          <div className="px-4 py-3 flex items-center h-full">
+            <span className="text-sm text-slate-400">Header placeholder</span>
+          </div>
+        ) : (
+          header
+        )}
+      </header>
 
-      <div className="flex flex-1 overflow-hidden">
-
-
-        {hasSidebar && (
-          <aside className="hidden md:flex flex-col w-64 flex-shrink-0 min-h-0 border-r border-slate-800 bg-slate-950 overflow-y-auto">
+      <div className="flex flex-1 min-h-0 h-[calc(100vh-3.5rem)]">
+        {sidebar === null ? null : (
+          <aside className="hidden w-64 flex-shrink-0 flex flex-col min-h-0 border-r border-slate-800 md:flex">
             {sidebar === undefined ? (
               <div className="p-4">
                 <span className="text-sm text-slate-400">
@@ -51,18 +43,13 @@ export const Layout: React.FC<LayoutProps> = ({
           </aside>
         )}
 
-        
-        <main className="flex-1 min-w-0 overflow-auto p-4 h-full">
-          {children}
-        </main>
+        <main className="flex-1 min-w-0 p-4 overflow-auto">{children}</main>
       </div>
     </div>
   );
 };
 
 export default Layout;
-
-/* ─────────────────────────────────────────── */
 
 const routeTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
