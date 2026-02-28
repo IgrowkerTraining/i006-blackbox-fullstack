@@ -1,4 +1,4 @@
-import type { Chofer, UnidadFlota, RegistroHistorial } from "../types/dataPages";
+import type { Chofer, ChoferFicha, UnidadFlota, RegistroHistorial } from "../types/dataPages";
 
 /**
  * Mock de choferes. Se usa cuando el backend no tiene aún el endpoint /api/choferes.
@@ -54,6 +54,24 @@ export const MOCK_CHOFERES: Chofer[] = [
   { unidadAsignada: "Sin asignar", idChofer: "CH390", nombre: "Fuerza Regida", licencia: "TX-99329", estadoOperativo: "Licencia vencida" },
   { unidadAsignada: "U517", idChofer: "CH400", nombre: "Carin León", licencia: "TX-99330", estadoOperativo: "Autorizado" },
 ];
+
+/**
+ * Mock de ficha de un chofer. Se usa cuando el backend no tiene aún el endpoint por ID.
+ * Siempre se devuelve este chofer para cualquier id solicitado.
+ */
+export const MOCK_CHOFER_FICHA: ChoferFicha = {
+  unidadAsignada: "U505",
+  idChofer: "CH205",
+  nombre: "Emiliano Cerati",
+  licencia: "TX-99281",
+  estadoOperativo: "Autorizado",
+  fotoUrl: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=400&h=300&fit=crop",
+  antiguedadAnios: 4,
+  estadoActual: "En Ruta (Asignado a Unit 505)",
+  unidadAsignadaActual: "Unit 505",
+  metricaCumplimiento: "100% Inspecciones Registradas (14/14)",
+  inspeccionesRegistradas: "14/14",
+};
 
 /**
  * Mock de flota. Se usa cuando el backend no tiene aún el endpoint /api/flota.

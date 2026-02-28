@@ -22,7 +22,9 @@ interface AppLayoutProps {
  */
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { pathname } = useLocation();
-  const title = routeTitles[pathname] ?? "Gestión";
+  const title =
+    routeTitles[pathname] ??
+    (pathname.startsWith("/choferes/") ? routeTitles["/choferes"] : "Gestión");
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">

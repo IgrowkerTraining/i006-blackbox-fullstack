@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Input } from "../components/common/Input";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
@@ -134,12 +135,12 @@ const ChoferesPage: React.FC = () => {
               sortDirection={sortDirection}
               onSort={handleSort}
               renderAction={(row) => (
-                <a
-                  href={`#/choferes/${row.idChofer}/ficha`}
+                <Link
+                  to={`/choferes/${row.idChofer}/ficha`}
                   className="text-menu-active hover:opacity-90 font-medium transition-colors"
                 >
                   Ver ficha
-                </a>
+                </Link>
               )}
             />
             <p className="mt-4 text-xs text-slate-700">

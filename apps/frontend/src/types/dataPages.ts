@@ -11,6 +11,16 @@ export interface Chofer extends Record<string, unknown> {
   estadoOperativo: string;
 }
 
+/** Ficha extendida de un chofer (vista detalle). Incluye foto, estado actual y métrica de cumplimiento. */
+export interface ChoferFicha extends Chofer {
+  fotoUrl?: string;
+  antiguedadAnios: number;
+  estadoActual: string;
+  unidadAsignadaActual?: string;
+  metricaCumplimiento: string;
+  inspeccionesRegistradas?: string;
+}
+
 export interface ChoferesFilters {
   idChofer?: string;
 }

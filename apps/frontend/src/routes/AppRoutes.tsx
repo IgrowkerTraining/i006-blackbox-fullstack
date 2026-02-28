@@ -11,6 +11,7 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import ChoferesPage from "../pages/ChoferesPage";
+import ChoferFichaPage from "../pages/ChoferFichaPage";
 import FlotaPage from "../pages/FlotaPage";
 import HistorialPage from "../pages/HistorialPage";
 import PlaceholderPage from "../pages/PlaceholderPage";
@@ -68,6 +69,16 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <AppLayout>
               <ChoferesPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/choferes/:idChofer/ficha"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <ChoferFichaPage />
             </AppLayout>
           </ProtectedRoute>
         }
