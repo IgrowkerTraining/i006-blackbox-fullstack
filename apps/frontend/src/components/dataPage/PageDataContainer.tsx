@@ -14,10 +14,10 @@ export const PageDataContainer: React.FC<PageDataContainerProps> = ({
   pagination,
 }) => {
   return (
-    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+    <div className="bg-white border border-slate-200 overflow-hidden">
       <div className="p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
+          <h2 className="text-xl font-bold text-slate-800">{title}</h2>
           {filters && (
             <div className="flex flex-wrap items-center gap-3 min-w-0">
               {filters}

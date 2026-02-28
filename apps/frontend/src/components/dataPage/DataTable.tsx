@@ -22,14 +22,14 @@ export interface DataTableProps<T> {
 
 function SortIcon({ direction }: { direction: "asc" | "desc" }) {
   return (
-    <span className="inline-flex flex-col ml-1 text-slate-500" aria-hidden>
+    <span className="inline-flex flex-col ml-1 text-slate-400" aria-hidden>
       <span
-        className={`leading-none ${direction === "asc" ? "text-indigo-400" : "opacity-50"}`}
+        className={`leading-none ${direction === "asc" ? "text-slate-600" : "opacity-50"}`}
       >
         ▲
       </span>
       <span
-        className={`leading-none -mt-0.5 ${direction === "desc" ? "text-indigo-400" : "opacity-50"}`}
+        className={`leading-none -mt-0.5 ${direction === "desc" ? "text-slate-600" : "opacity-50"}`}
       >
         ▼
       </span>
@@ -70,14 +70,14 @@ export function DataTable<T extends Record<string, unknown>>({
   };
 
   return (
-    <div className="overflow-x-auto border border-indigo-500/30 rounded-lg">
+    <div className="overflow-x-auto border border-slate-200 bg-white rounded-lg">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b border-dotted border-slate-600">
+          <tr className="bg-surface-subtle border-b border-slate-200">
             {columns.map((col) => (
               <th
                 key={col.id}
-                className={`px-4 py-3 font-semibold text-slate-300 uppercase tracking-wider ${alignClass(col.align)} ${col.sortable && onSort ? "cursor-pointer select-none hover:text-slate-200" : ""}`}
+                className={`px-4 py-3 font-semibold text-slate-700 uppercase tracking-wider ${alignClass(col.align)} ${col.sortable && onSort ? "cursor-pointer select-none hover:text-slate-900" : ""}`}
                 scope="col"
                 onClick={
                   col.sortable && onSort
@@ -99,7 +99,7 @@ export function DataTable<T extends Record<string, unknown>>({
             ))}
             {renderAction && (
               <th
-                className="px-4 py-3 font-semibold text-slate-300 uppercase tracking-wider text-left"
+                className="px-4 py-3 font-semibold text-slate-700 uppercase tracking-wider text-left"
                 scope="col"
               >
                 ACCIÓN
@@ -112,7 +112,7 @@ export function DataTable<T extends Record<string, unknown>>({
             <tr>
               <td
                 colSpan={columns.length + (renderAction ? 1 : 0)}
-                className="px-4 py-8 text-center text-slate-500"
+                className="px-4 py-8 text-center text-slate-500 bg-white"
               >
                 No hay datos para mostrar.
               </td>
@@ -121,12 +121,12 @@ export function DataTable<T extends Record<string, unknown>>({
             data.map((row, i) => (
               <tr
                 key={i}
-                className="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/30 transition-colors"
+                className="border-b border-slate-200 last:border-b-0 hover:bg-slate-50 transition-colors bg-white"
               >
                 {columns.map((col) => (
                   <td
                     key={col.id}
-                    className={`px-4 py-3 text-slate-200 ${alignClass(col.align)}`}
+                    className={`px-4 py-3 text-slate-700 ${alignClass(col.align)}`}
                   >
                     {getCellContent(row, col)}
                   </td>

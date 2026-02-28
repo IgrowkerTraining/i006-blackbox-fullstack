@@ -60,40 +60,40 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   return (
     <div className="min-h-full">
-      <div className="mb-6">
+      <div className="mb-12">
         <button
           type="button"
           onClick={() => navigate(ROUTES.INSPECCION_NUEVA)}
-          className="inline-flex items-center gap-2 rounded-lg bg-white px-[38px] py-[20px] text-sm font-medium text-[#3F51B5] shadow-sm hover:bg-slate-50 transition-colors border border-slate-200"
+          className="inline-flex items-center gap-2 rounded-lg bg-white px-[38px] py-[20px]  font-medium text-accent shadow-sm hover:bg-slate-50 transition-colors border border-slate-200"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#3F51B5]">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-accent">
             <IconPlus />
           </span>
           Nueva Inspección
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm pt-[22px] pb-[26px] pl-[27px]">
-          <p className="text-sm font-medium text-slate-600">Flota Activa</p>
+          <p className="text-sm font-medium text-slate-400">Flota Activa</p>
           <p className="text-3xl font-bold text-slate-800 mt-1">42</p>
           <p className="text-sm text-green-600 mt-1">↑ 100% Operativa</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm pt-[22px] pb-[26px] pl-[27px]">
-          <p className="text-sm font-medium text-slate-600">Inspecciones de hoy</p>
-          <p className="text-3xl font-bold text-blue-700 mt-1">14</p>
+          <p className="text-sm font-medium text-slate-400">Inspecciones de hoy</p>
+          <p className="text-3xl font-bold text-accent mt-1">14</p>
           <p className="text-sm text-slate-600 mt-1">8 Salidas / 6 Llegadas</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm pt-[22px] pb-[26px] pl-[27px]">
-          <p className="text-sm font-medium text-slate-600">Hallazgos Abiertos</p>
+          <p className="text-sm font-medium text-slate-400">Hallazgos Abiertos</p>
           <p className="text-3xl font-bold text-amber-600 mt-1">3</p>
           <p className="text-sm text-slate-600 mt-1">Requieren Atención</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <section className="lg:col-span-2">
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mt-[45px]">
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
             <h2 className="text-lg font-semibold text-slate-800 pl-[27px] pr-5 pt-5 pb-4">Actividad reciente en Patio</h2>
             <div className="divide-y divide-slate-200">
               {activities.map((item, i) => (
@@ -131,7 +131,7 @@ const Dashboard: React.FC = () => {
           </div>
         </section>
 
-        <section className="pt-[2.75rem] flex flex-col min-h-0">
+        <section className="flex flex-col min-h-0">
           <div className="bg-slate-900 rounded-xl px-[25px] py-5 shadow-sm border border-slate-700 flex-1 min-h-0 flex flex-col">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-white font-semibold text-[20px]">BlackBox Engine</span>

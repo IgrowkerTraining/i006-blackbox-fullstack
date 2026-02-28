@@ -26,7 +26,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
-      <aside className="hidden md:flex w-64 flex-shrink-0 flex-col h-full min-h-0 overflow-hidden">
+      <aside className="hidden md:flex w-56 flex-shrink-0 flex-col h-full min-h-0 overflow-hidden">
         <Sidebar />
       </aside>
 
@@ -34,7 +34,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <header className="sticky top-0 z-10 flex h-14 flex-shrink-0 items-stretch rounded-lg bg-black shadow-sm">
           <AppHeader title={title} />
         </header>
-        <main className="min-h-0 flex-1 overflow-auto p-6 bg-slate-100 text-slate-900">
+        <main className="min-h-0 flex-1 overflow-auto p-6 bg-main">
           {children}
         </main>
       </div>

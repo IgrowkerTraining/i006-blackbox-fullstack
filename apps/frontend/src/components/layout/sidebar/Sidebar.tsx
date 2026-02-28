@@ -51,14 +51,14 @@ export const Sidebar: React.FC = () => {
   const { user } = useAuth();
 
   return (
-    <div className="flex flex-col h-full min-h-0 w-64 flex-shrink-0 bg-slate-900" style={{ borderRadius: 0 }}>
-      <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-white" style={{ borderRadius: 0 }}>
+    <div className="flex flex-col h-full min-h-0 w-56 flex-shrink-0 bg-main-dark">
+      <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-main">
         <LogoHexagon />
         <span className="text-lg font-bold tracking-tight text-black uppercase">
           BLACKBOX
         </span>
       </div>
-      <nav className="flex-1 flex flex-col overflow-y-auto py-6 min-h-0">
+      <nav className="flex-1 flex flex-col overflow-y-auto pb-6 min-h-0">
         <MenuItem
           icon={<IconDashboard />}
           label="Dashboard"

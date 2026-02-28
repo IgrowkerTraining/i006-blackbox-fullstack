@@ -23,8 +23,8 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   const baseStyles =
     "flex items-center gap-3 w-full text-left font-medium transition-colors duration-200 px-4 py-[35px]";
   const activeStyles = active
-    ? "bg-[#4E63A8]/50 text-white"
-    : "bg-slate-900 text-white hover:bg-slate-800";
+    ? "bg-menu-active/50 text-white border-l-2 border-white"
+    : "bg-main-dark text-white hover:bg-slate-800";
 
   const content = (
     <>
