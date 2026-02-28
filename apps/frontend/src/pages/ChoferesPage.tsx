@@ -108,7 +108,7 @@ const ChoferesPage: React.FC = () => {
             onChange={(e) => setSearchId(e.target.value)}
             icon={<SearchIcon />}
             iconPosition="right"
-            className="min-w-[380px] max-w-md py-2 rounded bg-surface-subtle border-slate-400 text-slate-900 placeholder:text-slate-500"
+            className="min-w-[260px] max-w-md"
           />
         }
         pagination={

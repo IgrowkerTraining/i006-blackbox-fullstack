@@ -116,7 +116,7 @@ const FlotaPage: React.FC = () => {
             onChange={(e) => setSearchId(e.target.value)}
             icon={<SearchIcon />}
             iconPosition="right"
-            className="min-w-[280px] max-w-md py-2 rounded bg-surface-subtle border-slate-200 text-slate-800 placeholder:text-slate-500"
+            className="min-w-[260px] max-w-md"
           />
         }
         pagination={
