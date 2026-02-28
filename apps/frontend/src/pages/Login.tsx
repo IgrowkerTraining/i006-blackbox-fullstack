@@ -33,27 +33,24 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#e8e6e0] flex items-center justify-center gap-12 p-8 font-['DM_Sans',sans-serif]">
-      {/* Left side — Isotipo */}
-      <div className="hidden lg:flex flex-shrink-0">
-        <img
-          src={isotipoBlackbox}
-          alt="BlackBox Isotipo"
-          className="w-[596px] h-[596px] object-contain"
-        />
-      </div>
+    <div className="min-h-screen flex items-center justify-center gap-12 p-8 md:p-6 md:gap-8 lg:gap-8 lg:gap-12 font-['DM_Sans',sans-serif]">
+     <div className="hidden md:flex lg:flex flex-shrink-0 md:max-w-[280px] lg:max-w-none">
+  <img
+    src={isotipoBlackbox}
+    alt="BlackBox Isotipo"
+    className="w-full h-auto object-contain md:w-[280px] md:h-[280px] lg:w-[596px] lg:h-[596px]"
+  />
+</div>
 
-      {/* Right side — Card */}
-      <div className="w-full max-w-md bg-[#151a10] rounded-2xl p-12 shadow-2xl border border-[#2a2f22]">
-        {/* Brand name */}
-        <img src={Maskgroup} alt="BlackBox Logo" className="h-12 mb-8" />
 
-        <h2 className="text-xl font-semibold text-[#f0ede6] mb-8">
-          Ingresa a tu cuenta
-        </h2>
+<div className="w-full max-w-md bg-[#151a10] rounded-2xl p-12 md:p-8 md:max-w-[90%] lg:p-12 lg:max-w-md shadow-2xl border border-[#2a2f22]">
+<img src={Maskgroup} alt="BlackBox Logo" className="w-full h-auto p-4 mb-10 md:p-3 md:mb-6 lg:p-4 lg:mb-10" />
+<h2 className="text-xl font-semibold font-['Roboto',sans-serif] text-[#f0ede6] mt-8 mb-6 md:mt-6 md:mb-5 lg:mt-8 lg:mb-6">
+  Ingresa a tu cuenta
+</h2>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
-          {/* Email */}
+
           <div>
             <label htmlFor="email" className="block text-xs font-medium text-[#a0a890] mb-2 tracking-wide">
               Usuario
@@ -70,7 +67,7 @@ const Login: React.FC = () => {
             />
           </div>
 
-          {/* Password */}
+
           <div>
             <label htmlFor="password" className="block text-xs font-medium text-[#a0a890] mb-2 tracking-wide">
               Contraseña
@@ -104,14 +101,12 @@ const Login: React.FC = () => {
             </p>
           </div>
 
-          {/* Error message */}
           {error && (
             <div className="text-xs text-[#e05c5c] p-2 bg-[rgba(224,92,92,0.1)] rounded-md border border-[rgba(224,92,92,0.25)]">
               {error}
             </div>
           )}
 
-          {/* Remember me + Forgot password */}
           <div className="flex items-center justify-between my-6">
             <label className="flex items-center gap-2 text-xs text-[#a0a890] cursor-pointer select-none">
               <input
@@ -127,13 +122,12 @@ const Login: React.FC = () => {
             </a>
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full py-2.5 bg-[#f5c518] text-[#1a1200] font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-['DM_Sans',sans-serif] ${isLoading
-              ? "bg-[#b89010] cursor-not-allowed"
-              : "hover:bg-[#e0b010] shadow-lg shadow-[#f5c518]/30 hover:shadow-[#f5c518]/50"
+            className={`w-full py-2.5 bg-[var(--accent)] text-[var(--bg)] font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-['DM_Sans',sans-serif] ${isLoading
+              ? "bg-[var(--accent)] cursor-not-allowed"
+              : "hover:bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/30 hover:shadow-[var(--accent)]/50"
               }`}
           >
             {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
