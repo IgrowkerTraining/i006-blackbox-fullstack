@@ -1,4 +1,10 @@
-import type { Chofer, ChoferFicha, UnidadFlota, RegistroHistorial } from "../types/dataPages";
+import type {
+  Chofer,
+  ChoferFicha,
+  UnidadFlota,
+  RegistroHistorial,
+  EventoReporte,
+} from "../types/dataPages";
 
 /**
  * Mock de choferes. Se usa cuando el backend no tiene aún el endpoint /api/choferes.
@@ -133,4 +139,21 @@ export const MOCK_HISTORIAL: RegistroHistorial[] = [
   { idUnidad: "U795", idChofer: "CH155", fechaInspeccion: "21/11/2022", fechaIncidente: "—", fechaMantenimiento: "21/11/2022" },
   { idUnidad: "U511", idChofer: "CH270", fechaInspeccion: "20/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "20/11/2022" },
   { idUnidad: "U608", idChofer: "CH280", fechaInspeccion: "12/11/2022", fechaIncidente: "12/11/2022", fechaMantenimiento: "12/11/2022" },
+];
+
+/**
+ * Mock del registro consolidado de eventos (reporte). Se devuelve para cualquier unidad
+ * mientras el backend no exponga el endpoint.
+ */
+export const MOCK_HISTORIAL_REPORTE: EventoReporte[] = [
+  { fecha: "02 Feb 2026", hora: "10:30 AM", unidad: "U505", evento: "Inspección Salida", resultadoDetalle: "Sin Observaciones", tipoResultado: "normal", registradoPor: "Rick Ramirez" },
+  { fecha: "02 Feb 2026", hora: "07:15 AM", unidad: "U505", evento: "Inspección Llegada", resultadoDetalle: "Hallazgo: Luz Trasera Rota", tipoResultado: "hallazgo", registradoPor: "Rick Ramirez" },
+  { fecha: "01 Feb 2026", hora: "02:00 PM", unidad: "U505", evento: "Inspección Salida", resultadoDetalle: "Sin Observaciones", tipoResultado: "normal", registradoPor: "Rick Ramirez" },
+  { fecha: "01 Feb 2026", hora: "11:00 AM", unidad: "U505", evento: "Inspección Llegada", resultadoDetalle: "Hallazgo: Neumático delantero izquierdo bajo", tipoResultado: "hallazgo", registradoPor: "Rick Ramirez" },
+  { fecha: "01 Feb 2026", hora: "09:00 AM", unidad: "U505", evento: "Mantenimiento", resultadoDetalle: "Preventivo Completado", tipoResultado: "completado", registradoPor: "Rick Ramirez" },
+  { fecha: "31 Ene 2026", hora: "04:30 PM", unidad: "U505", evento: "Inspección Llegada", resultadoDetalle: "Sin Observaciones", tipoResultado: "normal", registradoPor: "Rick Ramirez" },
+  { fecha: "31 Ene 2026", hora: "08:00 AM", unidad: "U505", evento: "Inspección Salida", resultadoDetalle: "Hallazgo: Espejo retrovisor dañado", tipoResultado: "hallazgo", registradoPor: "Rick Ramirez" },
+  { fecha: "30 Ene 2026", hora: "01:15 PM", unidad: "U505", evento: "Mantenimiento", resultadoDetalle: "Correctivo Completado", tipoResultado: "completado", registradoPor: "Rick Ramirez" },
+  { fecha: "30 Ene 2026", hora: "09:45 AM", unidad: "U505", evento: "Inspección Salida", resultadoDetalle: "Sin Observaciones", tipoResultado: "normal", registradoPor: "Rick Ramirez" },
+  { fecha: "29 Ene 2026", hora: "05:00 PM", unidad: "U505", evento: "Inspección Llegada", resultadoDetalle: "Sin Observaciones", tipoResultado: "normal", registradoPor: "Rick Ramirez" },
 ];

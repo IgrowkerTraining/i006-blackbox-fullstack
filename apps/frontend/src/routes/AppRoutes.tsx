@@ -14,6 +14,7 @@ import ChoferesPage from "../pages/ChoferesPage";
 import ChoferFichaPage from "../pages/ChoferFichaPage";
 import FlotaPage from "../pages/FlotaPage";
 import HistorialPage from "../pages/HistorialPage";
+import HistorialReportePage from "../pages/HistorialReportePage";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import NuevaInspeccionPage from "../pages/NuevaInspeccionPage";
 
@@ -99,6 +100,16 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <AppLayout>
               <HistorialPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/historial/reporte/:idUnidad"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <HistorialReportePage />
             </AppLayout>
           </ProtectedRoute>
         }

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Input } from "../components/common/Input";
 import { Select } from "../components/common/Select";
 import { Button } from "../components/common/Button";
@@ -196,12 +197,12 @@ const HistorialPage: React.FC = () => {
             sortDirection={sortDirection}
             onSort={handleSort}
             renderAction={(row) => (
-              <a
-                href={`#/historial/reporte/${row.idUnidad}-${row.idChofer}`}
+              <Link
+                to={`/historial/reporte/${row.idUnidad}`}
                 className="text-accent hover:opacity-90 font-medium transition-colors"
               >
                 Ver reporte
-              </a>
+              </Link>
             )}
           />
         )}

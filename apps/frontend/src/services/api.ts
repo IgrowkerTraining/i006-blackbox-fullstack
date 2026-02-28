@@ -5,12 +5,14 @@ import type {
   ChoferFicha,
   UnidadFlota,
   RegistroHistorial,
+  EventoReporte,
 } from "../types/dataPages";
 import {
   MOCK_CHOFERES,
   MOCK_CHOFER_FICHA,
   MOCK_FLOTA,
   MOCK_HISTORIAL,
+  MOCK_HISTORIAL_REPORTE,
 } from "../data/mockData";
 
 export const api = {
@@ -124,6 +126,22 @@ export const api = {
       return response.json() as Promise<RegistroHistorial[]>;
     } catch {
       return MOCK_HISTORIAL;
+    }
+  },
+
+  /**
+   * Registro consolidado de eventos (reporte por unidad). Si el backend no tiene
+   * el endpoint, devuelve siempre el mock para cualquier idUnidad.
+   */
+  async getHistorialReporte(idUnidad: string): Promise<EventoReporte[]> {
+    try {
+      const response = await fetch(
+        `${API_ENDPOINTS.BASE}${API_ENDPOINTS.HISTORIAL}/reporte/${encodeURIComponent(idUnidad)}`,
+      );
+      if (!response.ok) return MOCK_HISTORIAL_REPORTE;
+      return response.json() as Promise<EventoReporte[]>;
+    } catch {
+      return MOCK_HISTORIAL_REPORTE;
     }
   },
 };

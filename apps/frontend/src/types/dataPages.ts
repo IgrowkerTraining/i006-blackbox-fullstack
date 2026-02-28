@@ -56,3 +56,16 @@ export interface HistorialFilters {
   criterio?: CriterioHistorial;
   valor?: string;
 }
+
+/** Evento del registro consolidado (reporte por unidad). */
+export type TipoResultadoEvento = "normal" | "hallazgo" | "completado";
+
+export interface EventoReporte extends Record<string, unknown> {
+  fecha: string;
+  hora: string;
+  unidad: string;
+  evento: string;
+  resultadoDetalle: string;
+  tipoResultado: TipoResultadoEvento;
+  registradoPor: string;
+}
