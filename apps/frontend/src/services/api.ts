@@ -1,7 +1,7 @@
 import { User } from "../types";
 import { API_ENDPOINTS } from "../constants/routes";
-import type { Chofer, UnidadFlota } from "../types/dataPages";
-import { MOCK_CHOFERES, MOCK_FLOTA } from "../data/mockData";
+import type { Chofer, UnidadFlota, RegistroHistorial } from "../types/dataPages";
+import { MOCK_CHOFERES, MOCK_FLOTA, MOCK_HISTORIAL } from "../data/mockData";
 
 export const api = {
   async register(data: any): Promise<{ user: User; message: string }> {
@@ -81,6 +81,23 @@ export const api = {
       return response.json() as Promise<UnidadFlota[]>;
     } catch {
       return MOCK_FLOTA;
+    }
+  },
+
+  /**
+   * Historial de eventos. Si el backend no tiene el endpoint aún, devuelve mock data.
+   */
+  async getHistorial(): Promise<RegistroHistorial[]> {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HISTORIAL}`);
+      if (!response.ok) {
+        if (response.status === 404) return MOCK_HISTORIAL;
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || `Error ${response.status}`);
+      }
+      return response.json() as Promise<RegistroHistorial[]>;
+    } catch {
+      return MOCK_HISTORIAL;
     }
   },
 };

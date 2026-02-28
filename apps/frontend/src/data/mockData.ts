@@ -86,5 +86,33 @@ export const MOCK_FLOTA: UnidadFlota[] = [
   { idUnidad: "U608", estado: "ACTIVO", chofer: "Marco Antonio Solís", ultimaInspeccion: "Hoy, 12:00 hrs" },
 ];
 
-/** Mock de historial (placeholder para cuando exista el endpoint). */
-export const MOCK_HISTORIAL: RegistroHistorial[] = [];
+/**
+ * Mock de historial de eventos. Se usa cuando el backend no tiene aún el endpoint /api/historial.
+ */
+export const MOCK_HISTORIAL: RegistroHistorial[] = [
+  { idUnidad: "U505", idChofer: "CH205", fechaInspeccion: "20/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "20/11/2022" },
+  { idUnidad: "U601", idChofer: "CH207", fechaInspeccion: "20/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "20/11/2022" },
+  { idUnidad: "U789", idChofer: "CH104", fechaInspeccion: "20/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "20/11/2022" },
+  { idUnidad: "U365", idChofer: "CH097", fechaInspeccion: "20/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "20/11/2022" },
+  { idUnidad: "U236", idChofer: "CH063", fechaInspeccion: "20/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "20/11/2022" },
+  { idUnidad: "U502", idChofer: "CH201", fechaInspeccion: "19/11/2022", fechaIncidente: "19/11/2022", fechaMantenimiento: "18/11/2022" },
+  { idUnidad: "U603", idChofer: "CH088", fechaInspeccion: "21/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "21/11/2022" },
+  { idUnidad: "U790", idChofer: "CH312", fechaInspeccion: "18/11/2022", fechaIncidente: "—", fechaMantenimiento: "18/11/2022" },
+  { idUnidad: "U506", idChofer: "CH115", fechaInspeccion: "22/11/2022", fechaIncidente: "22/11/2022", fechaMantenimiento: "20/11/2022" },
+  { idUnidad: "U602", idChofer: "CH210", fechaInspeccion: "17/11/2022", fechaIncidente: "17/11/2022", fechaMantenimiento: "17/11/2022" },
+  { idUnidad: "U791", idChofer: "CH118", fechaInspeccion: "20/11/2022", fechaIncidente: "—", fechaMantenimiento: "19/11/2022" },
+  { idUnidad: "U507", idChofer: "CH099", fechaInspeccion: "19/11/2022", fechaIncidente: "19/11/2022", fechaMantenimiento: "19/11/2022" },
+  { idUnidad: "U604", idChofer: "CH220", fechaInspeccion: "21/11/2022", fechaIncidente: "—", fechaMantenimiento: "21/11/2022" },
+  { idUnidad: "U792", idChofer: "CH125", fechaInspeccion: "16/11/2022", fechaIncidente: "16/11/2022", fechaMantenimiento: "16/11/2022" },
+  { idUnidad: "U508", idChofer: "CH230", fechaInspeccion: "20/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "20/11/2022" },
+  { idUnidad: "U605", idChofer: "CH130", fechaInspeccion: "15/11/2022", fechaIncidente: "—", fechaMantenimiento: "15/11/2022" },
+  { idUnidad: "U793", idChofer: "CH135", fechaInspeccion: "23/11/2022", fechaIncidente: "23/11/2022", fechaMantenimiento: "22/11/2022" },
+  { idUnidad: "U509", idChofer: "CH240", fechaInspeccion: "20/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "20/11/2022" },
+  { idUnidad: "U606", idChofer: "CH140", fechaInspeccion: "14/11/2022", fechaIncidente: "14/11/2022", fechaMantenimiento: "14/11/2022" },
+  { idUnidad: "U794", idChofer: "CH250", fechaInspeccion: "19/11/2022", fechaIncidente: "—", fechaMantenimiento: "19/11/2022" },
+  { idUnidad: "U510", idChofer: "CH150", fechaInspeccion: "20/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "20/11/2022" },
+  { idUnidad: "U607", idChofer: "CH260", fechaInspeccion: "13/11/2022", fechaIncidente: "13/11/2022", fechaMantenimiento: "13/11/2022" },
+  { idUnidad: "U795", idChofer: "CH155", fechaInspeccion: "21/11/2022", fechaIncidente: "—", fechaMantenimiento: "21/11/2022" },
+  { idUnidad: "U511", idChofer: "CH270", fechaInspeccion: "20/11/2022", fechaIncidente: "20/11/2022", fechaMantenimiento: "20/11/2022" },
+  { idUnidad: "U608", idChofer: "CH280", fechaInspeccion: "12/11/2022", fechaIncidente: "12/11/2022", fechaMantenimiento: "12/11/2022" },
+];

@@ -12,6 +12,7 @@ import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import ChoferesPage from "../pages/ChoferesPage";
 import FlotaPage from "../pages/FlotaPage";
+import HistorialPage from "../pages/HistorialPage";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import NuevaInspeccionPage from "../pages/NuevaInspeccionPage";
 
@@ -86,7 +87,7 @@ export const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <AppLayout>
-              <PlaceholderPage title="Historial" />
+              <HistorialPage />
             </AppLayout>
           </ProtectedRoute>
         }

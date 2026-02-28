@@ -26,12 +26,23 @@ export interface FlotaFilters {
   idUnidad?: string;
 }
 
-/** Placeholder para cuando exista el endpoint de historial */
-export interface RegistroHistorial {
-  id: string;
-  [key: string]: unknown;
+export interface RegistroHistorial extends Record<string, unknown> {
+  idUnidad: string;
+  idChofer: string;
+  fechaInspeccion: string;
+  fechaIncidente: string;
+  fechaMantenimiento: string;
 }
 
+/** Criterios de búsqueda para historial */
+export type CriterioHistorial =
+  | "idUnidad"
+  | "idChofer"
+  | "fechaInspeccion"
+  | "fechaIncidente"
+  | "fechaMantenimiento";
+
 export interface HistorialFilters {
-  [key: string]: unknown;
+  criterio?: CriterioHistorial;
+  valor?: string;
 }

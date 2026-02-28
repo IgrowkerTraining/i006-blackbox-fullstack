@@ -7,7 +7,7 @@ const routeTitles: Record<string, string> = {
   "/dashboard": "Dashboard Operativo",
   "/choferes": "Gestión de Choferes",
   "/flota": "Gestión de Flota",
-  "/historial": "Historial",
+  "/historial": "Gestión de Eventos",
   "/blackbox-engine": "BlackBox Engine",
   "/inspeccion/nueva": "Nueva inspección de Activo",
 };
