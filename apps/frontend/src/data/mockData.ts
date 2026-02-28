@@ -55,8 +55,36 @@ export const MOCK_CHOFERES: Chofer[] = [
   { unidadAsignada: "U517", idChofer: "CH400", nombre: "Carin León", licencia: "TX-99330", estadoOperativo: "Autorizado" },
 ];
 
-/** Mock de flota (placeholder para cuando exista el endpoint). */
-export const MOCK_FLOTA: UnidadFlota[] = [];
+/**
+ * Mock de flota. Se usa cuando el backend no tiene aún el endpoint /api/flota.
+ */
+export const MOCK_FLOTA: UnidadFlota[] = [
+  { idUnidad: "U505", estado: "ACTIVO", chofer: "Emiliano Cerati", ultimaInspeccion: "Hoy, 10:30 hrs" },
+  { idUnidad: "U601", estado: "ACTIVO", chofer: "Josué Maradona", ultimaInspeccion: "Hoy, 8:30 hrs" },
+  { idUnidad: "U789", estado: "ACTIVO", chofer: "Amanda Miguel", ultimaInspeccion: "Ayer 18:00 hrs" },
+  { idUnidad: "U365", estado: "ACTIVO", chofer: "Elvis Crespo", ultimaInspeccion: "Ayer 13:00 hrs" },
+  { idUnidad: "U236", estado: "OBSERVACIÓN", chofer: "Natanael Cano", ultimaInspeccion: "Hace 2 días" },
+  { idUnidad: "U502", estado: "ACTIVO", chofer: "Luis Fonsi", ultimaInspeccion: "Hace 3 días" },
+  { idUnidad: "U603", estado: "ACTIVO", chofer: "Shakira Rodríguez", ultimaInspeccion: "Hoy, 7:00 hrs" },
+  { idUnidad: "U790", estado: "OBSERVACIÓN", chofer: "Carlos Vives", ultimaInspeccion: "Ayer 9:00 hrs" },
+  { idUnidad: "U506", estado: "ACTIVO", chofer: "Ricardo Arjona", ultimaInspeccion: "Hoy, 11:15 hrs" },
+  { idUnidad: "U602", estado: "ACTIVO", chofer: "Alejandro Sanz", ultimaInspeccion: "Ayer 16:30 hrs" },
+  { idUnidad: "U791", estado: "ACTIVO", chofer: "Laura Pausini", ultimaInspeccion: "Hace 2 días" },
+  { idUnidad: "U507", estado: "ACTIVO", chofer: "Miguel Bosé", ultimaInspeccion: "Hoy, 9:45 hrs" },
+  { idUnidad: "U604", estado: "ACTIVO", chofer: "Thalía Fernández", ultimaInspeccion: "Ayer 14:00 hrs" },
+  { idUnidad: "U792", estado: "OBSERVACIÓN", chofer: "Ricky Martin", ultimaInspeccion: "Hace 4 días" },
+  { idUnidad: "U508", estado: "ACTIVO", chofer: "Enrique Iglesias", ultimaInspeccion: "Hoy, 8:00 hrs" },
+  { idUnidad: "U605", estado: "ACTIVO", chofer: "Gloria Estefan", ultimaInspeccion: "Ayer 12:00 hrs" },
+  { idUnidad: "U793", estado: "ACTIVO", chofer: "Marc Anthony", ultimaInspeccion: "Hace 1 día" },
+  { idUnidad: "U509", estado: "ACTIVO", chofer: "Jennifer López", ultimaInspeccion: "Hoy, 10:00 hrs" },
+  { idUnidad: "U606", estado: "ACTIVO", chofer: "Chayanne", ultimaInspeccion: "Ayer 17:00 hrs" },
+  { idUnidad: "U794", estado: "ACTIVO", chofer: "Juan Luis Guerra", ultimaInspeccion: "Hace 2 días" },
+  { idUnidad: "U510", estado: "OBSERVACIÓN", chofer: "Vicente Fernández", ultimaInspeccion: "Hace 5 días" },
+  { idUnidad: "U607", estado: "ACTIVO", chofer: "Alejandra Guzmán", ultimaInspeccion: "Hoy, 6:30 hrs" },
+  { idUnidad: "U795", estado: "ACTIVO", chofer: "Franco de Vita", ultimaInspeccion: "Ayer 10:00 hrs" },
+  { idUnidad: "U511", estado: "ACTIVO", chofer: "Cristian Castro", ultimaInspeccion: "Hace 3 días" },
+  { idUnidad: "U608", estado: "ACTIVO", chofer: "Marco Antonio Solís", ultimaInspeccion: "Hoy, 12:00 hrs" },
+];
 
 /** Mock de historial (placeholder para cuando exista el endpoint). */
 export const MOCK_HISTORIAL: RegistroHistorial[] = [];

@@ -1,7 +1,7 @@
 import { User } from "../types";
-import type { Chofer } from "../types/dataPages";
 import { API_ENDPOINTS } from "../constants/routes";
-import { MOCK_CHOFERES } from "../data/mockData";
+import type { Chofer, UnidadFlota } from "../types/dataPages";
+import { MOCK_CHOFERES, MOCK_FLOTA } from "../data/mockData";
 
 export const api = {
   async register(data: any): Promise<{ user: User; message: string }> {
@@ -64,6 +64,23 @@ export const api = {
       return response.json() as Promise<Chofer[]>;
     } catch {
       return MOCK_CHOFERES;
+    }
+  },
+
+  /**
+   * Inventario de flota. Si el backend no tiene el endpoint aún, devuelve mock data.
+   */
+  async getFlota(): Promise<UnidadFlota[]> {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.FLOTA}`);
+      if (!response.ok) {
+        if (response.status === 404) return MOCK_FLOTA;
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || `Error ${response.status}`);
+      }
+      return response.json() as Promise<UnidadFlota[]>;
+    } catch {
+      return MOCK_FLOTA;
     }
   },
 };

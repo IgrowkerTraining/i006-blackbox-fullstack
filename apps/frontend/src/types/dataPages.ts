@@ -15,14 +15,15 @@ export interface ChoferesFilters {
   idChofer?: string;
 }
 
-/** Placeholder para cuando exista el endpoint de flota */
-export interface UnidadFlota {
-  id: string;
-  [key: string]: unknown;
+export interface UnidadFlota extends Record<string, unknown> {
+  idUnidad: string;
+  estado: string;
+  chofer: string;
+  ultimaInspeccion: string;
 }
 
 export interface FlotaFilters {
-  [key: string]: unknown;
+  idUnidad?: string;
 }
 
 /** Placeholder para cuando exista el endpoint de historial */

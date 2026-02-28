@@ -6,7 +6,7 @@ import Sidebar from "./sidebar/Sidebar";
 const routeTitles: Record<string, string> = {
   "/dashboard": "Dashboard Operativo",
   "/choferes": "Gestión de Choferes",
-  "/flota": "Flota",
+  "/flota": "Gestión de Flota",
   "/historial": "Historial",
   "/blackbox-engine": "BlackBox Engine",
   "/inspeccion/nueva": "Nueva inspección de Activo",
