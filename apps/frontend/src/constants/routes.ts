@@ -14,6 +14,9 @@ export const API_ENDPOINTS = {
     REGISTER: '/auth/register',
   },
   HEALTH: '/health',
+  CHOFERES: '/choferes',
+  FLOTA: '/flota',
+  HISTORIAL: '/historial',
 } as const;
 
 export const STORAGE_KEYS = {
