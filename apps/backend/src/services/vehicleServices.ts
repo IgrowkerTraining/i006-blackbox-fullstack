@@ -15,8 +15,6 @@ interface UpdateVehicleDto {
   driverId?: string;
 }
 
-// Función auxiliar para desconectar al conductor si está asignado a otro vehículo (basado en lógica)
-
 const create = async (data: CreateVehicleDto) => {
   return await prisma.vehicle.create({
     data,
@@ -41,8 +39,12 @@ const getById = async (id: string, companyId: string) => {
   });
 };
 
-// Actualizar: Si se proporciona driverId, actualiza la relación. Si driverId es null, desconecta.
 const update = async (id: string, companyId: string, data: UpdateVehicleDto) => {
+  const vehicle = await prisma.vehicle.findFirst({ where: { id, companyId } });
+  if (!vehicle) {
+    throw new Error("Vehicle not found or access denied");
+  }
+
   return await prisma.vehicle.update({
     where: { id },
     data,
@@ -50,11 +52,11 @@ const update = async (id: string, companyId: string, data: UpdateVehicleDto) => 
 };
 
 const deleteVehicle = async (id: string, companyId: string) => {
-  // Verificar propiedad
   const vehicle = await prisma.vehicle.findFirst({ where: { id, companyId } });
   if (!vehicle) {
     throw new Error("Vehicle not found or access denied");
   }
+
   return await prisma.vehicle.delete({
     where: { id },
   });
