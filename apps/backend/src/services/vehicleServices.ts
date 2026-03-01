@@ -39,7 +39,11 @@ const getById = async (id: string, companyId: string) => {
   });
 };
 
-const update = async (id: string, companyId: string, data: UpdateVehicleDto) => {
+const update = async (
+  id: string,
+  companyId: string,
+  data: UpdateVehicleDto,
+) => {
   const vehicle = await prisma.vehicle.findFirst({ where: { id, companyId } });
   if (!vehicle) {
     throw new Error("Vehicle not found or access denied");

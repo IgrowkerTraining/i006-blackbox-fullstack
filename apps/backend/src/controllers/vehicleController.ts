@@ -37,7 +37,9 @@ export const getVehicleById = async (req: AuthRequest, res: Response) => {
 
     const vehicle = await VehicleService.getById(String(id), companyId);
     if (!vehicle) {
-      return res.status(404).json({ success: false, error: "Vehicle not found" });
+      return res
+        .status(404)
+        .json({ success: false, error: "Vehicle not found" });
     }
     res.json({ success: true, data: vehicle });
   } catch (error: any) {
@@ -51,7 +53,11 @@ export const updateVehicle = async (req: AuthRequest, res: Response) => {
     const companyId = req.user?.companyId;
     if (!companyId) return res.status(401).json({ error: "Not authorized" });
 
-    const updated = await VehicleService.update(String(id), companyId, req.body);
+    const updated = await VehicleService.update(
+      String(id),
+      companyId,
+      req.body,
+    );
     res.json({ success: true, data: updated });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

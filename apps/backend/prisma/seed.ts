@@ -4,10 +4,10 @@ const prisma = new PrismaClient();
 
 async function main() {
   const defaultCompany = await prisma.company.upsert({
-    where: { id: '00000000-0000-0000-0000-000000000001' }, // ID predecible para pruebas
+    where: { id: "00000000-0000-0000-0000-000000000001" }, // ID predecible para pruebas
     update: {},
     create: {
-      id: '00000000-0000-0000-0000-000000000001',
+      id: "00000000-0000-0000-0000-000000000001",
       name: "Default Test Company",
       usdotNumber: "1234567",
     },
