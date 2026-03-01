@@ -9,6 +9,11 @@ generator client {
   output   = "../generated/prisma"
 }
 
+generator zod {
+  provider = "zod-prisma-types"
+  output   = "./generated/zod"
+}
+
 datasource db {
   provider = "postgresql"
 }
@@ -16,8 +21,8 @@ datasource db {
 model Company {
   id           String   @id @default(uuid())
   name         String
-  usdotNumber  String
-  state        String //faltaba este campo
+  usdotNumber  String?
+  state        String? //faltaba este campo
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
