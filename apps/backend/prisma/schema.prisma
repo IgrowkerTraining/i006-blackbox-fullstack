@@ -38,6 +38,9 @@ model Vehicle {
 
   // relaciones
   company Company @relation(fields: [companyId], references: [id]) // relacion 1:M por companyId
+  
+  driverId String? @unique
+  driver   Driver? @relation(fields: [driverId], references: [id]) // relacion 1:1 por driverId
 }
 
 model Driver {
@@ -51,6 +54,7 @@ model Driver {
 
   // relaciones
   company Company @relation(fields: [companyId], references: [id])
+  vehicle Vehicle?
 }
 
 model User {
