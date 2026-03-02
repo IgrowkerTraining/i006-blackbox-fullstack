@@ -23,5 +23,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
 # Documentation
-apps/backend/gemini.md
+apps/backend/AGENT.md
+
+# Test
+apps/backend/prisma/seed.ts

@@ -1,0 +1,63 @@
+name: CI and Deploy to Render
+
+on:
+  push:
+    branches:
+      - devops-workflow
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  ci-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: apps/backend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: |
+          cd apps/backend
+          pnpm install --frozen-lockfile
+
+      - name: Audit Dependencies (Security)
+        run: |
+          cd apps/backend
+          pnpm audit --audit-level=high
+
+      - name: Snyk Security Scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --policy-path=apps/backend
+          directory: apps/backend
+
+      - name: Lint Backend
+        run: |
+          cd apps/backend
+          pnpm lint
+
+  deploy:
+    needs: ci-backend
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/devops-workflow' || github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy Hook
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl -sS "$DEPLOY_HOOK"
