@@ -130,7 +130,6 @@ const update = async (id: string, data: UpdateDriverDto, companyId: string) => {
 
 // Eliminar conductor (SOFT DELETE)
 const remove = async (id: string, companyId: string) => {
-  // 1. Verificar existencia y pertenencia
   const existingDriver = await prisma.driver.findFirst({
     where: { id, companyId },
   });
@@ -139,8 +138,7 @@ const remove = async (id: string, companyId: string) => {
     throw new Error("Driver not found");
   }
 
-  // 2. Actualizar estado a INACTIVO (Soft Delete)
-  // Esto mantiene el historial de inspecciones intacto
+  // Solo lo marca inactivo
   return await prisma.driver.update({
     where: { id },
     data: {
