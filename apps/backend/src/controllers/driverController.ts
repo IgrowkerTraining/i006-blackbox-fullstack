@@ -17,6 +17,7 @@ const getAll = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// SOLO CONDUCTORES ACTIVOS
 const getAllActive = async (req: AuthRequest, res: Response) => {
   try {
     const companyId = req.user?.companyId;

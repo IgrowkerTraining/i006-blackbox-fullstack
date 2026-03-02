@@ -2,6 +2,7 @@ import { Router } from "express";
 import { DriverController } from "../controllers/driverController";
 import { authMiddleware } from "../middleware/auth";
 const router = Router();
+
 router.use(authMiddleware);
 
 router.get("/", DriverController.getAll);
