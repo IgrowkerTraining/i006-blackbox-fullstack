@@ -3,7 +3,7 @@ name: CI and Deploy to Render
 on:
   push:
     branches:
-      - devops-workflow
+      - feat/devops-workflow
       - develop
   pull_request:
     branches:
