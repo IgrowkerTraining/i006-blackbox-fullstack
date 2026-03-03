@@ -50,7 +50,8 @@ jobs:
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          doppler run --project example-project --config prd_rwby -- snyk test --severity-threshold=high --policy-path=apps/backend --dir=apps/backend
+          cd apps/backend
+          doppler run --project example-project --config prd_rwby -- snyk test --severity-threshold=high
 
       - name: Lint Backend
         run: |
