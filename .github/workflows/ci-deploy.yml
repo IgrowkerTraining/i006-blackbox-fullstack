@@ -60,7 +60,7 @@ jobs:
 
   deploy:
     needs: ci-backend
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/devops-workflow' || github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/feat/devops-workflow' || github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     steps:
       - name: Install Doppler CLI
