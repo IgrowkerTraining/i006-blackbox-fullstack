@@ -20,7 +20,7 @@ const createInspection = (
         create: {
           type_inspection: data.typeInspection,
           documentation_verified: data.documentationVerified,
-          lights_brakes_ok: data.lightsBrakesOk,
+          lights_ok: data.lightsOk,
           safety_elements_ok: data.safetyElementsOk,
         },
       },

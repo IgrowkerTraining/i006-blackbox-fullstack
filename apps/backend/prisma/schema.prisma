@@ -153,7 +153,9 @@ model InspectionDetail {
   type_inspection        TypeInspection?
   documentation_verified Boolean?
   vehicle_condition      InspectionStatus?
-  lights_brakes_ok       Boolean?
+  lights_ok              Boolean?
+  tires_ok               Boolean?
+  brakes_ok              Boolean?
   safety_elements_ok     Boolean?
 
   event OperationalEvent @relation(fields: [event_id], references: [id])

@@ -8,7 +8,7 @@ export type CreateInspectionDto = {
   driverId: string;
   typeInspection: TypeInspection;
   documentationVerified: boolean;
-  lightsBrakesOk: boolean;
+  lightsOk: boolean;
   safetyElementsOk: boolean;
   eSignature: string;
   isConfirmed: boolean;
