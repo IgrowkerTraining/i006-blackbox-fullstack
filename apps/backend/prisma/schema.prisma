@@ -133,6 +133,30 @@ model OperationalEvent {
   vehicle   Vehicle? @relation(fields: [vehicle_id], references: [id])
   driver    Driver?  @relation(fields: [driver_id], references: [id])
   createdBy User     @relation(fields: [created_by_user_id], references: [id])
+
+  inspection_details InspectionDetail[]
+}
+
+enum TypeInspection {
+  ARRIVAL
+  DEPARTURE
+}
+
+enum InspectionStatus {
+  ACCEPTABLE
+  NOT_ACCEPTABLE
+}
+
+model InspectionDetail {
+  id                     String            @id @default(uuid())
+  event_id               String
+  type_inspection        TypeInspection?
+  documentation_verified Boolean?
+  vehicle_condition      InspectionStatus?
+  lights_brakes_ok       Boolean?
+  safety_elements_ok     Boolean?
+
+  event OperationalEvent @relation(fields: [event_id], references: [id])
 }
 
 enum UserRole {
