@@ -11,7 +11,7 @@ export const MenuSection: React.FC<MenuSectionProps> = ({
 }) => {
   return (
     <div
-      className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 ${className}`}
+      className={`px-4 pt-6 pb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 ${className}`}
       role="presentation"
     >
       {label}

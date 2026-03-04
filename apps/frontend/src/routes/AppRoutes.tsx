@@ -1,9 +1,10 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { ROUTES } from "../constants/routes";
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 
-import Layout, { AppLayout } from "../components/layout/Layout";
+import AppLayout from "../components/layout/AppLayout";
 import AuthLayout from "../components/layout/AuthLayout";
 
 import Login from "../pages/Login";
@@ -11,6 +12,7 @@ import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import ChoferesPage from "../pages/ChoferesPage";
 import PlaceholderPage from "../pages/PlaceholderPage";
+import NuevaInspeccionPage from "../pages/NuevaInspeccionPage";
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -39,11 +41,21 @@ export const AppRoutes: React.FC = () => {
 
       {/* Protected/App routes */}
       <Route
-        path="/dashboard"
+        path={ROUTES.DASHBOARD}
         element={
           <ProtectedRoute>
             <AppLayout>
               <Dashboard />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.INSPECCION_NUEVA}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <NuevaInspeccionPage />
             </AppLayout>
           </ProtectedRoute>
         }
