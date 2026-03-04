@@ -23,7 +23,7 @@ const Login: React.FC = () => {
 
     try {
       const response = await api.login({ email, password });
-      login(response.user);
+      
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred");
@@ -33,7 +33,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center gap-12 p-8 md:p-6 md:gap-8 lg:gap-8 lg:gap-12 font-['DM_Sans',sans-serif]">
+    <div className="min-h-screen flex items-center justify-center gap-12 p-8 md:p-6 md:gap-8 lg:gap-8 font-['DM_Sans',sans-serif]">
      <div className="hidden md:flex lg:flex flex-shrink-0 md:max-w-[280px] lg:max-w-none">
   <img
     src={isotipoBlackbox}
