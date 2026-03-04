@@ -28,7 +28,7 @@ export default function Modal({ isOpen, onClose, title, children}){
 
 
 
-const overlayStyles = {
+const overlayStyles: React.CSSProperties = {
   position: "fixed",
   top: 0,
   left: 0,
@@ -44,7 +44,7 @@ const overlayStyles = {
   backdropFilter: "blur(4px)",
 }
 
-const modalStyles = {
+const modalStyles : React.CSSProperties = {
   backgroundColor: "white",
   padding: "24px",
   borderRadius: "20px",
@@ -55,7 +55,7 @@ const modalStyles = {
   position: "relative",
 }
 
-const headerStyles = {
+const headerStyles : React.CSSProperties= {
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
@@ -64,7 +64,7 @@ const headerStyles = {
   position: "relative",
 }
 
-const closeButtonStyles = {
+const closeButtonStyles : React.CSSProperties = {
   background: "none",
   color: "#1B1B1B",
   border: "1px solid #1B1B1B",
@@ -77,7 +77,7 @@ const closeButtonStyles = {
   right: "0",
 }
 
-const contentStyles = {
+const contentStyles : React.CSSProperties = {
   marginTop: "10px",
   marginBottom: "10px",
   marginLeft: "10px",
@@ -90,7 +90,7 @@ const contentStyles = {
   width: "100%",
 }
 
-const titleStyles = {
+const titleStyles: React.CSSProperties = {
   fontSize: "20px",
   fontWeight: "bold",
   fontFamily: "Lato, sans-serif",
