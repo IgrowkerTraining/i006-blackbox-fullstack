@@ -1,31 +1,26 @@
-version: "3.8"
-
 services:
   backend:
     build:
       context: ./apps/backend
       target: development
-    command: sh -c "pnpm prisma migrate deploy && pnpm run dev"
+    command: sh -c "pnpm prisma generate && pnpm prisma migrate deploy && pnpm prisma db seed && pnpm run dev"
     ports:
       - "3000:3000"
+    env_file:
+      - ./apps/backend/.env
     environment:
       - NODE_ENV=development
       - PORT=3000
       - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     volumes:
       - ./apps/backend:/app
       - /app/node_modules
     restart: unless-stopped
     healthcheck:
-      test:
-        [
-          "CMD",
-          "node",
-          "-e",
-          "require('http').get('http://localhost:3000/api', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })",
-        ]
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:3000/api', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -58,11 +53,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
-
   # Production services (uncomment for production)
   # backend-prod:
   #   build:

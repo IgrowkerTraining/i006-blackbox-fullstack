@@ -54,5 +54,8 @@
     "api"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  }
 }
