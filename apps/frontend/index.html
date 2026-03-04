@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,20 +12,34 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Lato&display=swap" rel="stylesheet" />
- <script src="https://cdn.tailwindcss.com"></script>
 
-  <link rel="stylesheet" href="/index.css" />
+  <link rel="stylesheet" href="/src/output.css" />
 
   <style>
     :root {
-      --page: #F8F8F8;
+      --page: #0B1001;
       --bg: #0B1001;
       --surface: #0F1603;
       --surface-2: #141E06;
       --text: #F8F8F8;
       --muted: rgba(248, 248, 248, 0.70);
       --border: rgba(248, 248, 248, 0.12);
-      --accent: #FFC943;
+      --accent: #F2B705;
+    }
+
+    body {
+      background-color: #F8F8F8 !important;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      background-color: #F8F8F8 !important;
+    }
+
+    #root {
+      background-color: #F8F8F8 !important;
+      min-height: 100vh;
     }
 
     * {
@@ -39,4 +54,5 @@
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
