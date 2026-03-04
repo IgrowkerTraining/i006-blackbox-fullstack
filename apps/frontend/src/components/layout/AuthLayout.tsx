@@ -1,19 +1,17 @@
-import React from "react"
-import Layout from "./Layout"
+import React from "react";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
 }
 
-
-export default function AuthLayout ({ children }: AuthLayoutProps) {
+/**
+ * Layout independiente para páginas de autenticación (login, register).
+ * No usa el layout de la app; las pantallas de auth quedan sin header ni sidebar.
+ */
+export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <Layout
-    header={null}
-    sidebar = {null}
-    className= "flex items-center justify-center "
-    >
-      <div className="w-full max-w-md p-4">{children}</div>
-    </Layout>
-  )
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950 text-slate-200">
+      <div className="w-full max-w-md p-4 mx-auto">{children}</div>
+    </div>
+  );
 }

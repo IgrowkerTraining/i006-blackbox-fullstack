@@ -127,6 +127,43 @@ const findByEmail = async (email: string) => {
   });
 };
 
+const setResetPasswordToken = async (
+  email: string,
+  token: string,
+  expires: Date,
+) => {
+  const user = await prisma.user.update({
+    where: { email },
+    data: {
+      resetPasswordToken: token,
+      resetPasswordExpires: expires,
+    },
+  });
+  return user;
+};
+
+const findByResetToken = async (token: string) => {
+  return await prisma.user.findFirst({
+    where: {
+      resetPasswordToken: token,
+      resetPasswordExpires: {
+        gt: new Date(),
+      },
+    },
+  });
+};
+
+const updatePassword = async (userId: string, newPasswordHash: string) => {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: {
+      passwordHash: newPasswordHash,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    },
+  });
+};
+
 export const UserService = {
   getAll,
   getByUserId,
@@ -134,4 +171,7 @@ export const UserService = {
   update,
   remove,
   findByEmail,
+  setResetPasswordToken,
+  findByResetToken,
+  updatePassword,
 };
