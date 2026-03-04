@@ -1,58 +1,76 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../services/api";
-import { useAuth } from "../hooks/useAuth";
-import isotipoBlackbox from "../assets/Isotipos/isotipo_blackbox.png";
-import Maskgroup from "../assets/Logo/Maskgroup.png"
+import { useAuth } from "@/src/hooks/useAuth";
+import isotipoBlackbox from "@/src/assets/Isotipos/isotipo_blackbox.png";
+import Maskgroup from "@/src/assets/Logo/Maskgroup.png";
 import { Eye, EyeOff } from "lucide-react";
+import ForgotPasswordModal from "@/src/components/ForgotPasswordModal";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loading, error, testUsers } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
 
     try {
-      const response = await api.login({ email, password });
-      
+      await login(email, password);
       navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
     }
   };
 
+  const handleQuickLogin = (testEmail: string, testPassword: string) => {
+    setEmail(testEmail);
+    setPassword(testPassword);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center gap-12 p-8 md:p-6 md:gap-8 lg:gap-8 font-['DM_Sans',sans-serif]">
-     <div className="hidden md:flex lg:flex flex-shrink-0 md:max-w-[280px] lg:max-w-none">
-  <img
-    src={isotipoBlackbox}
-    alt="BlackBox Isotipo"
-    className="w-full h-auto object-contain md:w-[280px] md:h-[280px] lg:w-[596px] lg:h-[596px]"
-  />
-</div>
+    <div className="min-h-screen overflow-hidden flex items-center justify-center gap-12 p-8 md:p-6 md:gap-8 lg:gap-8 font-['DM_Sans',sans-serif]">
+      <div className="hidden md:flex lg:flex flex-shrink-0 md:max-w-[280px] lg:max-w-none">
+        <img
+          src={isotipoBlackbox}
+          alt="BlackBox Isotipo"
+          className="w-full h-auto object-contain md:w-[280px] md:h-[280px] lg:w-[596px] lg:h-[596px]"
+        />
+      </div>
 
+      <div className="w-full max-w-md bg-[#151a10] rounded-2xl p-12 md:p-8 md:max-w-[90%] lg:p-12 lg:max-w-md shadow-2xl border border-[#2a2f22]">
+        <img
+          src={Maskgroup}
+          alt="BlackBox Logo"
+          className="w-full h-auto p-4 mb-10 md:p-3 md:mb-6 lg:p-4 lg:mb-10"
+        />
+        <h2 className="text-xl font-semibold font-['Roboto',sans-serif] text-[#f0ede6] mt-8 mb-6 md:mt-6 md:mb-5 lg:mt-8 lg:mb-6">
+          Ingresa a tu cuenta
+        </h2>
 
-<div className="w-full max-w-md bg-[#151a10] rounded-2xl p-12 md:p-8 md:max-w-[90%] lg:p-12 lg:max-w-md shadow-2xl border border-[#2a2f22]">
-<img src={Maskgroup} alt="BlackBox Logo" className="w-full h-auto p-4 mb-10 md:p-3 md:mb-6 lg:p-4 lg:mb-10" />
-<h2 className="text-xl font-semibold font-['Roboto',sans-serif] text-[#f0ede6] mt-8 mb-6 md:mt-6 md:mb-5 lg:mt-8 lg:mb-6">
-  Ingresa a tu cuenta
-</h2>
+        <div className="bg-blue-900/30 border border-blue-700/50 rounded-lg p-3 mb-4">
+          <p className="text-xs text-blue-300 font-medium mb-2">Pruebas rápidas:</p>
+          <div className="flex flex-wrap gap-2">
+            {testUsers.map((user, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => handleQuickLogin(user.email, user.password)}
+                disabled={loading}
+                className="text-xs bg-blue-800 hover:bg-blue-700 text-blue-100 px-2 py-1 rounded transition-colors disabled:opacity-50"
+              >
+                {user.email}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
-
           <div>
-            <label htmlFor="email" className="block text-xs font-medium text-[#a0a890] mb-2 tracking-wide">
+            <label
+              htmlFor="email"
+              className="block text-xs font-medium text-[#a0a890] mb-2 tracking-wide">
               Usuario
             </label>
             <input
@@ -67,9 +85,10 @@ const Login: React.FC = () => {
             />
           </div>
 
-
           <div>
-            <label htmlFor="password" className="block text-xs font-medium text-[#a0a890] mb-2 tracking-wide">
+            <label
+              htmlFor="password"
+              className="block text-xs font-medium text-[#a0a890] mb-2 tracking-wide">
               Contraseña
             </label>
             <div className="relative">
@@ -87,12 +106,13 @@ const Login: React.FC = () => {
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer p-0 flex items-center"
-                aria-label={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
-              >
+                aria-label={
+                  showPassword ? "Ocultar contraseña" : "Ver contraseña"
+                }>
                 {showPassword ? (
-                  <EyeOff size={18} color="#888" />
-                ) : (
                   <Eye size={18} color="#888" />
+                ) : (
+                  <EyeOff size={18} color="#888" />
                 )}
               </button>
             </div>
@@ -117,20 +137,17 @@ const Login: React.FC = () => {
               />
               Recordarme
             </label>
-            <a href="/forgot-password" className="text-xs text-[#a0a890] hover:text-[#f0ede6] no-underline transition-colors">
-              ¿Olvidaste la contraseña?
-            </a>
+            <ForgotPasswordModal />
           </div>
 
           <button
             type="submit"
-            disabled={isLoading}
-            className={`w-full py-2.5 bg-[var(--accent)] text-[var(--bg)] font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-['DM_Sans',sans-serif] ${isLoading
-              ? "bg-[var(--accent)] cursor-not-allowed"
-              : "hover:bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/30 hover:shadow-[var(--accent)]/50"
-              }`}
-          >
-            {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
+            disabled={loading}
+            className={`w-full py-2.5 bg-[var(--accent)] text-[var(--bg)] font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-['DM_Sans',sans-serif] ${loading
+                ? "bg-[var(--accent)] cursor-not-allowed"
+                : "hover:bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/30 hover:shadow-[var(--accent)]/50"
+              }`}>
+            {loading ? "Iniciando sesión..." : "Iniciar sesión"}
           </button>
         </form>
       </div>
