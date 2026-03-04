@@ -71,12 +71,7 @@ export default function PasswordRecovery() {
             <p className="text-xs md:text-sm text-slate-500">
               Define tu nueva contraseña para mantener segura tu cuenta.
             </p>
-            {/* Debug info for testing */}
-            <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-              <strong>Testing Info:</strong><br />
-              Test emails: {mockData.testEmails.join(', ')}<br />
-              Active flow: {hasActiveResetFlow() ? 'Yes' : 'No'}
-            </div>
+            
           </div>
 
           {/* Formulario */}
