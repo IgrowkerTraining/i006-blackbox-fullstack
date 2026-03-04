@@ -1,7 +1,6 @@
 import React from "react";
-import { HashRouter } from "react-router-dom";
+import { BrowserRouter, HashRouter } from "react-router-dom";
 import { AuthProvider } from "./src/context/AuthContext";
-
 import { LoadingSpinner } from "./src/components/common/LoadingSpinner";
 import { AppRoutes } from "./src/routes/AppRoutes";
 import { useAuth } from "./src/hooks/useAuth";
@@ -16,17 +15,17 @@ const AppContent: React.FC = () => {
   return (
 
       <AppRoutes />
-    
+
   );
 };
 
 export const App: React.FC = () => {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <AuthProvider>
         <AppContent />
       </AuthProvider>
-    </HashRouter>
+    </BrowserRouter>
   );
 };
 
