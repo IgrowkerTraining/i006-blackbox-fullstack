@@ -28,9 +28,10 @@ export const CompanyScalarFieldEnumSchema = z.enum([
 export const VehicleScalarFieldEnumSchema = z.enum([
   "id",
   "companyId",
-  "unitNumber",
+  "driverId",
+  "unit_number",
   "plate",
-  "isActive",
+  "is_active",
   "createdAt",
   "updatedAt",
 ]);
@@ -39,10 +40,10 @@ export const DriverScalarFieldEnumSchema = z.enum([
   "id",
   "companyId",
   "name",
-  "licenseNumber",
-  "isActive",
-  "createdAt",
-  "updatedAt",
+  "license_number",
+  "is_active",
+  "created_at",
+  "updated_at",
 ]);
 
 export const UserScalarFieldEnumSchema = z.enum([
@@ -53,25 +54,39 @@ export const UserScalarFieldEnumSchema = z.enum([
   "passwordHash",
   "role",
   "isActive",
+  "resetPasswordToken",
+  "resetPasswordExpires",
   "createdAt",
 ]);
 
 export const OperationalEventScalarFieldEnumSchema = z.enum([
   "id",
-  "companyId",
-  "vehicleId",
-  "driverId",
-  "eventType",
-  "eventDatetime",
+  "company_id",
+  "vehicle_id",
+  "driver_id",
+  "event_type",
+  "event_datetime",
   "location",
   "context",
-  "generalResult",
-  "eSignature",
-  "finalObservations",
-  "isConfirmed",
-  "createdByUserId",
-  "createdAt",
-  "updatedAt",
+  "general_result",
+  "e_signature",
+  "final_observations",
+  "is_confirmed",
+  "created_by_user_id",
+  "created_at",
+  "updated_at",
+]);
+
+export const InspectionDetailScalarFieldEnumSchema = z.enum([
+  "id",
+  "event_id",
+  "type_inspection",
+  "documentation_verified",
+  "vehicle_condition",
+  "lights_ok",
+  "tires_ok",
+  "brakes_ok",
+  "safety_elements_ok",
 ]);
 
 export const SortOrderSchema = z.enum(["asc", "desc"]);
@@ -107,6 +122,14 @@ export const GeneralResultSchema = z.enum(["WITH_OBS", "WITHOUT_OBS"]);
 
 export type GeneralResultType = `${z.infer<typeof GeneralResultSchema>}`;
 
+export const TypeInspectionSchema = z.enum(["ARRIVAL", "DEPARTURE"]);
+
+export type TypeInspectionType = `${z.infer<typeof TypeInspectionSchema>}`;
+
+export const InspectionStatusSchema = z.enum(["ACCEPTABLE", "NOT_ACCEPTABLE"]);
+
+export type InspectionStatusType = `${z.infer<typeof InspectionStatusSchema>}`;
+
 export const UserRoleSchema = z.enum(["ADMIN", "OPERATOR", "COMPLIANCE"]);
 
 export type UserRoleType = `${z.infer<typeof UserRoleSchema>}`;
@@ -137,9 +160,10 @@ export type Company = z.infer<typeof CompanySchema>;
 export const VehicleSchema = z.object({
   id: z.uuid(),
   companyId: z.string(),
-  unitNumber: z.string(),
+  driverId: z.string().nullable(),
+  unit_number: z.string().nullable(),
   plate: z.string().nullable(),
-  isActive: z.boolean(),
+  is_active: z.boolean(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -154,10 +178,10 @@ export const DriverSchema = z.object({
   id: z.uuid(),
   companyId: z.string(),
   name: z.string(),
-  licenseNumber: z.string(),
-  isActive: z.boolean(),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
+  license_number: z.string(),
+  is_active: z.boolean(),
+  created_at: z.coerce.date(),
+  updated_at: z.coerce.date(),
 });
 
 export type Driver = z.infer<typeof DriverSchema>;
@@ -174,6 +198,8 @@ export const UserSchema = z.object({
   email: z.string(),
   passwordHash: z.string(),
   isActive: z.boolean(),
+  resetPasswordToken: z.string().nullable(),
+  resetPasswordExpires: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),
 });
 
@@ -184,24 +210,42 @@ export type User = z.infer<typeof UserSchema>;
 /////////////////////////////////////////
 
 export const OperationalEventSchema = z.object({
-  eventType: EventTypeSchema,
+  event_type: EventTypeSchema,
   location: LocationTypeSchema.nullable(),
   context: ContextTypeSchema.nullable(),
-  generalResult: GeneralResultSchema.nullable(),
+  general_result: GeneralResultSchema.nullable(),
   id: z.uuid(),
-  companyId: z.string(),
-  vehicleId: z.string().nullable(),
-  driverId: z.string().nullable(),
-  eventDatetime: z.coerce.date(),
-  eSignature: z.string().nullable(),
-  finalObservations: z.string().nullable(),
-  isConfirmed: z.boolean().nullable(),
-  createdByUserId: z.string(),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
+  company_id: z.string(),
+  vehicle_id: z.string().nullable(),
+  driver_id: z.string().nullable(),
+  event_datetime: z.coerce.date(),
+  e_signature: z.string().nullable(),
+  final_observations: z.string().nullable(),
+  is_confirmed: z.boolean().nullable(),
+  created_by_user_id: z.string(),
+  created_at: z.coerce.date(),
+  updated_at: z.coerce.date(),
 });
 
 export type OperationalEvent = z.infer<typeof OperationalEventSchema>;
+
+/////////////////////////////////////////
+// INSPECTION DETAIL SCHEMA
+/////////////////////////////////////////
+
+export const InspectionDetailSchema = z.object({
+  type_inspection: TypeInspectionSchema.nullable(),
+  vehicle_condition: InspectionStatusSchema.nullable(),
+  id: z.uuid(),
+  event_id: z.string(),
+  documentation_verified: z.boolean().nullable(),
+  lights_ok: z.boolean().nullable(),
+  tires_ok: z.boolean().nullable(),
+  brakes_ok: z.boolean().nullable(),
+  safety_elements_ok: z.boolean().nullable(),
+});
+
+export type InspectionDetail = z.infer<typeof InspectionDetailSchema>;
 
 /////////////////////////////////////////
 // SELECT & INCLUDE
@@ -221,7 +265,7 @@ export const CompanyIncludeSchema: z.ZodType<Prisma.CompanyInclude> = z
     users: z
       .union([z.boolean(), z.lazy(() => UserFindManyArgsSchema)])
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .union([z.boolean(), z.lazy(() => OperationalEventFindManyArgsSchema)])
       .optional(),
     _count: z
@@ -250,7 +294,7 @@ export const CompanyCountOutputTypeSelectSchema: z.ZodType<Prisma.CompanyCountOu
       vehicles: z.boolean().optional(),
       drivers: z.boolean().optional(),
       users: z.boolean().optional(),
-      operationalEvents: z.boolean().optional(),
+      operational_events: z.boolean().optional(),
     })
     .strict();
 
@@ -271,7 +315,7 @@ export const CompanySelectSchema: z.ZodType<Prisma.CompanySelect> = z
     users: z
       .union([z.boolean(), z.lazy(() => UserFindManyArgsSchema)])
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .union([z.boolean(), z.lazy(() => OperationalEventFindManyArgsSchema)])
       .optional(),
     _count: z
@@ -286,7 +330,8 @@ export const CompanySelectSchema: z.ZodType<Prisma.CompanySelect> = z
 export const VehicleIncludeSchema: z.ZodType<Prisma.VehicleInclude> = z
   .object({
     company: z.union([z.boolean(), z.lazy(() => CompanyArgsSchema)]).optional(),
-    operationalEvents: z
+    driver: z.union([z.boolean(), z.lazy(() => DriverArgsSchema)]).optional(),
+    operational_events: z
       .union([z.boolean(), z.lazy(() => OperationalEventFindManyArgsSchema)])
       .optional(),
     _count: z
@@ -312,7 +357,7 @@ export const VehicleCountOutputTypeArgsSchema: z.ZodType<Prisma.VehicleCountOutp
 export const VehicleCountOutputTypeSelectSchema: z.ZodType<Prisma.VehicleCountOutputTypeSelect> =
   z
     .object({
-      operationalEvents: z.boolean().optional(),
+      operational_events: z.boolean().optional(),
     })
     .strict();
 
@@ -320,13 +365,15 @@ export const VehicleSelectSchema: z.ZodType<Prisma.VehicleSelect> = z
   .object({
     id: z.boolean().optional(),
     companyId: z.boolean().optional(),
-    unitNumber: z.boolean().optional(),
+    driverId: z.boolean().optional(),
+    unit_number: z.boolean().optional(),
     plate: z.boolean().optional(),
-    isActive: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     createdAt: z.boolean().optional(),
     updatedAt: z.boolean().optional(),
     company: z.union([z.boolean(), z.lazy(() => CompanyArgsSchema)]).optional(),
-    operationalEvents: z
+    driver: z.union([z.boolean(), z.lazy(() => DriverArgsSchema)]).optional(),
+    operational_events: z
       .union([z.boolean(), z.lazy(() => OperationalEventFindManyArgsSchema)])
       .optional(),
     _count: z
@@ -341,7 +388,8 @@ export const VehicleSelectSchema: z.ZodType<Prisma.VehicleSelect> = z
 export const DriverIncludeSchema: z.ZodType<Prisma.DriverInclude> = z
   .object({
     company: z.union([z.boolean(), z.lazy(() => CompanyArgsSchema)]).optional(),
-    operationalEvents: z
+    vehicle: z.union([z.boolean(), z.lazy(() => VehicleArgsSchema)]).optional(),
+    operational_events: z
       .union([z.boolean(), z.lazy(() => OperationalEventFindManyArgsSchema)])
       .optional(),
     _count: z
@@ -367,7 +415,7 @@ export const DriverCountOutputTypeArgsSchema: z.ZodType<Prisma.DriverCountOutput
 export const DriverCountOutputTypeSelectSchema: z.ZodType<Prisma.DriverCountOutputTypeSelect> =
   z
     .object({
-      operationalEvents: z.boolean().optional(),
+      operational_events: z.boolean().optional(),
     })
     .strict();
 
@@ -376,12 +424,13 @@ export const DriverSelectSchema: z.ZodType<Prisma.DriverSelect> = z
     id: z.boolean().optional(),
     companyId: z.boolean().optional(),
     name: z.boolean().optional(),
-    licenseNumber: z.boolean().optional(),
-    isActive: z.boolean().optional(),
-    createdAt: z.boolean().optional(),
-    updatedAt: z.boolean().optional(),
+    license_number: z.boolean().optional(),
+    is_active: z.boolean().optional(),
+    created_at: z.boolean().optional(),
+    updated_at: z.boolean().optional(),
     company: z.union([z.boolean(), z.lazy(() => CompanyArgsSchema)]).optional(),
-    operationalEvents: z
+    vehicle: z.union([z.boolean(), z.lazy(() => VehicleArgsSchema)]).optional(),
+    operational_events: z
       .union([z.boolean(), z.lazy(() => OperationalEventFindManyArgsSchema)])
       .optional(),
     _count: z
@@ -396,7 +445,7 @@ export const DriverSelectSchema: z.ZodType<Prisma.DriverSelect> = z
 export const UserIncludeSchema: z.ZodType<Prisma.UserInclude> = z
   .object({
     company: z.union([z.boolean(), z.lazy(() => CompanyArgsSchema)]).optional(),
-    operationalEvents: z
+    operational_events: z
       .union([z.boolean(), z.lazy(() => OperationalEventFindManyArgsSchema)])
       .optional(),
     _count: z
@@ -422,7 +471,7 @@ export const UserCountOutputTypeArgsSchema: z.ZodType<Prisma.UserCountOutputType
 export const UserCountOutputTypeSelectSchema: z.ZodType<Prisma.UserCountOutputTypeSelect> =
   z
     .object({
-      operationalEvents: z.boolean().optional(),
+      operational_events: z.boolean().optional(),
     })
     .strict();
 
@@ -435,9 +484,11 @@ export const UserSelectSchema: z.ZodType<Prisma.UserSelect> = z
     passwordHash: z.boolean().optional(),
     role: z.boolean().optional(),
     isActive: z.boolean().optional(),
+    resetPasswordToken: z.boolean().optional(),
+    resetPasswordExpires: z.boolean().optional(),
     createdAt: z.boolean().optional(),
     company: z.union([z.boolean(), z.lazy(() => CompanyArgsSchema)]).optional(),
-    operationalEvents: z
+    operational_events: z
       .union([z.boolean(), z.lazy(() => OperationalEventFindManyArgsSchema)])
       .optional(),
     _count: z
@@ -462,6 +513,15 @@ export const OperationalEventIncludeSchema: z.ZodType<Prisma.OperationalEventInc
       createdBy: z
         .union([z.boolean(), z.lazy(() => UserArgsSchema)])
         .optional(),
+      inspection_details: z
+        .union([z.boolean(), z.lazy(() => InspectionDetailFindManyArgsSchema)])
+        .optional(),
+      _count: z
+        .union([
+          z.boolean(),
+          z.lazy(() => OperationalEventCountOutputTypeArgsSchema),
+        ])
+        .optional(),
     })
     .strict();
 
@@ -473,24 +533,40 @@ export const OperationalEventArgsSchema: z.ZodType<Prisma.OperationalEventDefaul
     })
     .strict();
 
+export const OperationalEventCountOutputTypeArgsSchema: z.ZodType<Prisma.OperationalEventCountOutputTypeDefaultArgs> =
+  z
+    .object({
+      select: z
+        .lazy(() => OperationalEventCountOutputTypeSelectSchema)
+        .nullish(),
+    })
+    .strict();
+
+export const OperationalEventCountOutputTypeSelectSchema: z.ZodType<Prisma.OperationalEventCountOutputTypeSelect> =
+  z
+    .object({
+      inspection_details: z.boolean().optional(),
+    })
+    .strict();
+
 export const OperationalEventSelectSchema: z.ZodType<Prisma.OperationalEventSelect> =
   z
     .object({
       id: z.boolean().optional(),
-      companyId: z.boolean().optional(),
-      vehicleId: z.boolean().optional(),
-      driverId: z.boolean().optional(),
-      eventType: z.boolean().optional(),
-      eventDatetime: z.boolean().optional(),
+      company_id: z.boolean().optional(),
+      vehicle_id: z.boolean().optional(),
+      driver_id: z.boolean().optional(),
+      event_type: z.boolean().optional(),
+      event_datetime: z.boolean().optional(),
       location: z.boolean().optional(),
       context: z.boolean().optional(),
-      generalResult: z.boolean().optional(),
-      eSignature: z.boolean().optional(),
-      finalObservations: z.boolean().optional(),
-      isConfirmed: z.boolean().optional(),
-      createdByUserId: z.boolean().optional(),
-      createdAt: z.boolean().optional(),
-      updatedAt: z.boolean().optional(),
+      general_result: z.boolean().optional(),
+      e_signature: z.boolean().optional(),
+      final_observations: z.boolean().optional(),
+      is_confirmed: z.boolean().optional(),
+      created_by_user_id: z.boolean().optional(),
+      created_at: z.boolean().optional(),
+      updated_at: z.boolean().optional(),
       company: z
         .union([z.boolean(), z.lazy(() => CompanyArgsSchema)])
         .optional(),
@@ -500,6 +576,53 @@ export const OperationalEventSelectSchema: z.ZodType<Prisma.OperationalEventSele
       driver: z.union([z.boolean(), z.lazy(() => DriverArgsSchema)]).optional(),
       createdBy: z
         .union([z.boolean(), z.lazy(() => UserArgsSchema)])
+        .optional(),
+      inspection_details: z
+        .union([z.boolean(), z.lazy(() => InspectionDetailFindManyArgsSchema)])
+        .optional(),
+      _count: z
+        .union([
+          z.boolean(),
+          z.lazy(() => OperationalEventCountOutputTypeArgsSchema),
+        ])
+        .optional(),
+    })
+    .strict();
+
+// INSPECTION DETAIL
+//------------------------------------------------------
+
+export const InspectionDetailIncludeSchema: z.ZodType<Prisma.InspectionDetailInclude> =
+  z
+    .object({
+      event: z
+        .union([z.boolean(), z.lazy(() => OperationalEventArgsSchema)])
+        .optional(),
+    })
+    .strict();
+
+export const InspectionDetailArgsSchema: z.ZodType<Prisma.InspectionDetailDefaultArgs> =
+  z
+    .object({
+      select: z.lazy(() => InspectionDetailSelectSchema).optional(),
+      include: z.lazy(() => InspectionDetailIncludeSchema).optional(),
+    })
+    .strict();
+
+export const InspectionDetailSelectSchema: z.ZodType<Prisma.InspectionDetailSelect> =
+  z
+    .object({
+      id: z.boolean().optional(),
+      event_id: z.boolean().optional(),
+      type_inspection: z.boolean().optional(),
+      documentation_verified: z.boolean().optional(),
+      vehicle_condition: z.boolean().optional(),
+      lights_ok: z.boolean().optional(),
+      tires_ok: z.boolean().optional(),
+      brakes_ok: z.boolean().optional(),
+      safety_elements_ok: z.boolean().optional(),
+      event: z
+        .union([z.boolean(), z.lazy(() => OperationalEventArgsSchema)])
         .optional(),
     })
     .strict();
@@ -545,7 +668,7 @@ export const CompanyWhereInputSchema: z.ZodType<Prisma.CompanyWhereInput> =
     vehicles: z.lazy(() => VehicleListRelationFilterSchema).optional(),
     drivers: z.lazy(() => DriverListRelationFilterSchema).optional(),
     users: z.lazy(() => UserListRelationFilterSchema).optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventListRelationFilterSchema)
       .optional(),
   });
@@ -573,29 +696,19 @@ export const CompanyOrderByWithRelationInputSchema: z.ZodType<Prisma.CompanyOrde
       .optional(),
     drivers: z.lazy(() => DriverOrderByRelationAggregateInputSchema).optional(),
     users: z.lazy(() => UserOrderByRelationAggregateInputSchema).optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventOrderByRelationAggregateInputSchema)
       .optional(),
   });
 
 export const CompanyWhereUniqueInputSchema: z.ZodType<Prisma.CompanyWhereUniqueInput> =
   z
-    .union([
-      z.object({
-        id: z.uuid(),
-        usdotNumber: z.string(),
-      }),
-      z.object({
-        id: z.uuid(),
-      }),
-      z.object({
-        usdotNumber: z.string(),
-      }),
-    ])
+    .object({
+      id: z.uuid(),
+    })
     .and(
       z.strictObject({
         id: z.uuid().optional(),
-        usdotNumber: z.string().optional(),
         AND: z
           .union([
             z.lazy(() => CompanyWhereInputSchema),
@@ -615,6 +728,10 @@ export const CompanyWhereUniqueInputSchema: z.ZodType<Prisma.CompanyWhereUniqueI
         name: z
           .union([z.lazy(() => StringFilterSchema), z.string()])
           .optional(),
+        usdotNumber: z
+          .union([z.lazy(() => StringNullableFilterSchema), z.string()])
+          .optional()
+          .nullable(),
         state: z
           .union([z.lazy(() => StringNullableFilterSchema), z.string()])
           .optional()
@@ -628,7 +745,7 @@ export const CompanyWhereUniqueInputSchema: z.ZodType<Prisma.CompanyWhereUniqueI
         vehicles: z.lazy(() => VehicleListRelationFilterSchema).optional(),
         drivers: z.lazy(() => DriverListRelationFilterSchema).optional(),
         users: z.lazy(() => UserListRelationFilterSchema).optional(),
-        operationalEvents: z
+        operational_events: z
           .lazy(() => OperationalEventListRelationFilterSchema)
           .optional(),
       }),
@@ -731,14 +848,21 @@ export const VehicleWhereInputSchema: z.ZodType<Prisma.VehicleWhereInput> =
     companyId: z
       .union([z.lazy(() => StringFilterSchema), z.string()])
       .optional(),
-    unitNumber: z
-      .union([z.lazy(() => StringFilterSchema), z.string()])
-      .optional(),
+    driverId: z
+      .union([z.lazy(() => StringNullableFilterSchema), z.string()])
+      .optional()
+      .nullable(),
+    unit_number: z
+      .union([z.lazy(() => StringNullableFilterSchema), z.string()])
+      .optional()
+      .nullable(),
     plate: z
       .union([z.lazy(() => StringNullableFilterSchema), z.string()])
       .optional()
       .nullable(),
-    isActive: z.union([z.lazy(() => BoolFilterSchema), z.boolean()]).optional(),
+    is_active: z
+      .union([z.lazy(() => BoolFilterSchema), z.boolean()])
+      .optional(),
     createdAt: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
@@ -751,7 +875,14 @@ export const VehicleWhereInputSchema: z.ZodType<Prisma.VehicleWhereInput> =
         z.lazy(() => CompanyWhereInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    driver: z
+      .union([
+        z.lazy(() => DriverNullableScalarRelationFilterSchema),
+        z.lazy(() => DriverWhereInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    operational_events: z
       .lazy(() => OperationalEventListRelationFilterSchema)
       .optional(),
   });
@@ -760,30 +891,52 @@ export const VehicleOrderByWithRelationInputSchema: z.ZodType<Prisma.VehicleOrde
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
     companyId: z.lazy(() => SortOrderSchema).optional(),
-    unitNumber: z.lazy(() => SortOrderSchema).optional(),
+    driverId: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    unit_number: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
     plate: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    isActive: z.lazy(() => SortOrderSchema).optional(),
+    is_active: z.lazy(() => SortOrderSchema).optional(),
     createdAt: z.lazy(() => SortOrderSchema).optional(),
     updatedAt: z.lazy(() => SortOrderSchema).optional(),
     company: z.lazy(() => CompanyOrderByWithRelationInputSchema).optional(),
-    operationalEvents: z
+    driver: z.lazy(() => DriverOrderByWithRelationInputSchema).optional(),
+    operational_events: z
       .lazy(() => OperationalEventOrderByRelationAggregateInputSchema)
       .optional(),
   });
 
 export const VehicleWhereUniqueInputSchema: z.ZodType<Prisma.VehicleWhereUniqueInput> =
   z
-    .object({
-      id: z.uuid(),
-    })
+    .union([
+      z.object({
+        id: z.uuid(),
+        driverId: z.string(),
+      }),
+      z.object({
+        id: z.uuid(),
+      }),
+      z.object({
+        driverId: z.string(),
+      }),
+    ])
     .and(
       z.strictObject({
         id: z.uuid().optional(),
+        driverId: z.string().optional(),
         AND: z
           .union([
             z.lazy(() => VehicleWhereInputSchema),
@@ -803,14 +956,15 @@ export const VehicleWhereUniqueInputSchema: z.ZodType<Prisma.VehicleWhereUniqueI
         companyId: z
           .union([z.lazy(() => StringFilterSchema), z.string()])
           .optional(),
-        unitNumber: z
-          .union([z.lazy(() => StringFilterSchema), z.string()])
-          .optional(),
+        unit_number: z
+          .union([z.lazy(() => StringNullableFilterSchema), z.string()])
+          .optional()
+          .nullable(),
         plate: z
           .union([z.lazy(() => StringNullableFilterSchema), z.string()])
           .optional()
           .nullable(),
-        isActive: z
+        is_active: z
           .union([z.lazy(() => BoolFilterSchema), z.boolean()])
           .optional(),
         createdAt: z
@@ -825,7 +979,14 @@ export const VehicleWhereUniqueInputSchema: z.ZodType<Prisma.VehicleWhereUniqueI
             z.lazy(() => CompanyWhereInputSchema),
           ])
           .optional(),
-        operationalEvents: z
+        driver: z
+          .union([
+            z.lazy(() => DriverNullableScalarRelationFilterSchema),
+            z.lazy(() => DriverWhereInputSchema),
+          ])
+          .optional()
+          .nullable(),
+        operational_events: z
           .lazy(() => OperationalEventListRelationFilterSchema)
           .optional(),
       }),
@@ -835,14 +996,25 @@ export const VehicleOrderByWithAggregationInputSchema: z.ZodType<Prisma.VehicleO
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
     companyId: z.lazy(() => SortOrderSchema).optional(),
-    unitNumber: z.lazy(() => SortOrderSchema).optional(),
+    driverId: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    unit_number: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
     plate: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    isActive: z.lazy(() => SortOrderSchema).optional(),
+    is_active: z.lazy(() => SortOrderSchema).optional(),
     createdAt: z.lazy(() => SortOrderSchema).optional(),
     updatedAt: z.lazy(() => SortOrderSchema).optional(),
     _count: z.lazy(() => VehicleCountOrderByAggregateInputSchema).optional(),
@@ -874,9 +1046,20 @@ export const VehicleScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Vehic
     companyId: z
       .union([z.lazy(() => StringWithAggregatesFilterSchema), z.string()])
       .optional(),
-    unitNumber: z
-      .union([z.lazy(() => StringWithAggregatesFilterSchema), z.string()])
-      .optional(),
+    driverId: z
+      .union([
+        z.lazy(() => StringNullableWithAggregatesFilterSchema),
+        z.string(),
+      ])
+      .optional()
+      .nullable(),
+    unit_number: z
+      .union([
+        z.lazy(() => StringNullableWithAggregatesFilterSchema),
+        z.string(),
+      ])
+      .optional()
+      .nullable(),
     plate: z
       .union([
         z.lazy(() => StringNullableWithAggregatesFilterSchema),
@@ -884,7 +1067,7 @@ export const VehicleScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Vehic
       ])
       .optional()
       .nullable(),
-    isActive: z
+    is_active: z
       .union([z.lazy(() => BoolWithAggregatesFilterSchema), z.boolean()])
       .optional(),
     createdAt: z
@@ -924,14 +1107,16 @@ export const DriverWhereInputSchema: z.ZodType<Prisma.DriverWhereInput> =
       .union([z.lazy(() => StringFilterSchema), z.string()])
       .optional(),
     name: z.union([z.lazy(() => StringFilterSchema), z.string()]).optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.lazy(() => StringFilterSchema), z.string()])
       .optional(),
-    isActive: z.union([z.lazy(() => BoolFilterSchema), z.boolean()]).optional(),
-    createdAt: z
+    is_active: z
+      .union([z.lazy(() => BoolFilterSchema), z.boolean()])
+      .optional(),
+    created_at: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
     company: z
@@ -940,7 +1125,14 @@ export const DriverWhereInputSchema: z.ZodType<Prisma.DriverWhereInput> =
         z.lazy(() => CompanyWhereInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    vehicle: z
+      .union([
+        z.lazy(() => VehicleNullableScalarRelationFilterSchema),
+        z.lazy(() => VehicleWhereInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    operational_events: z
       .lazy(() => OperationalEventListRelationFilterSchema)
       .optional(),
   });
@@ -950,12 +1142,13 @@ export const DriverOrderByWithRelationInputSchema: z.ZodType<Prisma.DriverOrderB
     id: z.lazy(() => SortOrderSchema).optional(),
     companyId: z.lazy(() => SortOrderSchema).optional(),
     name: z.lazy(() => SortOrderSchema).optional(),
-    licenseNumber: z.lazy(() => SortOrderSchema).optional(),
-    isActive: z.lazy(() => SortOrderSchema).optional(),
-    createdAt: z.lazy(() => SortOrderSchema).optional(),
-    updatedAt: z.lazy(() => SortOrderSchema).optional(),
+    license_number: z.lazy(() => SortOrderSchema).optional(),
+    is_active: z.lazy(() => SortOrderSchema).optional(),
+    created_at: z.lazy(() => SortOrderSchema).optional(),
+    updated_at: z.lazy(() => SortOrderSchema).optional(),
     company: z.lazy(() => CompanyOrderByWithRelationInputSchema).optional(),
-    operationalEvents: z
+    vehicle: z.lazy(() => VehicleOrderByWithRelationInputSchema).optional(),
+    operational_events: z
       .lazy(() => OperationalEventOrderByRelationAggregateInputSchema)
       .optional(),
   });
@@ -990,16 +1183,16 @@ export const DriverWhereUniqueInputSchema: z.ZodType<Prisma.DriverWhereUniqueInp
         name: z
           .union([z.lazy(() => StringFilterSchema), z.string()])
           .optional(),
-        licenseNumber: z
+        license_number: z
           .union([z.lazy(() => StringFilterSchema), z.string()])
           .optional(),
-        isActive: z
+        is_active: z
           .union([z.lazy(() => BoolFilterSchema), z.boolean()])
           .optional(),
-        createdAt: z
+        created_at: z
           .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
           .optional(),
-        updatedAt: z
+        updated_at: z
           .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
           .optional(),
         company: z
@@ -1008,7 +1201,14 @@ export const DriverWhereUniqueInputSchema: z.ZodType<Prisma.DriverWhereUniqueInp
             z.lazy(() => CompanyWhereInputSchema),
           ])
           .optional(),
-        operationalEvents: z
+        vehicle: z
+          .union([
+            z.lazy(() => VehicleNullableScalarRelationFilterSchema),
+            z.lazy(() => VehicleWhereInputSchema),
+          ])
+          .optional()
+          .nullable(),
+        operational_events: z
           .lazy(() => OperationalEventListRelationFilterSchema)
           .optional(),
       }),
@@ -1019,10 +1219,10 @@ export const DriverOrderByWithAggregationInputSchema: z.ZodType<Prisma.DriverOrd
     id: z.lazy(() => SortOrderSchema).optional(),
     companyId: z.lazy(() => SortOrderSchema).optional(),
     name: z.lazy(() => SortOrderSchema).optional(),
-    licenseNumber: z.lazy(() => SortOrderSchema).optional(),
-    isActive: z.lazy(() => SortOrderSchema).optional(),
-    createdAt: z.lazy(() => SortOrderSchema).optional(),
-    updatedAt: z.lazy(() => SortOrderSchema).optional(),
+    license_number: z.lazy(() => SortOrderSchema).optional(),
+    is_active: z.lazy(() => SortOrderSchema).optional(),
+    created_at: z.lazy(() => SortOrderSchema).optional(),
+    updated_at: z.lazy(() => SortOrderSchema).optional(),
     _count: z.lazy(() => DriverCountOrderByAggregateInputSchema).optional(),
     _max: z.lazy(() => DriverMaxOrderByAggregateInputSchema).optional(),
     _min: z.lazy(() => DriverMinOrderByAggregateInputSchema).optional(),
@@ -1055,19 +1255,19 @@ export const DriverScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Driver
     name: z
       .union([z.lazy(() => StringWithAggregatesFilterSchema), z.string()])
       .optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.lazy(() => StringWithAggregatesFilterSchema), z.string()])
       .optional(),
-    isActive: z
+    is_active: z
       .union([z.lazy(() => BoolWithAggregatesFilterSchema), z.boolean()])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.lazy(() => DateTimeWithAggregatesFilterSchema),
         z.coerce.date(),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.lazy(() => DateTimeWithAggregatesFilterSchema),
         z.coerce.date(),
@@ -1109,6 +1309,14 @@ export const UserWhereInputSchema: z.ZodType<Prisma.UserWhereInput> =
       ])
       .optional(),
     isActive: z.union([z.lazy(() => BoolFilterSchema), z.boolean()]).optional(),
+    resetPasswordToken: z
+      .union([z.lazy(() => StringNullableFilterSchema), z.string()])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([z.lazy(() => DateTimeNullableFilterSchema), z.coerce.date()])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
@@ -1118,7 +1326,7 @@ export const UserWhereInputSchema: z.ZodType<Prisma.UserWhereInput> =
         z.lazy(() => CompanyWhereInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventListRelationFilterSchema)
       .optional(),
   });
@@ -1132,9 +1340,21 @@ export const UserOrderByWithRelationInputSchema: z.ZodType<Prisma.UserOrderByWit
     passwordHash: z.lazy(() => SortOrderSchema).optional(),
     role: z.lazy(() => SortOrderSchema).optional(),
     isActive: z.lazy(() => SortOrderSchema).optional(),
+    resetPasswordToken: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    resetPasswordExpires: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
     createdAt: z.lazy(() => SortOrderSchema).optional(),
     company: z.lazy(() => CompanyOrderByWithRelationInputSchema).optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventOrderByRelationAggregateInputSchema)
       .optional(),
   });
@@ -1145,18 +1365,37 @@ export const UserWhereUniqueInputSchema: z.ZodType<Prisma.UserWhereUniqueInput> 
       z.object({
         id: z.uuid(),
         email: z.string(),
+        id_companyId: z.lazy(() => UserIdCompanyIdCompoundUniqueInputSchema),
+      }),
+      z.object({
+        id: z.uuid(),
+        email: z.string(),
+      }),
+      z.object({
+        id: z.uuid(),
+        id_companyId: z.lazy(() => UserIdCompanyIdCompoundUniqueInputSchema),
       }),
       z.object({
         id: z.uuid(),
       }),
       z.object({
         email: z.string(),
+        id_companyId: z.lazy(() => UserIdCompanyIdCompoundUniqueInputSchema),
+      }),
+      z.object({
+        email: z.string(),
+      }),
+      z.object({
+        id_companyId: z.lazy(() => UserIdCompanyIdCompoundUniqueInputSchema),
       }),
     ])
     .and(
       z.strictObject({
         id: z.uuid().optional(),
         email: z.string().optional(),
+        id_companyId: z
+          .lazy(() => UserIdCompanyIdCompoundUniqueInputSchema)
+          .optional(),
         AND: z
           .union([
             z.lazy(() => UserWhereInputSchema),
@@ -1191,6 +1430,14 @@ export const UserWhereUniqueInputSchema: z.ZodType<Prisma.UserWhereUniqueInput> 
         isActive: z
           .union([z.lazy(() => BoolFilterSchema), z.boolean()])
           .optional(),
+        resetPasswordToken: z
+          .union([z.lazy(() => StringNullableFilterSchema), z.string()])
+          .optional()
+          .nullable(),
+        resetPasswordExpires: z
+          .union([z.lazy(() => DateTimeNullableFilterSchema), z.coerce.date()])
+          .optional()
+          .nullable(),
         createdAt: z
           .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
           .optional(),
@@ -1200,7 +1447,7 @@ export const UserWhereUniqueInputSchema: z.ZodType<Prisma.UserWhereUniqueInput> 
             z.lazy(() => CompanyWhereInputSchema),
           ])
           .optional(),
-        operationalEvents: z
+        operational_events: z
           .lazy(() => OperationalEventListRelationFilterSchema)
           .optional(),
       }),
@@ -1215,6 +1462,18 @@ export const UserOrderByWithAggregationInputSchema: z.ZodType<Prisma.UserOrderBy
     passwordHash: z.lazy(() => SortOrderSchema).optional(),
     role: z.lazy(() => SortOrderSchema).optional(),
     isActive: z.lazy(() => SortOrderSchema).optional(),
+    resetPasswordToken: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    resetPasswordExpires: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
     createdAt: z.lazy(() => SortOrderSchema).optional(),
     _count: z.lazy(() => UserCountOrderByAggregateInputSchema).optional(),
     _max: z.lazy(() => UserMaxOrderByAggregateInputSchema).optional(),
@@ -1263,6 +1522,20 @@ export const UserScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.UserScal
     isActive: z
       .union([z.lazy(() => BoolWithAggregatesFilterSchema), z.boolean()])
       .optional(),
+    resetPasswordToken: z
+      .union([
+        z.lazy(() => StringNullableWithAggregatesFilterSchema),
+        z.string(),
+      ])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([
+        z.lazy(() => DateTimeNullableWithAggregatesFilterSchema),
+        z.coerce.date(),
+      ])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([
         z.lazy(() => DateTimeWithAggregatesFilterSchema),
@@ -1290,24 +1563,24 @@ export const OperationalEventWhereInputSchema: z.ZodType<Prisma.OperationalEvent
       ])
       .optional(),
     id: z.union([z.lazy(() => StringFilterSchema), z.string()]).optional(),
-    companyId: z
+    company_id: z
       .union([z.lazy(() => StringFilterSchema), z.string()])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([z.lazy(() => StringNullableFilterSchema), z.string()])
       .optional()
       .nullable(),
-    driverId: z
+    driver_id: z
       .union([z.lazy(() => StringNullableFilterSchema), z.string()])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EnumEventTypeFilterSchema),
         z.lazy(() => EventTypeSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
     location: z
@@ -1324,32 +1597,32 @@ export const OperationalEventWhereInputSchema: z.ZodType<Prisma.OperationalEvent
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => EnumGeneralResultNullableFilterSchema),
         z.lazy(() => GeneralResultSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([z.lazy(() => StringNullableFilterSchema), z.string()])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([z.lazy(() => StringNullableFilterSchema), z.string()])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.lazy(() => StringFilterSchema), z.string()])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
     company: z
@@ -1378,26 +1651,29 @@ export const OperationalEventWhereInputSchema: z.ZodType<Prisma.OperationalEvent
         z.lazy(() => UserWhereInputSchema),
       ])
       .optional(),
+    inspection_details: z
+      .lazy(() => InspectionDetailListRelationFilterSchema)
+      .optional(),
   });
 
 export const OperationalEventOrderByWithRelationInputSchema: z.ZodType<Prisma.OperationalEventOrderByWithRelationInput> =
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
-    companyId: z.lazy(() => SortOrderSchema).optional(),
-    vehicleId: z
+    company_id: z.lazy(() => SortOrderSchema).optional(),
+    vehicle_id: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    driverId: z
+    driver_id: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    eventType: z.lazy(() => SortOrderSchema).optional(),
-    eventDatetime: z.lazy(() => SortOrderSchema).optional(),
+    event_type: z.lazy(() => SortOrderSchema).optional(),
+    event_datetime: z.lazy(() => SortOrderSchema).optional(),
     location: z
       .union([
         z.lazy(() => SortOrderSchema),
@@ -1410,37 +1686,40 @@ export const OperationalEventOrderByWithRelationInputSchema: z.ZodType<Prisma.Op
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    eSignature: z
+    e_signature: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    createdByUserId: z.lazy(() => SortOrderSchema).optional(),
-    createdAt: z.lazy(() => SortOrderSchema).optional(),
-    updatedAt: z.lazy(() => SortOrderSchema).optional(),
+    created_by_user_id: z.lazy(() => SortOrderSchema).optional(),
+    created_at: z.lazy(() => SortOrderSchema).optional(),
+    updated_at: z.lazy(() => SortOrderSchema).optional(),
     company: z.lazy(() => CompanyOrderByWithRelationInputSchema).optional(),
     vehicle: z.lazy(() => VehicleOrderByWithRelationInputSchema).optional(),
     driver: z.lazy(() => DriverOrderByWithRelationInputSchema).optional(),
     createdBy: z.lazy(() => UserOrderByWithRelationInputSchema).optional(),
+    inspection_details: z
+      .lazy(() => InspectionDetailOrderByRelationAggregateInputSchema)
+      .optional(),
   });
 
 export const OperationalEventWhereUniqueInputSchema: z.ZodType<Prisma.OperationalEventWhereUniqueInput> =
@@ -1467,24 +1746,24 @@ export const OperationalEventWhereUniqueInputSchema: z.ZodType<Prisma.Operationa
             z.lazy(() => OperationalEventWhereInputSchema).array(),
           ])
           .optional(),
-        companyId: z
+        company_id: z
           .union([z.lazy(() => StringFilterSchema), z.string()])
           .optional(),
-        vehicleId: z
+        vehicle_id: z
           .union([z.lazy(() => StringNullableFilterSchema), z.string()])
           .optional()
           .nullable(),
-        driverId: z
+        driver_id: z
           .union([z.lazy(() => StringNullableFilterSchema), z.string()])
           .optional()
           .nullable(),
-        eventType: z
+        event_type: z
           .union([
             z.lazy(() => EnumEventTypeFilterSchema),
             z.lazy(() => EventTypeSchema),
           ])
           .optional(),
-        eventDatetime: z
+        event_datetime: z
           .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
           .optional(),
         location: z
@@ -1501,32 +1780,32 @@ export const OperationalEventWhereUniqueInputSchema: z.ZodType<Prisma.Operationa
           ])
           .optional()
           .nullable(),
-        generalResult: z
+        general_result: z
           .union([
             z.lazy(() => EnumGeneralResultNullableFilterSchema),
             z.lazy(() => GeneralResultSchema),
           ])
           .optional()
           .nullable(),
-        eSignature: z
+        e_signature: z
           .union([z.lazy(() => StringNullableFilterSchema), z.string()])
           .optional()
           .nullable(),
-        finalObservations: z
+        final_observations: z
           .union([z.lazy(() => StringNullableFilterSchema), z.string()])
           .optional()
           .nullable(),
-        isConfirmed: z
+        is_confirmed: z
           .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
           .optional()
           .nullable(),
-        createdByUserId: z
+        created_by_user_id: z
           .union([z.lazy(() => StringFilterSchema), z.string()])
           .optional(),
-        createdAt: z
+        created_at: z
           .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
           .optional(),
-        updatedAt: z
+        updated_at: z
           .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
           .optional(),
         company: z
@@ -1555,27 +1834,30 @@ export const OperationalEventWhereUniqueInputSchema: z.ZodType<Prisma.Operationa
             z.lazy(() => UserWhereInputSchema),
           ])
           .optional(),
+        inspection_details: z
+          .lazy(() => InspectionDetailListRelationFilterSchema)
+          .optional(),
       }),
     );
 
 export const OperationalEventOrderByWithAggregationInputSchema: z.ZodType<Prisma.OperationalEventOrderByWithAggregationInput> =
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
-    companyId: z.lazy(() => SortOrderSchema).optional(),
-    vehicleId: z
+    company_id: z.lazy(() => SortOrderSchema).optional(),
+    vehicle_id: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    driverId: z
+    driver_id: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    eventType: z.lazy(() => SortOrderSchema).optional(),
-    eventDatetime: z.lazy(() => SortOrderSchema).optional(),
+    event_type: z.lazy(() => SortOrderSchema).optional(),
+    event_datetime: z.lazy(() => SortOrderSchema).optional(),
     location: z
       .union([
         z.lazy(() => SortOrderSchema),
@@ -1588,33 +1870,33 @@ export const OperationalEventOrderByWithAggregationInputSchema: z.ZodType<Prisma
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    eSignature: z
+    e_signature: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.lazy(() => SortOrderSchema),
         z.lazy(() => SortOrderInputSchema),
       ])
       .optional(),
-    createdByUserId: z.lazy(() => SortOrderSchema).optional(),
-    createdAt: z.lazy(() => SortOrderSchema).optional(),
-    updatedAt: z.lazy(() => SortOrderSchema).optional(),
+    created_by_user_id: z.lazy(() => SortOrderSchema).optional(),
+    created_at: z.lazy(() => SortOrderSchema).optional(),
+    updated_at: z.lazy(() => SortOrderSchema).optional(),
     _count: z
       .lazy(() => OperationalEventCountOrderByAggregateInputSchema)
       .optional(),
@@ -1651,30 +1933,30 @@ export const OperationalEventScalarWhereWithAggregatesInputSchema: z.ZodType<Pri
     id: z
       .union([z.lazy(() => StringWithAggregatesFilterSchema), z.string()])
       .optional(),
-    companyId: z
+    company_id: z
       .union([z.lazy(() => StringWithAggregatesFilterSchema), z.string()])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([
         z.lazy(() => StringNullableWithAggregatesFilterSchema),
         z.string(),
       ])
       .optional()
       .nullable(),
-    driverId: z
+    driver_id: z
       .union([
         z.lazy(() => StringNullableWithAggregatesFilterSchema),
         z.string(),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EnumEventTypeWithAggregatesFilterSchema),
         z.lazy(() => EventTypeSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.lazy(() => DateTimeWithAggregatesFilterSchema),
         z.coerce.date(),
@@ -1694,49 +1976,370 @@ export const OperationalEventScalarWhereWithAggregatesInputSchema: z.ZodType<Pri
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => EnumGeneralResultNullableWithAggregatesFilterSchema),
         z.lazy(() => GeneralResultSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.lazy(() => StringNullableWithAggregatesFilterSchema),
         z.string(),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.lazy(() => StringNullableWithAggregatesFilterSchema),
         z.string(),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.lazy(() => BoolNullableWithAggregatesFilterSchema),
         z.boolean(),
       ])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.lazy(() => StringWithAggregatesFilterSchema), z.string()])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.lazy(() => DateTimeWithAggregatesFilterSchema),
         z.coerce.date(),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.lazy(() => DateTimeWithAggregatesFilterSchema),
         z.coerce.date(),
       ])
       .optional(),
+  });
+
+export const InspectionDetailWhereInputSchema: z.ZodType<Prisma.InspectionDetailWhereInput> =
+  z.strictObject({
+    AND: z
+      .union([
+        z.lazy(() => InspectionDetailWhereInputSchema),
+        z.lazy(() => InspectionDetailWhereInputSchema).array(),
+      ])
+      .optional(),
+    OR: z
+      .lazy(() => InspectionDetailWhereInputSchema)
+      .array()
+      .optional(),
+    NOT: z
+      .union([
+        z.lazy(() => InspectionDetailWhereInputSchema),
+        z.lazy(() => InspectionDetailWhereInputSchema).array(),
+      ])
+      .optional(),
+    id: z.union([z.lazy(() => StringFilterSchema), z.string()]).optional(),
+    event_id: z
+      .union([z.lazy(() => StringFilterSchema), z.string()])
+      .optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => EnumTypeInspectionNullableFilterSchema),
+        z.lazy(() => TypeInspectionSchema),
+      ])
+      .optional()
+      .nullable(),
+    documentation_verified: z
+      .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+      .optional()
+      .nullable(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => EnumInspectionStatusNullableFilterSchema),
+        z.lazy(() => InspectionStatusSchema),
+      ])
+      .optional()
+      .nullable(),
+    lights_ok: z
+      .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+      .optional()
+      .nullable(),
+    tires_ok: z
+      .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+      .optional()
+      .nullable(),
+    brakes_ok: z
+      .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+      .optional()
+      .nullable(),
+    safety_elements_ok: z
+      .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+      .optional()
+      .nullable(),
+    event: z
+      .union([
+        z.lazy(() => OperationalEventScalarRelationFilterSchema),
+        z.lazy(() => OperationalEventWhereInputSchema),
+      ])
+      .optional(),
+  });
+
+export const InspectionDetailOrderByWithRelationInputSchema: z.ZodType<Prisma.InspectionDetailOrderByWithRelationInput> =
+  z.strictObject({
+    id: z.lazy(() => SortOrderSchema).optional(),
+    event_id: z.lazy(() => SortOrderSchema).optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    documentation_verified: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    lights_ok: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    tires_ok: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    brakes_ok: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    safety_elements_ok: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    event: z
+      .lazy(() => OperationalEventOrderByWithRelationInputSchema)
+      .optional(),
+  });
+
+export const InspectionDetailWhereUniqueInputSchema: z.ZodType<Prisma.InspectionDetailWhereUniqueInput> =
+  z
+    .object({
+      id: z.uuid(),
+    })
+    .and(
+      z.strictObject({
+        id: z.uuid().optional(),
+        AND: z
+          .union([
+            z.lazy(() => InspectionDetailWhereInputSchema),
+            z.lazy(() => InspectionDetailWhereInputSchema).array(),
+          ])
+          .optional(),
+        OR: z
+          .lazy(() => InspectionDetailWhereInputSchema)
+          .array()
+          .optional(),
+        NOT: z
+          .union([
+            z.lazy(() => InspectionDetailWhereInputSchema),
+            z.lazy(() => InspectionDetailWhereInputSchema).array(),
+          ])
+          .optional(),
+        event_id: z
+          .union([z.lazy(() => StringFilterSchema), z.string()])
+          .optional(),
+        type_inspection: z
+          .union([
+            z.lazy(() => EnumTypeInspectionNullableFilterSchema),
+            z.lazy(() => TypeInspectionSchema),
+          ])
+          .optional()
+          .nullable(),
+        documentation_verified: z
+          .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+          .optional()
+          .nullable(),
+        vehicle_condition: z
+          .union([
+            z.lazy(() => EnumInspectionStatusNullableFilterSchema),
+            z.lazy(() => InspectionStatusSchema),
+          ])
+          .optional()
+          .nullable(),
+        lights_ok: z
+          .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+          .optional()
+          .nullable(),
+        tires_ok: z
+          .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+          .optional()
+          .nullable(),
+        brakes_ok: z
+          .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+          .optional()
+          .nullable(),
+        safety_elements_ok: z
+          .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+          .optional()
+          .nullable(),
+        event: z
+          .union([
+            z.lazy(() => OperationalEventScalarRelationFilterSchema),
+            z.lazy(() => OperationalEventWhereInputSchema),
+          ])
+          .optional(),
+      }),
+    );
+
+export const InspectionDetailOrderByWithAggregationInputSchema: z.ZodType<Prisma.InspectionDetailOrderByWithAggregationInput> =
+  z.strictObject({
+    id: z.lazy(() => SortOrderSchema).optional(),
+    event_id: z.lazy(() => SortOrderSchema).optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    documentation_verified: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    lights_ok: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    tires_ok: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    brakes_ok: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    safety_elements_ok: z
+      .union([
+        z.lazy(() => SortOrderSchema),
+        z.lazy(() => SortOrderInputSchema),
+      ])
+      .optional(),
+    _count: z
+      .lazy(() => InspectionDetailCountOrderByAggregateInputSchema)
+      .optional(),
+    _max: z
+      .lazy(() => InspectionDetailMaxOrderByAggregateInputSchema)
+      .optional(),
+    _min: z
+      .lazy(() => InspectionDetailMinOrderByAggregateInputSchema)
+      .optional(),
+  });
+
+export const InspectionDetailScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.InspectionDetailScalarWhereWithAggregatesInput> =
+  z.strictObject({
+    AND: z
+      .union([
+        z.lazy(() => InspectionDetailScalarWhereWithAggregatesInputSchema),
+        z
+          .lazy(() => InspectionDetailScalarWhereWithAggregatesInputSchema)
+          .array(),
+      ])
+      .optional(),
+    OR: z
+      .lazy(() => InspectionDetailScalarWhereWithAggregatesInputSchema)
+      .array()
+      .optional(),
+    NOT: z
+      .union([
+        z.lazy(() => InspectionDetailScalarWhereWithAggregatesInputSchema),
+        z
+          .lazy(() => InspectionDetailScalarWhereWithAggregatesInputSchema)
+          .array(),
+      ])
+      .optional(),
+    id: z
+      .union([z.lazy(() => StringWithAggregatesFilterSchema), z.string()])
+      .optional(),
+    event_id: z
+      .union([z.lazy(() => StringWithAggregatesFilterSchema), z.string()])
+      .optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => EnumTypeInspectionNullableWithAggregatesFilterSchema),
+        z.lazy(() => TypeInspectionSchema),
+      ])
+      .optional()
+      .nullable(),
+    documentation_verified: z
+      .union([
+        z.lazy(() => BoolNullableWithAggregatesFilterSchema),
+        z.boolean(),
+      ])
+      .optional()
+      .nullable(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => EnumInspectionStatusNullableWithAggregatesFilterSchema),
+        z.lazy(() => InspectionStatusSchema),
+      ])
+      .optional()
+      .nullable(),
+    lights_ok: z
+      .union([
+        z.lazy(() => BoolNullableWithAggregatesFilterSchema),
+        z.boolean(),
+      ])
+      .optional()
+      .nullable(),
+    tires_ok: z
+      .union([
+        z.lazy(() => BoolNullableWithAggregatesFilterSchema),
+        z.boolean(),
+      ])
+      .optional()
+      .nullable(),
+    brakes_ok: z
+      .union([
+        z.lazy(() => BoolNullableWithAggregatesFilterSchema),
+        z.boolean(),
+      ])
+      .optional()
+      .nullable(),
+    safety_elements_ok: z
+      .union([
+        z.lazy(() => BoolNullableWithAggregatesFilterSchema),
+        z.boolean(),
+      ])
+      .optional()
+      .nullable(),
   });
 
 export const CompanyCreateInputSchema: z.ZodType<Prisma.CompanyCreateInput> =
@@ -1756,7 +2359,7 @@ export const CompanyCreateInputSchema: z.ZodType<Prisma.CompanyCreateInput> =
     users: z
       .lazy(() => UserCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
   });
@@ -1778,7 +2381,7 @@ export const CompanyUncheckedCreateInputSchema: z.ZodType<Prisma.CompanyUnchecke
     users: z
       .lazy(() => UserUncheckedCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedCreateNestedManyWithoutCompanyInputSchema,
@@ -1829,7 +2432,7 @@ export const CompanyUpdateInputSchema: z.ZodType<Prisma.CompanyUpdateInput> =
     users: z
       .lazy(() => UserUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
   });
@@ -1877,7 +2480,7 @@ export const CompanyUncheckedUpdateInputSchema: z.ZodType<Prisma.CompanyUnchecke
     users: z
       .lazy(() => UserUncheckedUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedUpdateManyWithoutCompanyNestedInputSchema,
@@ -1970,13 +2573,16 @@ export const CompanyUncheckedUpdateManyInputSchema: z.ZodType<Prisma.CompanyUnch
 export const VehicleCreateInputSchema: z.ZodType<Prisma.VehicleCreateInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    unitNumber: z.string(),
+    unit_number: z.string().optional().nullable(),
     plate: z.string().optional().nullable(),
-    isActive: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
     company: z.lazy(() => CompanyCreateNestedOneWithoutVehiclesInputSchema),
-    operationalEvents: z
+    driver: z
+      .lazy(() => DriverCreateNestedOneWithoutVehicleInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(() => OperationalEventCreateNestedManyWithoutVehicleInputSchema)
       .optional(),
   });
@@ -1985,12 +2591,13 @@ export const VehicleUncheckedCreateInputSchema: z.ZodType<Prisma.VehicleUnchecke
   z.strictObject({
     id: z.uuid().optional(),
     companyId: z.string(),
-    unitNumber: z.string(),
+    driverId: z.string().optional().nullable(),
+    unit_number: z.string().optional().nullable(),
     plate: z.string().optional().nullable(),
-    isActive: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedCreateNestedManyWithoutVehicleInputSchema,
@@ -2003,9 +2610,13 @@ export const VehicleUpdateInputSchema: z.ZodType<Prisma.VehicleUpdateInput> =
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    unitNumber: z
-      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
-      .optional(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     plate: z
       .union([
         z.string(),
@@ -2013,7 +2624,7 @@ export const VehicleUpdateInputSchema: z.ZodType<Prisma.VehicleUpdateInput> =
       ])
       .optional()
       .nullable(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
     createdAt: z
@@ -2031,7 +2642,10 @@ export const VehicleUpdateInputSchema: z.ZodType<Prisma.VehicleUpdateInput> =
     company: z
       .lazy(() => CompanyUpdateOneRequiredWithoutVehiclesNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    driver: z
+      .lazy(() => DriverUpdateOneWithoutVehicleNestedInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(() => OperationalEventUpdateManyWithoutVehicleNestedInputSchema)
       .optional(),
   });
@@ -2044,9 +2658,20 @@ export const VehicleUncheckedUpdateInputSchema: z.ZodType<Prisma.VehicleUnchecke
     companyId: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    unitNumber: z
-      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
-      .optional(),
+    driverId: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     plate: z
       .union([
         z.string(),
@@ -2054,7 +2679,7 @@ export const VehicleUncheckedUpdateInputSchema: z.ZodType<Prisma.VehicleUnchecke
       ])
       .optional()
       .nullable(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
     createdAt: z
@@ -2069,7 +2694,7 @@ export const VehicleUncheckedUpdateInputSchema: z.ZodType<Prisma.VehicleUnchecke
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedUpdateManyWithoutVehicleNestedInputSchema,
@@ -2081,9 +2706,10 @@ export const VehicleCreateManyInputSchema: z.ZodType<Prisma.VehicleCreateManyInp
   z.strictObject({
     id: z.uuid().optional(),
     companyId: z.string(),
-    unitNumber: z.string(),
+    driverId: z.string().optional().nullable(),
+    unit_number: z.string().optional().nullable(),
     plate: z.string().optional().nullable(),
-    isActive: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
   });
@@ -2093,9 +2719,13 @@ export const VehicleUpdateManyMutationInputSchema: z.ZodType<Prisma.VehicleUpdat
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    unitNumber: z
-      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
-      .optional(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     plate: z
       .union([
         z.string(),
@@ -2103,7 +2733,7 @@ export const VehicleUpdateManyMutationInputSchema: z.ZodType<Prisma.VehicleUpdat
       ])
       .optional()
       .nullable(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
     createdAt: z
@@ -2128,9 +2758,20 @@ export const VehicleUncheckedUpdateManyInputSchema: z.ZodType<Prisma.VehicleUnch
     companyId: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    unitNumber: z
-      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
-      .optional(),
+    driverId: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     plate: z
       .union([
         z.string(),
@@ -2138,7 +2779,7 @@ export const VehicleUncheckedUpdateManyInputSchema: z.ZodType<Prisma.VehicleUnch
       ])
       .optional()
       .nullable(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
     createdAt: z
@@ -2159,12 +2800,15 @@ export const DriverCreateInputSchema: z.ZodType<Prisma.DriverCreateInput> =
   z.strictObject({
     id: z.uuid().optional(),
     name: z.string(),
-    licenseNumber: z.string(),
-    isActive: z.boolean().optional(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    license_number: z.string(),
+    is_active: z.boolean().optional(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
     company: z.lazy(() => CompanyCreateNestedOneWithoutDriversInputSchema),
-    operationalEvents: z
+    vehicle: z
+      .lazy(() => VehicleCreateNestedOneWithoutDriverInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(() => OperationalEventCreateNestedManyWithoutDriverInputSchema)
       .optional(),
   });
@@ -2174,11 +2818,14 @@ export const DriverUncheckedCreateInputSchema: z.ZodType<Prisma.DriverUncheckedC
     id: z.uuid().optional(),
     companyId: z.string(),
     name: z.string(),
-    licenseNumber: z.string(),
-    isActive: z.boolean().optional(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
-    operationalEvents: z
+    license_number: z.string(),
+    is_active: z.boolean().optional(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    vehicle: z
+      .lazy(() => VehicleUncheckedCreateNestedOneWithoutDriverInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(
         () => OperationalEventUncheckedCreateNestedManyWithoutDriverInputSchema,
       )
@@ -2193,19 +2840,19 @@ export const DriverUpdateInputSchema: z.ZodType<Prisma.DriverUpdateInput> =
     name: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -2214,7 +2861,10 @@ export const DriverUpdateInputSchema: z.ZodType<Prisma.DriverUpdateInput> =
     company: z
       .lazy(() => CompanyUpdateOneRequiredWithoutDriversNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    vehicle: z
+      .lazy(() => VehicleUpdateOneWithoutDriverNestedInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(() => OperationalEventUpdateManyWithoutDriverNestedInputSchema)
       .optional(),
   });
@@ -2230,25 +2880,28 @@ export const DriverUncheckedUpdateInputSchema: z.ZodType<Prisma.DriverUncheckedU
     name: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    vehicle: z
+      .lazy(() => VehicleUncheckedUpdateOneWithoutDriverNestedInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(
         () => OperationalEventUncheckedUpdateManyWithoutDriverNestedInputSchema,
       )
@@ -2260,10 +2913,10 @@ export const DriverCreateManyInputSchema: z.ZodType<Prisma.DriverCreateManyInput
     id: z.uuid().optional(),
     companyId: z.string(),
     name: z.string(),
-    licenseNumber: z.string(),
-    isActive: z.boolean().optional(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    license_number: z.string(),
+    is_active: z.boolean().optional(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
   });
 
 export const DriverUpdateManyMutationInputSchema: z.ZodType<Prisma.DriverUpdateManyMutationInput> =
@@ -2274,19 +2927,19 @@ export const DriverUpdateManyMutationInputSchema: z.ZodType<Prisma.DriverUpdateM
     name: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -2305,19 +2958,19 @@ export const DriverUncheckedUpdateManyInputSchema: z.ZodType<Prisma.DriverUnchec
     name: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -2333,9 +2986,11 @@ export const UserCreateInputSchema: z.ZodType<Prisma.UserCreateInput> =
     passwordHash: z.string(),
     role: z.lazy(() => UserRoleSchema).optional(),
     isActive: z.boolean().optional(),
+    resetPasswordToken: z.string().optional().nullable(),
+    resetPasswordExpires: z.coerce.date().optional().nullable(),
     createdAt: z.coerce.date().optional(),
     company: z.lazy(() => CompanyCreateNestedOneWithoutUsersInputSchema),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventCreateNestedManyWithoutCreatedByInputSchema)
       .optional(),
   });
@@ -2349,8 +3004,10 @@ export const UserUncheckedCreateInputSchema: z.ZodType<Prisma.UserUncheckedCreat
     passwordHash: z.string(),
     role: z.lazy(() => UserRoleSchema).optional(),
     isActive: z.boolean().optional(),
+    resetPasswordToken: z.string().optional().nullable(),
+    resetPasswordExpires: z.coerce.date().optional().nullable(),
     createdAt: z.coerce.date().optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedCreateNestedManyWithoutCreatedByInputSchema,
@@ -2381,6 +3038,20 @@ export const UserUpdateInputSchema: z.ZodType<Prisma.UserUpdateInput> =
     isActive: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
+    resetPasswordToken: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([
         z.coerce.date(),
@@ -2390,7 +3061,7 @@ export const UserUpdateInputSchema: z.ZodType<Prisma.UserUpdateInput> =
     company: z
       .lazy(() => CompanyUpdateOneRequiredWithoutUsersNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventUpdateManyWithoutCreatedByNestedInputSchema)
       .optional(),
   });
@@ -2421,13 +3092,27 @@ export const UserUncheckedUpdateInputSchema: z.ZodType<Prisma.UserUncheckedUpdat
     isActive: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
+    resetPasswordToken: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedUpdateManyWithoutCreatedByNestedInputSchema,
@@ -2444,6 +3129,8 @@ export const UserCreateManyInputSchema: z.ZodType<Prisma.UserCreateManyInput> =
     passwordHash: z.string(),
     role: z.lazy(() => UserRoleSchema).optional(),
     isActive: z.boolean().optional(),
+    resetPasswordToken: z.string().optional().nullable(),
+    resetPasswordExpires: z.coerce.date().optional().nullable(),
     createdAt: z.coerce.date().optional(),
   });
 
@@ -2470,6 +3157,20 @@ export const UserUpdateManyMutationInputSchema: z.ZodType<Prisma.UserUpdateManyM
     isActive: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
+    resetPasswordToken: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([
         z.coerce.date(),
@@ -2504,6 +3205,20 @@ export const UserUncheckedUpdateManyInputSchema: z.ZodType<Prisma.UserUncheckedU
     isActive: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
+    resetPasswordToken: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([
         z.coerce.date(),
@@ -2515,8 +3230,8 @@ export const UserUncheckedUpdateManyInputSchema: z.ZodType<Prisma.UserUncheckedU
 export const OperationalEventCreateInputSchema: z.ZodType<Prisma.OperationalEventCreateInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -2525,37 +3240,40 @@ export const OperationalEventCreateInputSchema: z.ZodType<Prisma.OperationalEven
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
     company: z.lazy(
-      () => CompanyCreateNestedOneWithoutOperationalEventsInputSchema,
+      () => CompanyCreateNestedOneWithoutOperational_eventsInputSchema,
     ),
     vehicle: z
-      .lazy(() => VehicleCreateNestedOneWithoutOperationalEventsInputSchema)
+      .lazy(() => VehicleCreateNestedOneWithoutOperational_eventsInputSchema)
       .optional(),
     driver: z
-      .lazy(() => DriverCreateNestedOneWithoutOperationalEventsInputSchema)
+      .lazy(() => DriverCreateNestedOneWithoutOperational_eventsInputSchema)
       .optional(),
     createdBy: z.lazy(
-      () => UserCreateNestedOneWithoutOperationalEventsInputSchema,
+      () => UserCreateNestedOneWithoutOperational_eventsInputSchema,
     ),
+    inspection_details: z
+      .lazy(() => InspectionDetailCreateNestedManyWithoutEventInputSchema)
+      .optional(),
   });
 
 export const OperationalEventUncheckedCreateInputSchema: z.ZodType<Prisma.OperationalEventUncheckedCreateInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    companyId: z.string(),
-    vehicleId: z.string().optional().nullable(),
-    driverId: z.string().optional().nullable(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    company_id: z.string(),
+    vehicle_id: z.string().optional().nullable(),
+    driver_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -2564,16 +3282,21 @@ export const OperationalEventUncheckedCreateInputSchema: z.ZodType<Prisma.Operat
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdByUserId: z.string(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_by_user_id: z.string(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    inspection_details: z
+      .lazy(
+        () => InspectionDetailUncheckedCreateNestedManyWithoutEventInputSchema,
+      )
+      .optional(),
   });
 
 export const OperationalEventUpdateInputSchema: z.ZodType<Prisma.OperationalEventUpdateInput> =
@@ -2581,13 +3304,13 @@ export const OperationalEventUpdateInputSchema: z.ZodType<Prisma.OperationalEven
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -2607,41 +3330,41 @@ export const OperationalEventUpdateInputSchema: z.ZodType<Prisma.OperationalEven
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -2649,19 +3372,23 @@ export const OperationalEventUpdateInputSchema: z.ZodType<Prisma.OperationalEven
       .optional(),
     company: z
       .lazy(
-        () => CompanyUpdateOneRequiredWithoutOperationalEventsNestedInputSchema,
+        () =>
+          CompanyUpdateOneRequiredWithoutOperational_eventsNestedInputSchema,
       )
       .optional(),
     vehicle: z
-      .lazy(() => VehicleUpdateOneWithoutOperationalEventsNestedInputSchema)
+      .lazy(() => VehicleUpdateOneWithoutOperational_eventsNestedInputSchema)
       .optional(),
     driver: z
-      .lazy(() => DriverUpdateOneWithoutOperationalEventsNestedInputSchema)
+      .lazy(() => DriverUpdateOneWithoutOperational_eventsNestedInputSchema)
       .optional(),
     createdBy: z
       .lazy(
-        () => UserUpdateOneRequiredWithoutOperationalEventsNestedInputSchema,
+        () => UserUpdateOneRequiredWithoutOperational_eventsNestedInputSchema,
       )
+      .optional(),
+    inspection_details: z
+      .lazy(() => InspectionDetailUpdateManyWithoutEventNestedInputSchema)
       .optional(),
   });
 
@@ -2670,30 +3397,30 @@ export const OperationalEventUncheckedUpdateInputSchema: z.ZodType<Prisma.Operat
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    companyId: z
+    company_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    driverId: z
+    driver_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -2713,59 +3440,64 @@ export const OperationalEventUncheckedUpdateInputSchema: z.ZodType<Prisma.Operat
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
+      .optional(),
+    inspection_details: z
+      .lazy(
+        () => InspectionDetailUncheckedUpdateManyWithoutEventNestedInputSchema,
+      )
       .optional(),
   });
 
 export const OperationalEventCreateManyInputSchema: z.ZodType<Prisma.OperationalEventCreateManyInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    companyId: z.string(),
-    vehicleId: z.string().optional().nullable(),
-    driverId: z.string().optional().nullable(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    company_id: z.string(),
+    vehicle_id: z.string().optional().nullable(),
+    driver_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -2774,16 +3506,16 @@ export const OperationalEventCreateManyInputSchema: z.ZodType<Prisma.Operational
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdByUserId: z.string(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_by_user_id: z.string(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
   });
 
 export const OperationalEventUpdateManyMutationInputSchema: z.ZodType<Prisma.OperationalEventUpdateManyMutationInput> =
@@ -2791,13 +3523,13 @@ export const OperationalEventUpdateManyMutationInputSchema: z.ZodType<Prisma.Ope
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -2817,41 +3549,41 @@ export const OperationalEventUpdateManyMutationInputSchema: z.ZodType<Prisma.Ope
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -2864,30 +3596,30 @@ export const OperationalEventUncheckedUpdateManyInputSchema: z.ZodType<Prisma.Op
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    companyId: z
+    company_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    driverId: z
+    driver_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -2907,49 +3639,360 @@ export const OperationalEventUncheckedUpdateManyInputSchema: z.ZodType<Prisma.Op
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
+  });
+
+export const InspectionDetailCreateInputSchema: z.ZodType<Prisma.InspectionDetailCreateInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    type_inspection: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+    documentation_verified: z.boolean().optional().nullable(),
+    vehicle_condition: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+    lights_ok: z.boolean().optional().nullable(),
+    tires_ok: z.boolean().optional().nullable(),
+    brakes_ok: z.boolean().optional().nullable(),
+    safety_elements_ok: z.boolean().optional().nullable(),
+    event: z.lazy(
+      () => OperationalEventCreateNestedOneWithoutInspection_detailsInputSchema,
+    ),
+  });
+
+export const InspectionDetailUncheckedCreateInputSchema: z.ZodType<Prisma.InspectionDetailUncheckedCreateInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    event_id: z.string(),
+    type_inspection: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+    documentation_verified: z.boolean().optional().nullable(),
+    vehicle_condition: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+    lights_ok: z.boolean().optional().nullable(),
+    tires_ok: z.boolean().optional().nullable(),
+    brakes_ok: z.boolean().optional().nullable(),
+    safety_elements_ok: z.boolean().optional().nullable(),
+  });
+
+export const InspectionDetailUpdateInputSchema: z.ZodType<Prisma.InspectionDetailUpdateInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(
+          () => NullableEnumTypeInspectionFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    documentation_verified: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(
+          () => NullableEnumInspectionStatusFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    lights_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    tires_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    brakes_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    safety_elements_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    event: z
+      .lazy(
+        () =>
+          OperationalEventUpdateOneRequiredWithoutInspection_detailsNestedInputSchema,
+      )
+      .optional(),
+  });
+
+export const InspectionDetailUncheckedUpdateInputSchema: z.ZodType<Prisma.InspectionDetailUncheckedUpdateInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    event_id: z
+      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(
+          () => NullableEnumTypeInspectionFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    documentation_verified: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(
+          () => NullableEnumInspectionStatusFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    lights_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    tires_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    brakes_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    safety_elements_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+  });
+
+export const InspectionDetailCreateManyInputSchema: z.ZodType<Prisma.InspectionDetailCreateManyInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    event_id: z.string(),
+    type_inspection: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+    documentation_verified: z.boolean().optional().nullable(),
+    vehicle_condition: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+    lights_ok: z.boolean().optional().nullable(),
+    tires_ok: z.boolean().optional().nullable(),
+    brakes_ok: z.boolean().optional().nullable(),
+    safety_elements_ok: z.boolean().optional().nullable(),
+  });
+
+export const InspectionDetailUpdateManyMutationInputSchema: z.ZodType<Prisma.InspectionDetailUpdateManyMutationInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(
+          () => NullableEnumTypeInspectionFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    documentation_verified: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(
+          () => NullableEnumInspectionStatusFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    lights_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    tires_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    brakes_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    safety_elements_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+  });
+
+export const InspectionDetailUncheckedUpdateManyInputSchema: z.ZodType<Prisma.InspectionDetailUncheckedUpdateManyInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    event_id: z
+      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(
+          () => NullableEnumTypeInspectionFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    documentation_verified: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(
+          () => NullableEnumInspectionStatusFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    lights_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    tires_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    brakes_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    safety_elements_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
   });
 
 export const StringFilterSchema: z.ZodType<Prisma.StringFilter> =
@@ -3164,13 +4207,26 @@ export const CompanyScalarRelationFilterSchema: z.ZodType<Prisma.CompanyScalarRe
     isNot: z.lazy(() => CompanyWhereInputSchema).optional(),
   });
 
+export const DriverNullableScalarRelationFilterSchema: z.ZodType<Prisma.DriverNullableScalarRelationFilter> =
+  z.strictObject({
+    is: z
+      .lazy(() => DriverWhereInputSchema)
+      .optional()
+      .nullable(),
+    isNot: z
+      .lazy(() => DriverWhereInputSchema)
+      .optional()
+      .nullable(),
+  });
+
 export const VehicleCountOrderByAggregateInputSchema: z.ZodType<Prisma.VehicleCountOrderByAggregateInput> =
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
     companyId: z.lazy(() => SortOrderSchema).optional(),
-    unitNumber: z.lazy(() => SortOrderSchema).optional(),
+    driverId: z.lazy(() => SortOrderSchema).optional(),
+    unit_number: z.lazy(() => SortOrderSchema).optional(),
     plate: z.lazy(() => SortOrderSchema).optional(),
-    isActive: z.lazy(() => SortOrderSchema).optional(),
+    is_active: z.lazy(() => SortOrderSchema).optional(),
     createdAt: z.lazy(() => SortOrderSchema).optional(),
     updatedAt: z.lazy(() => SortOrderSchema).optional(),
   });
@@ -3179,9 +4235,10 @@ export const VehicleMaxOrderByAggregateInputSchema: z.ZodType<Prisma.VehicleMaxO
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
     companyId: z.lazy(() => SortOrderSchema).optional(),
-    unitNumber: z.lazy(() => SortOrderSchema).optional(),
+    driverId: z.lazy(() => SortOrderSchema).optional(),
+    unit_number: z.lazy(() => SortOrderSchema).optional(),
     plate: z.lazy(() => SortOrderSchema).optional(),
-    isActive: z.lazy(() => SortOrderSchema).optional(),
+    is_active: z.lazy(() => SortOrderSchema).optional(),
     createdAt: z.lazy(() => SortOrderSchema).optional(),
     updatedAt: z.lazy(() => SortOrderSchema).optional(),
   });
@@ -3190,9 +4247,10 @@ export const VehicleMinOrderByAggregateInputSchema: z.ZodType<Prisma.VehicleMinO
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
     companyId: z.lazy(() => SortOrderSchema).optional(),
-    unitNumber: z.lazy(() => SortOrderSchema).optional(),
+    driverId: z.lazy(() => SortOrderSchema).optional(),
+    unit_number: z.lazy(() => SortOrderSchema).optional(),
     plate: z.lazy(() => SortOrderSchema).optional(),
-    isActive: z.lazy(() => SortOrderSchema).optional(),
+    is_active: z.lazy(() => SortOrderSchema).optional(),
     createdAt: z.lazy(() => SortOrderSchema).optional(),
     updatedAt: z.lazy(() => SortOrderSchema).optional(),
   });
@@ -3208,15 +4266,27 @@ export const BoolWithAggregatesFilterSchema: z.ZodType<Prisma.BoolWithAggregates
     _max: z.lazy(() => NestedBoolFilterSchema).optional(),
   });
 
+export const VehicleNullableScalarRelationFilterSchema: z.ZodType<Prisma.VehicleNullableScalarRelationFilter> =
+  z.strictObject({
+    is: z
+      .lazy(() => VehicleWhereInputSchema)
+      .optional()
+      .nullable(),
+    isNot: z
+      .lazy(() => VehicleWhereInputSchema)
+      .optional()
+      .nullable(),
+  });
+
 export const DriverCountOrderByAggregateInputSchema: z.ZodType<Prisma.DriverCountOrderByAggregateInput> =
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
     companyId: z.lazy(() => SortOrderSchema).optional(),
     name: z.lazy(() => SortOrderSchema).optional(),
-    licenseNumber: z.lazy(() => SortOrderSchema).optional(),
-    isActive: z.lazy(() => SortOrderSchema).optional(),
-    createdAt: z.lazy(() => SortOrderSchema).optional(),
-    updatedAt: z.lazy(() => SortOrderSchema).optional(),
+    license_number: z.lazy(() => SortOrderSchema).optional(),
+    is_active: z.lazy(() => SortOrderSchema).optional(),
+    created_at: z.lazy(() => SortOrderSchema).optional(),
+    updated_at: z.lazy(() => SortOrderSchema).optional(),
   });
 
 export const DriverMaxOrderByAggregateInputSchema: z.ZodType<Prisma.DriverMaxOrderByAggregateInput> =
@@ -3224,10 +4294,10 @@ export const DriverMaxOrderByAggregateInputSchema: z.ZodType<Prisma.DriverMaxOrd
     id: z.lazy(() => SortOrderSchema).optional(),
     companyId: z.lazy(() => SortOrderSchema).optional(),
     name: z.lazy(() => SortOrderSchema).optional(),
-    licenseNumber: z.lazy(() => SortOrderSchema).optional(),
-    isActive: z.lazy(() => SortOrderSchema).optional(),
-    createdAt: z.lazy(() => SortOrderSchema).optional(),
-    updatedAt: z.lazy(() => SortOrderSchema).optional(),
+    license_number: z.lazy(() => SortOrderSchema).optional(),
+    is_active: z.lazy(() => SortOrderSchema).optional(),
+    created_at: z.lazy(() => SortOrderSchema).optional(),
+    updated_at: z.lazy(() => SortOrderSchema).optional(),
   });
 
 export const DriverMinOrderByAggregateInputSchema: z.ZodType<Prisma.DriverMinOrderByAggregateInput> =
@@ -3235,10 +4305,10 @@ export const DriverMinOrderByAggregateInputSchema: z.ZodType<Prisma.DriverMinOrd
     id: z.lazy(() => SortOrderSchema).optional(),
     companyId: z.lazy(() => SortOrderSchema).optional(),
     name: z.lazy(() => SortOrderSchema).optional(),
-    licenseNumber: z.lazy(() => SortOrderSchema).optional(),
-    isActive: z.lazy(() => SortOrderSchema).optional(),
-    createdAt: z.lazy(() => SortOrderSchema).optional(),
-    updatedAt: z.lazy(() => SortOrderSchema).optional(),
+    license_number: z.lazy(() => SortOrderSchema).optional(),
+    is_active: z.lazy(() => SortOrderSchema).optional(),
+    created_at: z.lazy(() => SortOrderSchema).optional(),
+    updated_at: z.lazy(() => SortOrderSchema).optional(),
   });
 
 export const EnumUserRoleFilterSchema: z.ZodType<Prisma.EnumUserRoleFilter> =
@@ -3260,6 +4330,30 @@ export const EnumUserRoleFilterSchema: z.ZodType<Prisma.EnumUserRoleFilter> =
       .optional(),
   });
 
+export const DateTimeNullableFilterSchema: z.ZodType<Prisma.DateTimeNullableFilter> =
+  z.strictObject({
+    equals: z.coerce.date().optional().nullable(),
+    in: z.coerce.date().array().optional().nullable(),
+    notIn: z.coerce.date().array().optional().nullable(),
+    lt: z.coerce.date().optional(),
+    lte: z.coerce.date().optional(),
+    gt: z.coerce.date().optional(),
+    gte: z.coerce.date().optional(),
+    not: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NestedDateTimeNullableFilterSchema),
+      ])
+      .optional()
+      .nullable(),
+  });
+
+export const UserIdCompanyIdCompoundUniqueInputSchema: z.ZodType<Prisma.UserIdCompanyIdCompoundUniqueInput> =
+  z.strictObject({
+    id: z.string(),
+    companyId: z.string(),
+  });
+
 export const UserCountOrderByAggregateInputSchema: z.ZodType<Prisma.UserCountOrderByAggregateInput> =
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
@@ -3269,6 +4363,8 @@ export const UserCountOrderByAggregateInputSchema: z.ZodType<Prisma.UserCountOrd
     passwordHash: z.lazy(() => SortOrderSchema).optional(),
     role: z.lazy(() => SortOrderSchema).optional(),
     isActive: z.lazy(() => SortOrderSchema).optional(),
+    resetPasswordToken: z.lazy(() => SortOrderSchema).optional(),
+    resetPasswordExpires: z.lazy(() => SortOrderSchema).optional(),
     createdAt: z.lazy(() => SortOrderSchema).optional(),
   });
 
@@ -3281,6 +4377,8 @@ export const UserMaxOrderByAggregateInputSchema: z.ZodType<Prisma.UserMaxOrderBy
     passwordHash: z.lazy(() => SortOrderSchema).optional(),
     role: z.lazy(() => SortOrderSchema).optional(),
     isActive: z.lazy(() => SortOrderSchema).optional(),
+    resetPasswordToken: z.lazy(() => SortOrderSchema).optional(),
+    resetPasswordExpires: z.lazy(() => SortOrderSchema).optional(),
     createdAt: z.lazy(() => SortOrderSchema).optional(),
   });
 
@@ -3293,6 +4391,8 @@ export const UserMinOrderByAggregateInputSchema: z.ZodType<Prisma.UserMinOrderBy
     passwordHash: z.lazy(() => SortOrderSchema).optional(),
     role: z.lazy(() => SortOrderSchema).optional(),
     isActive: z.lazy(() => SortOrderSchema).optional(),
+    resetPasswordToken: z.lazy(() => SortOrderSchema).optional(),
+    resetPasswordExpires: z.lazy(() => SortOrderSchema).optional(),
     createdAt: z.lazy(() => SortOrderSchema).optional(),
   });
 
@@ -3316,6 +4416,27 @@ export const EnumUserRoleWithAggregatesFilterSchema: z.ZodType<Prisma.EnumUserRo
     _count: z.lazy(() => NestedIntFilterSchema).optional(),
     _min: z.lazy(() => NestedEnumUserRoleFilterSchema).optional(),
     _max: z.lazy(() => NestedEnumUserRoleFilterSchema).optional(),
+  });
+
+export const DateTimeNullableWithAggregatesFilterSchema: z.ZodType<Prisma.DateTimeNullableWithAggregatesFilter> =
+  z.strictObject({
+    equals: z.coerce.date().optional().nullable(),
+    in: z.coerce.date().array().optional().nullable(),
+    notIn: z.coerce.date().array().optional().nullable(),
+    lt: z.coerce.date().optional(),
+    lte: z.coerce.date().optional(),
+    gt: z.coerce.date().optional(),
+    gte: z.coerce.date().optional(),
+    not: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NestedDateTimeNullableWithAggregatesFilterSchema),
+      ])
+      .optional()
+      .nullable(),
+    _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+    _min: z.lazy(() => NestedDateTimeNullableFilterSchema).optional(),
+    _max: z.lazy(() => NestedDateTimeNullableFilterSchema).optional(),
   });
 
 export const EnumEventTypeFilterSchema: z.ZodType<Prisma.EnumEventTypeFilter> =
@@ -3421,91 +4542,79 @@ export const BoolNullableFilterSchema: z.ZodType<Prisma.BoolNullableFilter> =
       .nullable(),
   });
 
-export const VehicleNullableScalarRelationFilterSchema: z.ZodType<Prisma.VehicleNullableScalarRelationFilter> =
-  z.strictObject({
-    is: z
-      .lazy(() => VehicleWhereInputSchema)
-      .optional()
-      .nullable(),
-    isNot: z
-      .lazy(() => VehicleWhereInputSchema)
-      .optional()
-      .nullable(),
-  });
-
-export const DriverNullableScalarRelationFilterSchema: z.ZodType<Prisma.DriverNullableScalarRelationFilter> =
-  z.strictObject({
-    is: z
-      .lazy(() => DriverWhereInputSchema)
-      .optional()
-      .nullable(),
-    isNot: z
-      .lazy(() => DriverWhereInputSchema)
-      .optional()
-      .nullable(),
-  });
-
 export const UserScalarRelationFilterSchema: z.ZodType<Prisma.UserScalarRelationFilter> =
   z.strictObject({
     is: z.lazy(() => UserWhereInputSchema).optional(),
     isNot: z.lazy(() => UserWhereInputSchema).optional(),
   });
 
+export const InspectionDetailListRelationFilterSchema: z.ZodType<Prisma.InspectionDetailListRelationFilter> =
+  z.strictObject({
+    every: z.lazy(() => InspectionDetailWhereInputSchema).optional(),
+    some: z.lazy(() => InspectionDetailWhereInputSchema).optional(),
+    none: z.lazy(() => InspectionDetailWhereInputSchema).optional(),
+  });
+
+export const InspectionDetailOrderByRelationAggregateInputSchema: z.ZodType<Prisma.InspectionDetailOrderByRelationAggregateInput> =
+  z.strictObject({
+    _count: z.lazy(() => SortOrderSchema).optional(),
+  });
+
 export const OperationalEventCountOrderByAggregateInputSchema: z.ZodType<Prisma.OperationalEventCountOrderByAggregateInput> =
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
-    companyId: z.lazy(() => SortOrderSchema).optional(),
-    vehicleId: z.lazy(() => SortOrderSchema).optional(),
-    driverId: z.lazy(() => SortOrderSchema).optional(),
-    eventType: z.lazy(() => SortOrderSchema).optional(),
-    eventDatetime: z.lazy(() => SortOrderSchema).optional(),
+    company_id: z.lazy(() => SortOrderSchema).optional(),
+    vehicle_id: z.lazy(() => SortOrderSchema).optional(),
+    driver_id: z.lazy(() => SortOrderSchema).optional(),
+    event_type: z.lazy(() => SortOrderSchema).optional(),
+    event_datetime: z.lazy(() => SortOrderSchema).optional(),
     location: z.lazy(() => SortOrderSchema).optional(),
     context: z.lazy(() => SortOrderSchema).optional(),
-    generalResult: z.lazy(() => SortOrderSchema).optional(),
-    eSignature: z.lazy(() => SortOrderSchema).optional(),
-    finalObservations: z.lazy(() => SortOrderSchema).optional(),
-    isConfirmed: z.lazy(() => SortOrderSchema).optional(),
-    createdByUserId: z.lazy(() => SortOrderSchema).optional(),
-    createdAt: z.lazy(() => SortOrderSchema).optional(),
-    updatedAt: z.lazy(() => SortOrderSchema).optional(),
+    general_result: z.lazy(() => SortOrderSchema).optional(),
+    e_signature: z.lazy(() => SortOrderSchema).optional(),
+    final_observations: z.lazy(() => SortOrderSchema).optional(),
+    is_confirmed: z.lazy(() => SortOrderSchema).optional(),
+    created_by_user_id: z.lazy(() => SortOrderSchema).optional(),
+    created_at: z.lazy(() => SortOrderSchema).optional(),
+    updated_at: z.lazy(() => SortOrderSchema).optional(),
   });
 
 export const OperationalEventMaxOrderByAggregateInputSchema: z.ZodType<Prisma.OperationalEventMaxOrderByAggregateInput> =
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
-    companyId: z.lazy(() => SortOrderSchema).optional(),
-    vehicleId: z.lazy(() => SortOrderSchema).optional(),
-    driverId: z.lazy(() => SortOrderSchema).optional(),
-    eventType: z.lazy(() => SortOrderSchema).optional(),
-    eventDatetime: z.lazy(() => SortOrderSchema).optional(),
+    company_id: z.lazy(() => SortOrderSchema).optional(),
+    vehicle_id: z.lazy(() => SortOrderSchema).optional(),
+    driver_id: z.lazy(() => SortOrderSchema).optional(),
+    event_type: z.lazy(() => SortOrderSchema).optional(),
+    event_datetime: z.lazy(() => SortOrderSchema).optional(),
     location: z.lazy(() => SortOrderSchema).optional(),
     context: z.lazy(() => SortOrderSchema).optional(),
-    generalResult: z.lazy(() => SortOrderSchema).optional(),
-    eSignature: z.lazy(() => SortOrderSchema).optional(),
-    finalObservations: z.lazy(() => SortOrderSchema).optional(),
-    isConfirmed: z.lazy(() => SortOrderSchema).optional(),
-    createdByUserId: z.lazy(() => SortOrderSchema).optional(),
-    createdAt: z.lazy(() => SortOrderSchema).optional(),
-    updatedAt: z.lazy(() => SortOrderSchema).optional(),
+    general_result: z.lazy(() => SortOrderSchema).optional(),
+    e_signature: z.lazy(() => SortOrderSchema).optional(),
+    final_observations: z.lazy(() => SortOrderSchema).optional(),
+    is_confirmed: z.lazy(() => SortOrderSchema).optional(),
+    created_by_user_id: z.lazy(() => SortOrderSchema).optional(),
+    created_at: z.lazy(() => SortOrderSchema).optional(),
+    updated_at: z.lazy(() => SortOrderSchema).optional(),
   });
 
 export const OperationalEventMinOrderByAggregateInputSchema: z.ZodType<Prisma.OperationalEventMinOrderByAggregateInput> =
   z.strictObject({
     id: z.lazy(() => SortOrderSchema).optional(),
-    companyId: z.lazy(() => SortOrderSchema).optional(),
-    vehicleId: z.lazy(() => SortOrderSchema).optional(),
-    driverId: z.lazy(() => SortOrderSchema).optional(),
-    eventType: z.lazy(() => SortOrderSchema).optional(),
-    eventDatetime: z.lazy(() => SortOrderSchema).optional(),
+    company_id: z.lazy(() => SortOrderSchema).optional(),
+    vehicle_id: z.lazy(() => SortOrderSchema).optional(),
+    driver_id: z.lazy(() => SortOrderSchema).optional(),
+    event_type: z.lazy(() => SortOrderSchema).optional(),
+    event_datetime: z.lazy(() => SortOrderSchema).optional(),
     location: z.lazy(() => SortOrderSchema).optional(),
     context: z.lazy(() => SortOrderSchema).optional(),
-    generalResult: z.lazy(() => SortOrderSchema).optional(),
-    eSignature: z.lazy(() => SortOrderSchema).optional(),
-    finalObservations: z.lazy(() => SortOrderSchema).optional(),
-    isConfirmed: z.lazy(() => SortOrderSchema).optional(),
-    createdByUserId: z.lazy(() => SortOrderSchema).optional(),
-    createdAt: z.lazy(() => SortOrderSchema).optional(),
-    updatedAt: z.lazy(() => SortOrderSchema).optional(),
+    general_result: z.lazy(() => SortOrderSchema).optional(),
+    e_signature: z.lazy(() => SortOrderSchema).optional(),
+    final_observations: z.lazy(() => SortOrderSchema).optional(),
+    is_confirmed: z.lazy(() => SortOrderSchema).optional(),
+    created_by_user_id: z.lazy(() => SortOrderSchema).optional(),
+    created_at: z.lazy(() => SortOrderSchema).optional(),
+    updated_at: z.lazy(() => SortOrderSchema).optional(),
   });
 
 export const EnumEventTypeWithAggregatesFilterSchema: z.ZodType<Prisma.EnumEventTypeWithAggregatesFilter> =
@@ -3627,6 +4736,165 @@ export const BoolNullableWithAggregatesFilterSchema: z.ZodType<Prisma.BoolNullab
     _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
     _min: z.lazy(() => NestedBoolNullableFilterSchema).optional(),
     _max: z.lazy(() => NestedBoolNullableFilterSchema).optional(),
+  });
+
+export const EnumTypeInspectionNullableFilterSchema: z.ZodType<Prisma.EnumTypeInspectionNullableFilter> =
+  z.strictObject({
+    equals: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+    in: z
+      .lazy(() => TypeInspectionSchema)
+      .array()
+      .optional()
+      .nullable(),
+    notIn: z
+      .lazy(() => TypeInspectionSchema)
+      .array()
+      .optional()
+      .nullable(),
+    not: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(() => NestedEnumTypeInspectionNullableFilterSchema),
+      ])
+      .optional()
+      .nullable(),
+  });
+
+export const EnumInspectionStatusNullableFilterSchema: z.ZodType<Prisma.EnumInspectionStatusNullableFilter> =
+  z.strictObject({
+    equals: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+    in: z
+      .lazy(() => InspectionStatusSchema)
+      .array()
+      .optional()
+      .nullable(),
+    notIn: z
+      .lazy(() => InspectionStatusSchema)
+      .array()
+      .optional()
+      .nullable(),
+    not: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(() => NestedEnumInspectionStatusNullableFilterSchema),
+      ])
+      .optional()
+      .nullable(),
+  });
+
+export const OperationalEventScalarRelationFilterSchema: z.ZodType<Prisma.OperationalEventScalarRelationFilter> =
+  z.strictObject({
+    is: z.lazy(() => OperationalEventWhereInputSchema).optional(),
+    isNot: z.lazy(() => OperationalEventWhereInputSchema).optional(),
+  });
+
+export const InspectionDetailCountOrderByAggregateInputSchema: z.ZodType<Prisma.InspectionDetailCountOrderByAggregateInput> =
+  z.strictObject({
+    id: z.lazy(() => SortOrderSchema).optional(),
+    event_id: z.lazy(() => SortOrderSchema).optional(),
+    type_inspection: z.lazy(() => SortOrderSchema).optional(),
+    documentation_verified: z.lazy(() => SortOrderSchema).optional(),
+    vehicle_condition: z.lazy(() => SortOrderSchema).optional(),
+    lights_ok: z.lazy(() => SortOrderSchema).optional(),
+    tires_ok: z.lazy(() => SortOrderSchema).optional(),
+    brakes_ok: z.lazy(() => SortOrderSchema).optional(),
+    safety_elements_ok: z.lazy(() => SortOrderSchema).optional(),
+  });
+
+export const InspectionDetailMaxOrderByAggregateInputSchema: z.ZodType<Prisma.InspectionDetailMaxOrderByAggregateInput> =
+  z.strictObject({
+    id: z.lazy(() => SortOrderSchema).optional(),
+    event_id: z.lazy(() => SortOrderSchema).optional(),
+    type_inspection: z.lazy(() => SortOrderSchema).optional(),
+    documentation_verified: z.lazy(() => SortOrderSchema).optional(),
+    vehicle_condition: z.lazy(() => SortOrderSchema).optional(),
+    lights_ok: z.lazy(() => SortOrderSchema).optional(),
+    tires_ok: z.lazy(() => SortOrderSchema).optional(),
+    brakes_ok: z.lazy(() => SortOrderSchema).optional(),
+    safety_elements_ok: z.lazy(() => SortOrderSchema).optional(),
+  });
+
+export const InspectionDetailMinOrderByAggregateInputSchema: z.ZodType<Prisma.InspectionDetailMinOrderByAggregateInput> =
+  z.strictObject({
+    id: z.lazy(() => SortOrderSchema).optional(),
+    event_id: z.lazy(() => SortOrderSchema).optional(),
+    type_inspection: z.lazy(() => SortOrderSchema).optional(),
+    documentation_verified: z.lazy(() => SortOrderSchema).optional(),
+    vehicle_condition: z.lazy(() => SortOrderSchema).optional(),
+    lights_ok: z.lazy(() => SortOrderSchema).optional(),
+    tires_ok: z.lazy(() => SortOrderSchema).optional(),
+    brakes_ok: z.lazy(() => SortOrderSchema).optional(),
+    safety_elements_ok: z.lazy(() => SortOrderSchema).optional(),
+  });
+
+export const EnumTypeInspectionNullableWithAggregatesFilterSchema: z.ZodType<Prisma.EnumTypeInspectionNullableWithAggregatesFilter> =
+  z.strictObject({
+    equals: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+    in: z
+      .lazy(() => TypeInspectionSchema)
+      .array()
+      .optional()
+      .nullable(),
+    notIn: z
+      .lazy(() => TypeInspectionSchema)
+      .array()
+      .optional()
+      .nullable(),
+    not: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(
+          () => NestedEnumTypeInspectionNullableWithAggregatesFilterSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+    _min: z.lazy(() => NestedEnumTypeInspectionNullableFilterSchema).optional(),
+    _max: z.lazy(() => NestedEnumTypeInspectionNullableFilterSchema).optional(),
+  });
+
+export const EnumInspectionStatusNullableWithAggregatesFilterSchema: z.ZodType<Prisma.EnumInspectionStatusNullableWithAggregatesFilter> =
+  z.strictObject({
+    equals: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+    in: z
+      .lazy(() => InspectionStatusSchema)
+      .array()
+      .optional()
+      .nullable(),
+    notIn: z
+      .lazy(() => InspectionStatusSchema)
+      .array()
+      .optional()
+      .nullable(),
+    not: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(
+          () => NestedEnumInspectionStatusNullableWithAggregatesFilterSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+    _min: z
+      .lazy(() => NestedEnumInspectionStatusNullableFilterSchema)
+      .optional(),
+    _max: z
+      .lazy(() => NestedEnumInspectionStatusNullableFilterSchema)
+      .optional(),
   });
 
 export const VehicleCreateNestedManyWithoutCompanyInputSchema: z.ZodType<Prisma.VehicleCreateNestedManyWithoutCompanyInput> =
@@ -4514,6 +5782,20 @@ export const CompanyCreateNestedOneWithoutVehiclesInputSchema: z.ZodType<Prisma.
     connect: z.lazy(() => CompanyWhereUniqueInputSchema).optional(),
   });
 
+export const DriverCreateNestedOneWithoutVehicleInputSchema: z.ZodType<Prisma.DriverCreateNestedOneWithoutVehicleInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(() => DriverCreateWithoutVehicleInputSchema),
+        z.lazy(() => DriverUncheckedCreateWithoutVehicleInputSchema),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .lazy(() => DriverCreateOrConnectWithoutVehicleInputSchema)
+      .optional(),
+    connect: z.lazy(() => DriverWhereUniqueInputSchema).optional(),
+  });
+
 export const OperationalEventCreateNestedManyWithoutVehicleInputSchema: z.ZodType<Prisma.OperationalEventCreateNestedManyWithoutVehicleInput> =
   z.strictObject({
     create: z
@@ -4599,6 +5881,34 @@ export const CompanyUpdateOneRequiredWithoutVehiclesNestedInputSchema: z.ZodType
         z.lazy(() => CompanyUpdateToOneWithWhereWithoutVehiclesInputSchema),
         z.lazy(() => CompanyUpdateWithoutVehiclesInputSchema),
         z.lazy(() => CompanyUncheckedUpdateWithoutVehiclesInputSchema),
+      ])
+      .optional(),
+  });
+
+export const DriverUpdateOneWithoutVehicleNestedInputSchema: z.ZodType<Prisma.DriverUpdateOneWithoutVehicleNestedInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(() => DriverCreateWithoutVehicleInputSchema),
+        z.lazy(() => DriverUncheckedCreateWithoutVehicleInputSchema),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .lazy(() => DriverCreateOrConnectWithoutVehicleInputSchema)
+      .optional(),
+    upsert: z.lazy(() => DriverUpsertWithoutVehicleInputSchema).optional(),
+    disconnect: z
+      .union([z.boolean(), z.lazy(() => DriverWhereInputSchema)])
+      .optional(),
+    delete: z
+      .union([z.boolean(), z.lazy(() => DriverWhereInputSchema)])
+      .optional(),
+    connect: z.lazy(() => DriverWhereUniqueInputSchema).optional(),
+    update: z
+      .union([
+        z.lazy(() => DriverUpdateToOneWithWhereWithoutVehicleInputSchema),
+        z.lazy(() => DriverUpdateWithoutVehicleInputSchema),
+        z.lazy(() => DriverUncheckedUpdateWithoutVehicleInputSchema),
       ])
       .optional(),
   });
@@ -4803,6 +6113,20 @@ export const CompanyCreateNestedOneWithoutDriversInputSchema: z.ZodType<Prisma.C
     connect: z.lazy(() => CompanyWhereUniqueInputSchema).optional(),
   });
 
+export const VehicleCreateNestedOneWithoutDriverInputSchema: z.ZodType<Prisma.VehicleCreateNestedOneWithoutDriverInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(() => VehicleCreateWithoutDriverInputSchema),
+        z.lazy(() => VehicleUncheckedCreateWithoutDriverInputSchema),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .lazy(() => VehicleCreateOrConnectWithoutDriverInputSchema)
+      .optional(),
+    connect: z.lazy(() => VehicleWhereUniqueInputSchema).optional(),
+  });
+
 export const OperationalEventCreateNestedManyWithoutDriverInputSchema: z.ZodType<Prisma.OperationalEventCreateNestedManyWithoutDriverInput> =
   z.strictObject({
     create: z
@@ -4832,6 +6156,20 @@ export const OperationalEventCreateNestedManyWithoutDriverInputSchema: z.ZodType
         z.lazy(() => OperationalEventWhereUniqueInputSchema).array(),
       ])
       .optional(),
+  });
+
+export const VehicleUncheckedCreateNestedOneWithoutDriverInputSchema: z.ZodType<Prisma.VehicleUncheckedCreateNestedOneWithoutDriverInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(() => VehicleCreateWithoutDriverInputSchema),
+        z.lazy(() => VehicleUncheckedCreateWithoutDriverInputSchema),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .lazy(() => VehicleCreateOrConnectWithoutDriverInputSchema)
+      .optional(),
+    connect: z.lazy(() => VehicleWhereUniqueInputSchema).optional(),
   });
 
 export const OperationalEventUncheckedCreateNestedManyWithoutDriverInputSchema: z.ZodType<Prisma.OperationalEventUncheckedCreateNestedManyWithoutDriverInput> =
@@ -4883,6 +6221,34 @@ export const CompanyUpdateOneRequiredWithoutDriversNestedInputSchema: z.ZodType<
         z.lazy(() => CompanyUpdateToOneWithWhereWithoutDriversInputSchema),
         z.lazy(() => CompanyUpdateWithoutDriversInputSchema),
         z.lazy(() => CompanyUncheckedUpdateWithoutDriversInputSchema),
+      ])
+      .optional(),
+  });
+
+export const VehicleUpdateOneWithoutDriverNestedInputSchema: z.ZodType<Prisma.VehicleUpdateOneWithoutDriverNestedInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(() => VehicleCreateWithoutDriverInputSchema),
+        z.lazy(() => VehicleUncheckedCreateWithoutDriverInputSchema),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .lazy(() => VehicleCreateOrConnectWithoutDriverInputSchema)
+      .optional(),
+    upsert: z.lazy(() => VehicleUpsertWithoutDriverInputSchema).optional(),
+    disconnect: z
+      .union([z.boolean(), z.lazy(() => VehicleWhereInputSchema)])
+      .optional(),
+    delete: z
+      .union([z.boolean(), z.lazy(() => VehicleWhereInputSchema)])
+      .optional(),
+    connect: z.lazy(() => VehicleWhereUniqueInputSchema).optional(),
+    update: z
+      .union([
+        z.lazy(() => VehicleUpdateToOneWithWhereWithoutDriverInputSchema),
+        z.lazy(() => VehicleUpdateWithoutDriverInputSchema),
+        z.lazy(() => VehicleUncheckedUpdateWithoutDriverInputSchema),
       ])
       .optional(),
   });
@@ -4974,6 +6340,34 @@ export const OperationalEventUpdateManyWithoutDriverNestedInputSchema: z.ZodType
       .union([
         z.lazy(() => OperationalEventScalarWhereInputSchema),
         z.lazy(() => OperationalEventScalarWhereInputSchema).array(),
+      ])
+      .optional(),
+  });
+
+export const VehicleUncheckedUpdateOneWithoutDriverNestedInputSchema: z.ZodType<Prisma.VehicleUncheckedUpdateOneWithoutDriverNestedInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(() => VehicleCreateWithoutDriverInputSchema),
+        z.lazy(() => VehicleUncheckedCreateWithoutDriverInputSchema),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .lazy(() => VehicleCreateOrConnectWithoutDriverInputSchema)
+      .optional(),
+    upsert: z.lazy(() => VehicleUpsertWithoutDriverInputSchema).optional(),
+    disconnect: z
+      .union([z.boolean(), z.lazy(() => VehicleWhereInputSchema)])
+      .optional(),
+    delete: z
+      .union([z.boolean(), z.lazy(() => VehicleWhereInputSchema)])
+      .optional(),
+    connect: z.lazy(() => VehicleWhereUniqueInputSchema).optional(),
+    update: z
+      .union([
+        z.lazy(() => VehicleUpdateToOneWithWhereWithoutDriverInputSchema),
+        z.lazy(() => VehicleUpdateWithoutDriverInputSchema),
+        z.lazy(() => VehicleUncheckedUpdateWithoutDriverInputSchema),
       ])
       .optional(),
   });
@@ -5164,6 +6558,11 @@ export const OperationalEventUncheckedCreateNestedManyWithoutCreatedByInputSchem
 export const EnumUserRoleFieldUpdateOperationsInputSchema: z.ZodType<Prisma.EnumUserRoleFieldUpdateOperationsInput> =
   z.strictObject({
     set: z.lazy(() => UserRoleSchema).optional(),
+  });
+
+export const NullableDateTimeFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableDateTimeFieldUpdateOperationsInput> =
+  z.strictObject({
+    set: z.coerce.date().optional().nullable(),
   });
 
 export const CompanyUpdateOneRequiredWithoutUsersNestedInputSchema: z.ZodType<Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput> =
@@ -5396,60 +6795,126 @@ export const OperationalEventUncheckedUpdateManyWithoutCreatedByNestedInputSchem
       .optional(),
   });
 
-export const CompanyCreateNestedOneWithoutOperationalEventsInputSchema: z.ZodType<Prisma.CompanyCreateNestedOneWithoutOperationalEventsInput> =
+export const CompanyCreateNestedOneWithoutOperational_eventsInputSchema: z.ZodType<Prisma.CompanyCreateNestedOneWithoutOperational_eventsInput> =
   z.strictObject({
     create: z
       .union([
-        z.lazy(() => CompanyCreateWithoutOperationalEventsInputSchema),
-        z.lazy(() => CompanyUncheckedCreateWithoutOperationalEventsInputSchema),
+        z.lazy(() => CompanyCreateWithoutOperational_eventsInputSchema),
+        z.lazy(
+          () => CompanyUncheckedCreateWithoutOperational_eventsInputSchema,
+        ),
       ])
       .optional(),
     connectOrCreate: z
-      .lazy(() => CompanyCreateOrConnectWithoutOperationalEventsInputSchema)
+      .lazy(() => CompanyCreateOrConnectWithoutOperational_eventsInputSchema)
       .optional(),
     connect: z.lazy(() => CompanyWhereUniqueInputSchema).optional(),
   });
 
-export const VehicleCreateNestedOneWithoutOperationalEventsInputSchema: z.ZodType<Prisma.VehicleCreateNestedOneWithoutOperationalEventsInput> =
+export const VehicleCreateNestedOneWithoutOperational_eventsInputSchema: z.ZodType<Prisma.VehicleCreateNestedOneWithoutOperational_eventsInput> =
   z.strictObject({
     create: z
       .union([
-        z.lazy(() => VehicleCreateWithoutOperationalEventsInputSchema),
-        z.lazy(() => VehicleUncheckedCreateWithoutOperationalEventsInputSchema),
+        z.lazy(() => VehicleCreateWithoutOperational_eventsInputSchema),
+        z.lazy(
+          () => VehicleUncheckedCreateWithoutOperational_eventsInputSchema,
+        ),
       ])
       .optional(),
     connectOrCreate: z
-      .lazy(() => VehicleCreateOrConnectWithoutOperationalEventsInputSchema)
+      .lazy(() => VehicleCreateOrConnectWithoutOperational_eventsInputSchema)
       .optional(),
     connect: z.lazy(() => VehicleWhereUniqueInputSchema).optional(),
   });
 
-export const DriverCreateNestedOneWithoutOperationalEventsInputSchema: z.ZodType<Prisma.DriverCreateNestedOneWithoutOperationalEventsInput> =
+export const DriverCreateNestedOneWithoutOperational_eventsInputSchema: z.ZodType<Prisma.DriverCreateNestedOneWithoutOperational_eventsInput> =
   z.strictObject({
     create: z
       .union([
-        z.lazy(() => DriverCreateWithoutOperationalEventsInputSchema),
-        z.lazy(() => DriverUncheckedCreateWithoutOperationalEventsInputSchema),
+        z.lazy(() => DriverCreateWithoutOperational_eventsInputSchema),
+        z.lazy(() => DriverUncheckedCreateWithoutOperational_eventsInputSchema),
       ])
       .optional(),
     connectOrCreate: z
-      .lazy(() => DriverCreateOrConnectWithoutOperationalEventsInputSchema)
+      .lazy(() => DriverCreateOrConnectWithoutOperational_eventsInputSchema)
       .optional(),
     connect: z.lazy(() => DriverWhereUniqueInputSchema).optional(),
   });
 
-export const UserCreateNestedOneWithoutOperationalEventsInputSchema: z.ZodType<Prisma.UserCreateNestedOneWithoutOperationalEventsInput> =
+export const UserCreateNestedOneWithoutOperational_eventsInputSchema: z.ZodType<Prisma.UserCreateNestedOneWithoutOperational_eventsInput> =
   z.strictObject({
     create: z
       .union([
-        z.lazy(() => UserCreateWithoutOperationalEventsInputSchema),
-        z.lazy(() => UserUncheckedCreateWithoutOperationalEventsInputSchema),
+        z.lazy(() => UserCreateWithoutOperational_eventsInputSchema),
+        z.lazy(() => UserUncheckedCreateWithoutOperational_eventsInputSchema),
       ])
       .optional(),
     connectOrCreate: z
-      .lazy(() => UserCreateOrConnectWithoutOperationalEventsInputSchema)
+      .lazy(() => UserCreateOrConnectWithoutOperational_eventsInputSchema)
       .optional(),
     connect: z.lazy(() => UserWhereUniqueInputSchema).optional(),
+  });
+
+export const InspectionDetailCreateNestedManyWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailCreateNestedManyWithoutEventInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(() => InspectionDetailCreateWithoutEventInputSchema),
+        z.lazy(() => InspectionDetailCreateWithoutEventInputSchema).array(),
+        z.lazy(() => InspectionDetailUncheckedCreateWithoutEventInputSchema),
+        z
+          .lazy(() => InspectionDetailUncheckedCreateWithoutEventInputSchema)
+          .array(),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .union([
+        z.lazy(() => InspectionDetailCreateOrConnectWithoutEventInputSchema),
+        z
+          .lazy(() => InspectionDetailCreateOrConnectWithoutEventInputSchema)
+          .array(),
+      ])
+      .optional(),
+    createMany: z
+      .lazy(() => InspectionDetailCreateManyEventInputEnvelopeSchema)
+      .optional(),
+    connect: z
+      .union([
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema).array(),
+      ])
+      .optional(),
+  });
+
+export const InspectionDetailUncheckedCreateNestedManyWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailUncheckedCreateNestedManyWithoutEventInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(() => InspectionDetailCreateWithoutEventInputSchema),
+        z.lazy(() => InspectionDetailCreateWithoutEventInputSchema).array(),
+        z.lazy(() => InspectionDetailUncheckedCreateWithoutEventInputSchema),
+        z
+          .lazy(() => InspectionDetailUncheckedCreateWithoutEventInputSchema)
+          .array(),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .union([
+        z.lazy(() => InspectionDetailCreateOrConnectWithoutEventInputSchema),
+        z
+          .lazy(() => InspectionDetailCreateOrConnectWithoutEventInputSchema)
+          .array(),
+      ])
+      .optional(),
+    createMany: z
+      .lazy(() => InspectionDetailCreateManyEventInputEnvelopeSchema)
+      .optional(),
+    connect: z
+      .union([
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema).array(),
+      ])
+      .optional(),
   });
 
 export const EnumEventTypeFieldUpdateOperationsInputSchema: z.ZodType<Prisma.EnumEventTypeFieldUpdateOperationsInput> =
@@ -5486,45 +6951,51 @@ export const NullableBoolFieldUpdateOperationsInputSchema: z.ZodType<Prisma.Null
     set: z.boolean().optional().nullable(),
   });
 
-export const CompanyUpdateOneRequiredWithoutOperationalEventsNestedInputSchema: z.ZodType<Prisma.CompanyUpdateOneRequiredWithoutOperationalEventsNestedInput> =
+export const CompanyUpdateOneRequiredWithoutOperational_eventsNestedInputSchema: z.ZodType<Prisma.CompanyUpdateOneRequiredWithoutOperational_eventsNestedInput> =
   z.strictObject({
     create: z
       .union([
-        z.lazy(() => CompanyCreateWithoutOperationalEventsInputSchema),
-        z.lazy(() => CompanyUncheckedCreateWithoutOperationalEventsInputSchema),
+        z.lazy(() => CompanyCreateWithoutOperational_eventsInputSchema),
+        z.lazy(
+          () => CompanyUncheckedCreateWithoutOperational_eventsInputSchema,
+        ),
       ])
       .optional(),
     connectOrCreate: z
-      .lazy(() => CompanyCreateOrConnectWithoutOperationalEventsInputSchema)
+      .lazy(() => CompanyCreateOrConnectWithoutOperational_eventsInputSchema)
       .optional(),
     upsert: z
-      .lazy(() => CompanyUpsertWithoutOperationalEventsInputSchema)
+      .lazy(() => CompanyUpsertWithoutOperational_eventsInputSchema)
       .optional(),
     connect: z.lazy(() => CompanyWhereUniqueInputSchema).optional(),
     update: z
       .union([
         z.lazy(
-          () => CompanyUpdateToOneWithWhereWithoutOperationalEventsInputSchema,
+          () => CompanyUpdateToOneWithWhereWithoutOperational_eventsInputSchema,
         ),
-        z.lazy(() => CompanyUpdateWithoutOperationalEventsInputSchema),
-        z.lazy(() => CompanyUncheckedUpdateWithoutOperationalEventsInputSchema),
+        z.lazy(() => CompanyUpdateWithoutOperational_eventsInputSchema),
+        z.lazy(
+          () => CompanyUncheckedUpdateWithoutOperational_eventsInputSchema,
+        ),
       ])
       .optional(),
   });
 
-export const VehicleUpdateOneWithoutOperationalEventsNestedInputSchema: z.ZodType<Prisma.VehicleUpdateOneWithoutOperationalEventsNestedInput> =
+export const VehicleUpdateOneWithoutOperational_eventsNestedInputSchema: z.ZodType<Prisma.VehicleUpdateOneWithoutOperational_eventsNestedInput> =
   z.strictObject({
     create: z
       .union([
-        z.lazy(() => VehicleCreateWithoutOperationalEventsInputSchema),
-        z.lazy(() => VehicleUncheckedCreateWithoutOperationalEventsInputSchema),
+        z.lazy(() => VehicleCreateWithoutOperational_eventsInputSchema),
+        z.lazy(
+          () => VehicleUncheckedCreateWithoutOperational_eventsInputSchema,
+        ),
       ])
       .optional(),
     connectOrCreate: z
-      .lazy(() => VehicleCreateOrConnectWithoutOperationalEventsInputSchema)
+      .lazy(() => VehicleCreateOrConnectWithoutOperational_eventsInputSchema)
       .optional(),
     upsert: z
-      .lazy(() => VehicleUpsertWithoutOperationalEventsInputSchema)
+      .lazy(() => VehicleUpsertWithoutOperational_eventsInputSchema)
       .optional(),
     disconnect: z
       .union([z.boolean(), z.lazy(() => VehicleWhereInputSchema)])
@@ -5536,27 +7007,29 @@ export const VehicleUpdateOneWithoutOperationalEventsNestedInputSchema: z.ZodTyp
     update: z
       .union([
         z.lazy(
-          () => VehicleUpdateToOneWithWhereWithoutOperationalEventsInputSchema,
+          () => VehicleUpdateToOneWithWhereWithoutOperational_eventsInputSchema,
         ),
-        z.lazy(() => VehicleUpdateWithoutOperationalEventsInputSchema),
-        z.lazy(() => VehicleUncheckedUpdateWithoutOperationalEventsInputSchema),
+        z.lazy(() => VehicleUpdateWithoutOperational_eventsInputSchema),
+        z.lazy(
+          () => VehicleUncheckedUpdateWithoutOperational_eventsInputSchema,
+        ),
       ])
       .optional(),
   });
 
-export const DriverUpdateOneWithoutOperationalEventsNestedInputSchema: z.ZodType<Prisma.DriverUpdateOneWithoutOperationalEventsNestedInput> =
+export const DriverUpdateOneWithoutOperational_eventsNestedInputSchema: z.ZodType<Prisma.DriverUpdateOneWithoutOperational_eventsNestedInput> =
   z.strictObject({
     create: z
       .union([
-        z.lazy(() => DriverCreateWithoutOperationalEventsInputSchema),
-        z.lazy(() => DriverUncheckedCreateWithoutOperationalEventsInputSchema),
+        z.lazy(() => DriverCreateWithoutOperational_eventsInputSchema),
+        z.lazy(() => DriverUncheckedCreateWithoutOperational_eventsInputSchema),
       ])
       .optional(),
     connectOrCreate: z
-      .lazy(() => DriverCreateOrConnectWithoutOperationalEventsInputSchema)
+      .lazy(() => DriverCreateOrConnectWithoutOperational_eventsInputSchema)
       .optional(),
     upsert: z
-      .lazy(() => DriverUpsertWithoutOperationalEventsInputSchema)
+      .lazy(() => DriverUpsertWithoutOperational_eventsInputSchema)
       .optional(),
     disconnect: z
       .union([z.boolean(), z.lazy(() => DriverWhereInputSchema)])
@@ -5568,36 +7041,296 @@ export const DriverUpdateOneWithoutOperationalEventsNestedInputSchema: z.ZodType
     update: z
       .union([
         z.lazy(
-          () => DriverUpdateToOneWithWhereWithoutOperationalEventsInputSchema,
+          () => DriverUpdateToOneWithWhereWithoutOperational_eventsInputSchema,
         ),
-        z.lazy(() => DriverUpdateWithoutOperationalEventsInputSchema),
-        z.lazy(() => DriverUncheckedUpdateWithoutOperationalEventsInputSchema),
+        z.lazy(() => DriverUpdateWithoutOperational_eventsInputSchema),
+        z.lazy(() => DriverUncheckedUpdateWithoutOperational_eventsInputSchema),
       ])
       .optional(),
   });
 
-export const UserUpdateOneRequiredWithoutOperationalEventsNestedInputSchema: z.ZodType<Prisma.UserUpdateOneRequiredWithoutOperationalEventsNestedInput> =
+export const UserUpdateOneRequiredWithoutOperational_eventsNestedInputSchema: z.ZodType<Prisma.UserUpdateOneRequiredWithoutOperational_eventsNestedInput> =
   z.strictObject({
     create: z
       .union([
-        z.lazy(() => UserCreateWithoutOperationalEventsInputSchema),
-        z.lazy(() => UserUncheckedCreateWithoutOperationalEventsInputSchema),
+        z.lazy(() => UserCreateWithoutOperational_eventsInputSchema),
+        z.lazy(() => UserUncheckedCreateWithoutOperational_eventsInputSchema),
       ])
       .optional(),
     connectOrCreate: z
-      .lazy(() => UserCreateOrConnectWithoutOperationalEventsInputSchema)
+      .lazy(() => UserCreateOrConnectWithoutOperational_eventsInputSchema)
       .optional(),
     upsert: z
-      .lazy(() => UserUpsertWithoutOperationalEventsInputSchema)
+      .lazy(() => UserUpsertWithoutOperational_eventsInputSchema)
       .optional(),
     connect: z.lazy(() => UserWhereUniqueInputSchema).optional(),
     update: z
       .union([
         z.lazy(
-          () => UserUpdateToOneWithWhereWithoutOperationalEventsInputSchema,
+          () => UserUpdateToOneWithWhereWithoutOperational_eventsInputSchema,
         ),
-        z.lazy(() => UserUpdateWithoutOperationalEventsInputSchema),
-        z.lazy(() => UserUncheckedUpdateWithoutOperationalEventsInputSchema),
+        z.lazy(() => UserUpdateWithoutOperational_eventsInputSchema),
+        z.lazy(() => UserUncheckedUpdateWithoutOperational_eventsInputSchema),
+      ])
+      .optional(),
+  });
+
+export const InspectionDetailUpdateManyWithoutEventNestedInputSchema: z.ZodType<Prisma.InspectionDetailUpdateManyWithoutEventNestedInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(() => InspectionDetailCreateWithoutEventInputSchema),
+        z.lazy(() => InspectionDetailCreateWithoutEventInputSchema).array(),
+        z.lazy(() => InspectionDetailUncheckedCreateWithoutEventInputSchema),
+        z
+          .lazy(() => InspectionDetailUncheckedCreateWithoutEventInputSchema)
+          .array(),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .union([
+        z.lazy(() => InspectionDetailCreateOrConnectWithoutEventInputSchema),
+        z
+          .lazy(() => InspectionDetailCreateOrConnectWithoutEventInputSchema)
+          .array(),
+      ])
+      .optional(),
+    upsert: z
+      .union([
+        z.lazy(
+          () => InspectionDetailUpsertWithWhereUniqueWithoutEventInputSchema,
+        ),
+        z
+          .lazy(
+            () => InspectionDetailUpsertWithWhereUniqueWithoutEventInputSchema,
+          )
+          .array(),
+      ])
+      .optional(),
+    createMany: z
+      .lazy(() => InspectionDetailCreateManyEventInputEnvelopeSchema)
+      .optional(),
+    set: z
+      .union([
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema).array(),
+      ])
+      .optional(),
+    disconnect: z
+      .union([
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema).array(),
+      ])
+      .optional(),
+    delete: z
+      .union([
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema).array(),
+      ])
+      .optional(),
+    connect: z
+      .union([
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema).array(),
+      ])
+      .optional(),
+    update: z
+      .union([
+        z.lazy(
+          () => InspectionDetailUpdateWithWhereUniqueWithoutEventInputSchema,
+        ),
+        z
+          .lazy(
+            () => InspectionDetailUpdateWithWhereUniqueWithoutEventInputSchema,
+          )
+          .array(),
+      ])
+      .optional(),
+    updateMany: z
+      .union([
+        z.lazy(
+          () => InspectionDetailUpdateManyWithWhereWithoutEventInputSchema,
+        ),
+        z
+          .lazy(
+            () => InspectionDetailUpdateManyWithWhereWithoutEventInputSchema,
+          )
+          .array(),
+      ])
+      .optional(),
+    deleteMany: z
+      .union([
+        z.lazy(() => InspectionDetailScalarWhereInputSchema),
+        z.lazy(() => InspectionDetailScalarWhereInputSchema).array(),
+      ])
+      .optional(),
+  });
+
+export const InspectionDetailUncheckedUpdateManyWithoutEventNestedInputSchema: z.ZodType<Prisma.InspectionDetailUncheckedUpdateManyWithoutEventNestedInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(() => InspectionDetailCreateWithoutEventInputSchema),
+        z.lazy(() => InspectionDetailCreateWithoutEventInputSchema).array(),
+        z.lazy(() => InspectionDetailUncheckedCreateWithoutEventInputSchema),
+        z
+          .lazy(() => InspectionDetailUncheckedCreateWithoutEventInputSchema)
+          .array(),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .union([
+        z.lazy(() => InspectionDetailCreateOrConnectWithoutEventInputSchema),
+        z
+          .lazy(() => InspectionDetailCreateOrConnectWithoutEventInputSchema)
+          .array(),
+      ])
+      .optional(),
+    upsert: z
+      .union([
+        z.lazy(
+          () => InspectionDetailUpsertWithWhereUniqueWithoutEventInputSchema,
+        ),
+        z
+          .lazy(
+            () => InspectionDetailUpsertWithWhereUniqueWithoutEventInputSchema,
+          )
+          .array(),
+      ])
+      .optional(),
+    createMany: z
+      .lazy(() => InspectionDetailCreateManyEventInputEnvelopeSchema)
+      .optional(),
+    set: z
+      .union([
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema).array(),
+      ])
+      .optional(),
+    disconnect: z
+      .union([
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema).array(),
+      ])
+      .optional(),
+    delete: z
+      .union([
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema).array(),
+      ])
+      .optional(),
+    connect: z
+      .union([
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+        z.lazy(() => InspectionDetailWhereUniqueInputSchema).array(),
+      ])
+      .optional(),
+    update: z
+      .union([
+        z.lazy(
+          () => InspectionDetailUpdateWithWhereUniqueWithoutEventInputSchema,
+        ),
+        z
+          .lazy(
+            () => InspectionDetailUpdateWithWhereUniqueWithoutEventInputSchema,
+          )
+          .array(),
+      ])
+      .optional(),
+    updateMany: z
+      .union([
+        z.lazy(
+          () => InspectionDetailUpdateManyWithWhereWithoutEventInputSchema,
+        ),
+        z
+          .lazy(
+            () => InspectionDetailUpdateManyWithWhereWithoutEventInputSchema,
+          )
+          .array(),
+      ])
+      .optional(),
+    deleteMany: z
+      .union([
+        z.lazy(() => InspectionDetailScalarWhereInputSchema),
+        z.lazy(() => InspectionDetailScalarWhereInputSchema).array(),
+      ])
+      .optional(),
+  });
+
+export const OperationalEventCreateNestedOneWithoutInspection_detailsInputSchema: z.ZodType<Prisma.OperationalEventCreateNestedOneWithoutInspection_detailsInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(
+          () => OperationalEventCreateWithoutInspection_detailsInputSchema,
+        ),
+        z.lazy(
+          () =>
+            OperationalEventUncheckedCreateWithoutInspection_detailsInputSchema,
+        ),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .lazy(
+        () =>
+          OperationalEventCreateOrConnectWithoutInspection_detailsInputSchema,
+      )
+      .optional(),
+    connect: z.lazy(() => OperationalEventWhereUniqueInputSchema).optional(),
+  });
+
+export const NullableEnumTypeInspectionFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableEnumTypeInspectionFieldUpdateOperationsInput> =
+  z.strictObject({
+    set: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+  });
+
+export const NullableEnumInspectionStatusFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableEnumInspectionStatusFieldUpdateOperationsInput> =
+  z.strictObject({
+    set: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+  });
+
+export const OperationalEventUpdateOneRequiredWithoutInspection_detailsNestedInputSchema: z.ZodType<Prisma.OperationalEventUpdateOneRequiredWithoutInspection_detailsNestedInput> =
+  z.strictObject({
+    create: z
+      .union([
+        z.lazy(
+          () => OperationalEventCreateWithoutInspection_detailsInputSchema,
+        ),
+        z.lazy(
+          () =>
+            OperationalEventUncheckedCreateWithoutInspection_detailsInputSchema,
+        ),
+      ])
+      .optional(),
+    connectOrCreate: z
+      .lazy(
+        () =>
+          OperationalEventCreateOrConnectWithoutInspection_detailsInputSchema,
+      )
+      .optional(),
+    upsert: z
+      .lazy(() => OperationalEventUpsertWithoutInspection_detailsInputSchema)
+      .optional(),
+    connect: z.lazy(() => OperationalEventWhereUniqueInputSchema).optional(),
+    update: z
+      .union([
+        z.lazy(
+          () =>
+            OperationalEventUpdateToOneWithWhereWithoutInspection_detailsInputSchema,
+        ),
+        z.lazy(
+          () => OperationalEventUpdateWithoutInspection_detailsInputSchema,
+        ),
+        z.lazy(
+          () =>
+            OperationalEventUncheckedUpdateWithoutInspection_detailsInputSchema,
+        ),
       ])
       .optional(),
   });
@@ -5780,6 +7513,24 @@ export const NestedEnumUserRoleFilterSchema: z.ZodType<Prisma.NestedEnumUserRole
       .optional(),
   });
 
+export const NestedDateTimeNullableFilterSchema: z.ZodType<Prisma.NestedDateTimeNullableFilter> =
+  z.strictObject({
+    equals: z.coerce.date().optional().nullable(),
+    in: z.coerce.date().array().optional().nullable(),
+    notIn: z.coerce.date().array().optional().nullable(),
+    lt: z.coerce.date().optional(),
+    lte: z.coerce.date().optional(),
+    gt: z.coerce.date().optional(),
+    gte: z.coerce.date().optional(),
+    not: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NestedDateTimeNullableFilterSchema),
+      ])
+      .optional()
+      .nullable(),
+  });
+
 export const NestedEnumUserRoleWithAggregatesFilterSchema: z.ZodType<Prisma.NestedEnumUserRoleWithAggregatesFilter> =
   z.strictObject({
     equals: z.lazy(() => UserRoleSchema).optional(),
@@ -5800,6 +7551,27 @@ export const NestedEnumUserRoleWithAggregatesFilterSchema: z.ZodType<Prisma.Nest
     _count: z.lazy(() => NestedIntFilterSchema).optional(),
     _min: z.lazy(() => NestedEnumUserRoleFilterSchema).optional(),
     _max: z.lazy(() => NestedEnumUserRoleFilterSchema).optional(),
+  });
+
+export const NestedDateTimeNullableWithAggregatesFilterSchema: z.ZodType<Prisma.NestedDateTimeNullableWithAggregatesFilter> =
+  z.strictObject({
+    equals: z.coerce.date().optional().nullable(),
+    in: z.coerce.date().array().optional().nullable(),
+    notIn: z.coerce.date().array().optional().nullable(),
+    lt: z.coerce.date().optional(),
+    lte: z.coerce.date().optional(),
+    gt: z.coerce.date().optional(),
+    gte: z.coerce.date().optional(),
+    not: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NestedDateTimeNullableWithAggregatesFilterSchema),
+      ])
+      .optional()
+      .nullable(),
+    _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+    _min: z.lazy(() => NestedDateTimeNullableFilterSchema).optional(),
+    _max: z.lazy(() => NestedDateTimeNullableFilterSchema).optional(),
   });
 
 export const NestedEnumEventTypeFilterSchema: z.ZodType<Prisma.NestedEnumEventTypeFilter> =
@@ -6026,15 +7798,132 @@ export const NestedBoolNullableWithAggregatesFilterSchema: z.ZodType<Prisma.Nest
     _max: z.lazy(() => NestedBoolNullableFilterSchema).optional(),
   });
 
+export const NestedEnumTypeInspectionNullableFilterSchema: z.ZodType<Prisma.NestedEnumTypeInspectionNullableFilter> =
+  z.strictObject({
+    equals: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+    in: z
+      .lazy(() => TypeInspectionSchema)
+      .array()
+      .optional()
+      .nullable(),
+    notIn: z
+      .lazy(() => TypeInspectionSchema)
+      .array()
+      .optional()
+      .nullable(),
+    not: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(() => NestedEnumTypeInspectionNullableFilterSchema),
+      ])
+      .optional()
+      .nullable(),
+  });
+
+export const NestedEnumInspectionStatusNullableFilterSchema: z.ZodType<Prisma.NestedEnumInspectionStatusNullableFilter> =
+  z.strictObject({
+    equals: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+    in: z
+      .lazy(() => InspectionStatusSchema)
+      .array()
+      .optional()
+      .nullable(),
+    notIn: z
+      .lazy(() => InspectionStatusSchema)
+      .array()
+      .optional()
+      .nullable(),
+    not: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(() => NestedEnumInspectionStatusNullableFilterSchema),
+      ])
+      .optional()
+      .nullable(),
+  });
+
+export const NestedEnumTypeInspectionNullableWithAggregatesFilterSchema: z.ZodType<Prisma.NestedEnumTypeInspectionNullableWithAggregatesFilter> =
+  z.strictObject({
+    equals: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+    in: z
+      .lazy(() => TypeInspectionSchema)
+      .array()
+      .optional()
+      .nullable(),
+    notIn: z
+      .lazy(() => TypeInspectionSchema)
+      .array()
+      .optional()
+      .nullable(),
+    not: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(
+          () => NestedEnumTypeInspectionNullableWithAggregatesFilterSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+    _min: z.lazy(() => NestedEnumTypeInspectionNullableFilterSchema).optional(),
+    _max: z.lazy(() => NestedEnumTypeInspectionNullableFilterSchema).optional(),
+  });
+
+export const NestedEnumInspectionStatusNullableWithAggregatesFilterSchema: z.ZodType<Prisma.NestedEnumInspectionStatusNullableWithAggregatesFilter> =
+  z.strictObject({
+    equals: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+    in: z
+      .lazy(() => InspectionStatusSchema)
+      .array()
+      .optional()
+      .nullable(),
+    notIn: z
+      .lazy(() => InspectionStatusSchema)
+      .array()
+      .optional()
+      .nullable(),
+    not: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(
+          () => NestedEnumInspectionStatusNullableWithAggregatesFilterSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+    _min: z
+      .lazy(() => NestedEnumInspectionStatusNullableFilterSchema)
+      .optional(),
+    _max: z
+      .lazy(() => NestedEnumInspectionStatusNullableFilterSchema)
+      .optional(),
+  });
+
 export const VehicleCreateWithoutCompanyInputSchema: z.ZodType<Prisma.VehicleCreateWithoutCompanyInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    unitNumber: z.string(),
+    unit_number: z.string().optional().nullable(),
     plate: z.string().optional().nullable(),
-    isActive: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
-    operationalEvents: z
+    driver: z
+      .lazy(() => DriverCreateNestedOneWithoutVehicleInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(() => OperationalEventCreateNestedManyWithoutVehicleInputSchema)
       .optional(),
   });
@@ -6042,12 +7931,13 @@ export const VehicleCreateWithoutCompanyInputSchema: z.ZodType<Prisma.VehicleCre
 export const VehicleUncheckedCreateWithoutCompanyInputSchema: z.ZodType<Prisma.VehicleUncheckedCreateWithoutCompanyInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    unitNumber: z.string(),
+    driverId: z.string().optional().nullable(),
+    unit_number: z.string().optional().nullable(),
     plate: z.string().optional().nullable(),
-    isActive: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedCreateNestedManyWithoutVehicleInputSchema,
@@ -6077,11 +7967,14 @@ export const DriverCreateWithoutCompanyInputSchema: z.ZodType<Prisma.DriverCreat
   z.strictObject({
     id: z.uuid().optional(),
     name: z.string(),
-    licenseNumber: z.string(),
-    isActive: z.boolean().optional(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
-    operationalEvents: z
+    license_number: z.string(),
+    is_active: z.boolean().optional(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    vehicle: z
+      .lazy(() => VehicleCreateNestedOneWithoutDriverInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(() => OperationalEventCreateNestedManyWithoutDriverInputSchema)
       .optional(),
   });
@@ -6090,11 +7983,14 @@ export const DriverUncheckedCreateWithoutCompanyInputSchema: z.ZodType<Prisma.Dr
   z.strictObject({
     id: z.uuid().optional(),
     name: z.string(),
-    licenseNumber: z.string(),
-    isActive: z.boolean().optional(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
-    operationalEvents: z
+    license_number: z.string(),
+    is_active: z.boolean().optional(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    vehicle: z
+      .lazy(() => VehicleUncheckedCreateNestedOneWithoutDriverInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(
         () => OperationalEventUncheckedCreateNestedManyWithoutDriverInputSchema,
       )
@@ -6127,8 +8023,10 @@ export const UserCreateWithoutCompanyInputSchema: z.ZodType<Prisma.UserCreateWit
     passwordHash: z.string(),
     role: z.lazy(() => UserRoleSchema).optional(),
     isActive: z.boolean().optional(),
+    resetPasswordToken: z.string().optional().nullable(),
+    resetPasswordExpires: z.coerce.date().optional().nullable(),
     createdAt: z.coerce.date().optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventCreateNestedManyWithoutCreatedByInputSchema)
       .optional(),
   });
@@ -6141,8 +8039,10 @@ export const UserUncheckedCreateWithoutCompanyInputSchema: z.ZodType<Prisma.User
     passwordHash: z.string(),
     role: z.lazy(() => UserRoleSchema).optional(),
     isActive: z.boolean().optional(),
+    resetPasswordToken: z.string().optional().nullable(),
+    resetPasswordExpires: z.coerce.date().optional().nullable(),
     createdAt: z.coerce.date().optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedCreateNestedManyWithoutCreatedByInputSchema,
@@ -6171,8 +8071,8 @@ export const UserCreateManyCompanyInputEnvelopeSchema: z.ZodType<Prisma.UserCrea
 export const OperationalEventCreateWithoutCompanyInputSchema: z.ZodType<Prisma.OperationalEventCreateWithoutCompanyInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -6181,33 +8081,36 @@ export const OperationalEventCreateWithoutCompanyInputSchema: z.ZodType<Prisma.O
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
     vehicle: z
-      .lazy(() => VehicleCreateNestedOneWithoutOperationalEventsInputSchema)
+      .lazy(() => VehicleCreateNestedOneWithoutOperational_eventsInputSchema)
       .optional(),
     driver: z
-      .lazy(() => DriverCreateNestedOneWithoutOperationalEventsInputSchema)
+      .lazy(() => DriverCreateNestedOneWithoutOperational_eventsInputSchema)
       .optional(),
     createdBy: z.lazy(
-      () => UserCreateNestedOneWithoutOperationalEventsInputSchema,
+      () => UserCreateNestedOneWithoutOperational_eventsInputSchema,
     ),
+    inspection_details: z
+      .lazy(() => InspectionDetailCreateNestedManyWithoutEventInputSchema)
+      .optional(),
   });
 
 export const OperationalEventUncheckedCreateWithoutCompanyInputSchema: z.ZodType<Prisma.OperationalEventUncheckedCreateWithoutCompanyInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    vehicleId: z.string().optional().nullable(),
-    driverId: z.string().optional().nullable(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    vehicle_id: z.string().optional().nullable(),
+    driver_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -6216,16 +8119,21 @@ export const OperationalEventUncheckedCreateWithoutCompanyInputSchema: z.ZodType
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdByUserId: z.string(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_by_user_id: z.string(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    inspection_details: z
+      .lazy(
+        () => InspectionDetailUncheckedCreateNestedManyWithoutEventInputSchema,
+      )
+      .optional(),
   });
 
 export const OperationalEventCreateOrConnectWithoutCompanyInputSchema: z.ZodType<Prisma.OperationalEventCreateOrConnectWithoutCompanyInput> =
@@ -6299,14 +8207,21 @@ export const VehicleScalarWhereInputSchema: z.ZodType<Prisma.VehicleScalarWhereI
     companyId: z
       .union([z.lazy(() => StringFilterSchema), z.string()])
       .optional(),
-    unitNumber: z
-      .union([z.lazy(() => StringFilterSchema), z.string()])
-      .optional(),
+    driverId: z
+      .union([z.lazy(() => StringNullableFilterSchema), z.string()])
+      .optional()
+      .nullable(),
+    unit_number: z
+      .union([z.lazy(() => StringNullableFilterSchema), z.string()])
+      .optional()
+      .nullable(),
     plate: z
       .union([z.lazy(() => StringNullableFilterSchema), z.string()])
       .optional()
       .nullable(),
-    isActive: z.union([z.lazy(() => BoolFilterSchema), z.boolean()]).optional(),
+    is_active: z
+      .union([z.lazy(() => BoolFilterSchema), z.boolean()])
+      .optional(),
     createdAt: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
@@ -6369,14 +8284,16 @@ export const DriverScalarWhereInputSchema: z.ZodType<Prisma.DriverScalarWhereInp
       .union([z.lazy(() => StringFilterSchema), z.string()])
       .optional(),
     name: z.union([z.lazy(() => StringFilterSchema), z.string()]).optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.lazy(() => StringFilterSchema), z.string()])
       .optional(),
-    isActive: z.union([z.lazy(() => BoolFilterSchema), z.boolean()]).optional(),
-    createdAt: z
+    is_active: z
+      .union([z.lazy(() => BoolFilterSchema), z.boolean()])
+      .optional(),
+    created_at: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
   });
@@ -6446,6 +8363,14 @@ export const UserScalarWhereInputSchema: z.ZodType<Prisma.UserScalarWhereInput> 
       ])
       .optional(),
     isActive: z.union([z.lazy(() => BoolFilterSchema), z.boolean()]).optional(),
+    resetPasswordToken: z
+      .union([z.lazy(() => StringNullableFilterSchema), z.string()])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([z.lazy(() => DateTimeNullableFilterSchema), z.coerce.date()])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
@@ -6503,24 +8428,24 @@ export const OperationalEventScalarWhereInputSchema: z.ZodType<Prisma.Operationa
       ])
       .optional(),
     id: z.union([z.lazy(() => StringFilterSchema), z.string()]).optional(),
-    companyId: z
+    company_id: z
       .union([z.lazy(() => StringFilterSchema), z.string()])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([z.lazy(() => StringNullableFilterSchema), z.string()])
       .optional()
       .nullable(),
-    driverId: z
+    driver_id: z
       .union([z.lazy(() => StringNullableFilterSchema), z.string()])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EnumEventTypeFilterSchema),
         z.lazy(() => EventTypeSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
     location: z
@@ -6537,32 +8462,32 @@ export const OperationalEventScalarWhereInputSchema: z.ZodType<Prisma.Operationa
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => EnumGeneralResultNullableFilterSchema),
         z.lazy(() => GeneralResultSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([z.lazy(() => StringNullableFilterSchema), z.string()])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([z.lazy(() => StringNullableFilterSchema), z.string()])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.lazy(() => StringFilterSchema), z.string()])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([z.lazy(() => DateTimeFilterSchema), z.coerce.date()])
       .optional(),
   });
@@ -6581,7 +8506,7 @@ export const CompanyCreateWithoutVehiclesInputSchema: z.ZodType<Prisma.CompanyCr
     users: z
       .lazy(() => UserCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
   });
@@ -6600,7 +8525,7 @@ export const CompanyUncheckedCreateWithoutVehiclesInputSchema: z.ZodType<Prisma.
     users: z
       .lazy(() => UserUncheckedCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedCreateNestedManyWithoutCompanyInputSchema,
@@ -6617,11 +8542,50 @@ export const CompanyCreateOrConnectWithoutVehiclesInputSchema: z.ZodType<Prisma.
     ]),
   });
 
+export const DriverCreateWithoutVehicleInputSchema: z.ZodType<Prisma.DriverCreateWithoutVehicleInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    name: z.string(),
+    license_number: z.string(),
+    is_active: z.boolean().optional(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    company: z.lazy(() => CompanyCreateNestedOneWithoutDriversInputSchema),
+    operational_events: z
+      .lazy(() => OperationalEventCreateNestedManyWithoutDriverInputSchema)
+      .optional(),
+  });
+
+export const DriverUncheckedCreateWithoutVehicleInputSchema: z.ZodType<Prisma.DriverUncheckedCreateWithoutVehicleInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    companyId: z.string(),
+    name: z.string(),
+    license_number: z.string(),
+    is_active: z.boolean().optional(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    operational_events: z
+      .lazy(
+        () => OperationalEventUncheckedCreateNestedManyWithoutDriverInputSchema,
+      )
+      .optional(),
+  });
+
+export const DriverCreateOrConnectWithoutVehicleInputSchema: z.ZodType<Prisma.DriverCreateOrConnectWithoutVehicleInput> =
+  z.strictObject({
+    where: z.lazy(() => DriverWhereUniqueInputSchema),
+    create: z.union([
+      z.lazy(() => DriverCreateWithoutVehicleInputSchema),
+      z.lazy(() => DriverUncheckedCreateWithoutVehicleInputSchema),
+    ]),
+  });
+
 export const OperationalEventCreateWithoutVehicleInputSchema: z.ZodType<Prisma.OperationalEventCreateWithoutVehicleInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -6630,33 +8594,36 @@ export const OperationalEventCreateWithoutVehicleInputSchema: z.ZodType<Prisma.O
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
     company: z.lazy(
-      () => CompanyCreateNestedOneWithoutOperationalEventsInputSchema,
+      () => CompanyCreateNestedOneWithoutOperational_eventsInputSchema,
     ),
     driver: z
-      .lazy(() => DriverCreateNestedOneWithoutOperationalEventsInputSchema)
+      .lazy(() => DriverCreateNestedOneWithoutOperational_eventsInputSchema)
       .optional(),
     createdBy: z.lazy(
-      () => UserCreateNestedOneWithoutOperationalEventsInputSchema,
+      () => UserCreateNestedOneWithoutOperational_eventsInputSchema,
     ),
+    inspection_details: z
+      .lazy(() => InspectionDetailCreateNestedManyWithoutEventInputSchema)
+      .optional(),
   });
 
 export const OperationalEventUncheckedCreateWithoutVehicleInputSchema: z.ZodType<Prisma.OperationalEventUncheckedCreateWithoutVehicleInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    companyId: z.string(),
-    driverId: z.string().optional().nullable(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    company_id: z.string(),
+    driver_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -6665,16 +8632,21 @@ export const OperationalEventUncheckedCreateWithoutVehicleInputSchema: z.ZodType
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdByUserId: z.string(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_by_user_id: z.string(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    inspection_details: z
+      .lazy(
+        () => InspectionDetailUncheckedCreateNestedManyWithoutEventInputSchema,
+      )
+      .optional(),
   });
 
 export const OperationalEventCreateOrConnectWithoutVehicleInputSchema: z.ZodType<Prisma.OperationalEventCreateOrConnectWithoutVehicleInput> =
@@ -6757,7 +8729,7 @@ export const CompanyUpdateWithoutVehiclesInputSchema: z.ZodType<Prisma.CompanyUp
     users: z
       .lazy(() => UserUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
   });
@@ -6802,10 +8774,102 @@ export const CompanyUncheckedUpdateWithoutVehiclesInputSchema: z.ZodType<Prisma.
     users: z
       .lazy(() => UserUncheckedUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedUpdateManyWithoutCompanyNestedInputSchema,
+      )
+      .optional(),
+  });
+
+export const DriverUpsertWithoutVehicleInputSchema: z.ZodType<Prisma.DriverUpsertWithoutVehicleInput> =
+  z.strictObject({
+    update: z.union([
+      z.lazy(() => DriverUpdateWithoutVehicleInputSchema),
+      z.lazy(() => DriverUncheckedUpdateWithoutVehicleInputSchema),
+    ]),
+    create: z.union([
+      z.lazy(() => DriverCreateWithoutVehicleInputSchema),
+      z.lazy(() => DriverUncheckedCreateWithoutVehicleInputSchema),
+    ]),
+    where: z.lazy(() => DriverWhereInputSchema).optional(),
+  });
+
+export const DriverUpdateToOneWithWhereWithoutVehicleInputSchema: z.ZodType<Prisma.DriverUpdateToOneWithWhereWithoutVehicleInput> =
+  z.strictObject({
+    where: z.lazy(() => DriverWhereInputSchema).optional(),
+    data: z.union([
+      z.lazy(() => DriverUpdateWithoutVehicleInputSchema),
+      z.lazy(() => DriverUncheckedUpdateWithoutVehicleInputSchema),
+    ]),
+  });
+
+export const DriverUpdateWithoutVehicleInputSchema: z.ZodType<Prisma.DriverUpdateWithoutVehicleInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    name: z
+      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    license_number: z
+      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    is_active: z
+      .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
+      .optional(),
+    created_at: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    updated_at: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    company: z
+      .lazy(() => CompanyUpdateOneRequiredWithoutDriversNestedInputSchema)
+      .optional(),
+    operational_events: z
+      .lazy(() => OperationalEventUpdateManyWithoutDriverNestedInputSchema)
+      .optional(),
+  });
+
+export const DriverUncheckedUpdateWithoutVehicleInputSchema: z.ZodType<Prisma.DriverUncheckedUpdateWithoutVehicleInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    companyId: z
+      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    name: z
+      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    license_number: z
+      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    is_active: z
+      .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
+      .optional(),
+    created_at: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    updated_at: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    operational_events: z
+      .lazy(
+        () => OperationalEventUncheckedUpdateManyWithoutDriverNestedInputSchema,
       )
       .optional(),
   });
@@ -6857,7 +8921,7 @@ export const CompanyCreateWithoutDriversInputSchema: z.ZodType<Prisma.CompanyCre
     users: z
       .lazy(() => UserCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
   });
@@ -6876,7 +8940,7 @@ export const CompanyUncheckedCreateWithoutDriversInputSchema: z.ZodType<Prisma.C
     users: z
       .lazy(() => UserUncheckedCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedCreateNestedManyWithoutCompanyInputSchema,
@@ -6893,11 +8957,51 @@ export const CompanyCreateOrConnectWithoutDriversInputSchema: z.ZodType<Prisma.C
     ]),
   });
 
+export const VehicleCreateWithoutDriverInputSchema: z.ZodType<Prisma.VehicleCreateWithoutDriverInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    unit_number: z.string().optional().nullable(),
+    plate: z.string().optional().nullable(),
+    is_active: z.boolean().optional(),
+    createdAt: z.coerce.date().optional(),
+    updatedAt: z.coerce.date().optional(),
+    company: z.lazy(() => CompanyCreateNestedOneWithoutVehiclesInputSchema),
+    operational_events: z
+      .lazy(() => OperationalEventCreateNestedManyWithoutVehicleInputSchema)
+      .optional(),
+  });
+
+export const VehicleUncheckedCreateWithoutDriverInputSchema: z.ZodType<Prisma.VehicleUncheckedCreateWithoutDriverInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    companyId: z.string(),
+    unit_number: z.string().optional().nullable(),
+    plate: z.string().optional().nullable(),
+    is_active: z.boolean().optional(),
+    createdAt: z.coerce.date().optional(),
+    updatedAt: z.coerce.date().optional(),
+    operational_events: z
+      .lazy(
+        () =>
+          OperationalEventUncheckedCreateNestedManyWithoutVehicleInputSchema,
+      )
+      .optional(),
+  });
+
+export const VehicleCreateOrConnectWithoutDriverInputSchema: z.ZodType<Prisma.VehicleCreateOrConnectWithoutDriverInput> =
+  z.strictObject({
+    where: z.lazy(() => VehicleWhereUniqueInputSchema),
+    create: z.union([
+      z.lazy(() => VehicleCreateWithoutDriverInputSchema),
+      z.lazy(() => VehicleUncheckedCreateWithoutDriverInputSchema),
+    ]),
+  });
+
 export const OperationalEventCreateWithoutDriverInputSchema: z.ZodType<Prisma.OperationalEventCreateWithoutDriverInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -6906,33 +9010,36 @@ export const OperationalEventCreateWithoutDriverInputSchema: z.ZodType<Prisma.Op
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
     company: z.lazy(
-      () => CompanyCreateNestedOneWithoutOperationalEventsInputSchema,
+      () => CompanyCreateNestedOneWithoutOperational_eventsInputSchema,
     ),
     vehicle: z
-      .lazy(() => VehicleCreateNestedOneWithoutOperationalEventsInputSchema)
+      .lazy(() => VehicleCreateNestedOneWithoutOperational_eventsInputSchema)
       .optional(),
     createdBy: z.lazy(
-      () => UserCreateNestedOneWithoutOperationalEventsInputSchema,
+      () => UserCreateNestedOneWithoutOperational_eventsInputSchema,
     ),
+    inspection_details: z
+      .lazy(() => InspectionDetailCreateNestedManyWithoutEventInputSchema)
+      .optional(),
   });
 
 export const OperationalEventUncheckedCreateWithoutDriverInputSchema: z.ZodType<Prisma.OperationalEventUncheckedCreateWithoutDriverInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    companyId: z.string(),
-    vehicleId: z.string().optional().nullable(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    company_id: z.string(),
+    vehicle_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -6941,16 +9048,21 @@ export const OperationalEventUncheckedCreateWithoutDriverInputSchema: z.ZodType<
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdByUserId: z.string(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_by_user_id: z.string(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    inspection_details: z
+      .lazy(
+        () => InspectionDetailUncheckedCreateNestedManyWithoutEventInputSchema,
+      )
+      .optional(),
   });
 
 export const OperationalEventCreateOrConnectWithoutDriverInputSchema: z.ZodType<Prisma.OperationalEventCreateOrConnectWithoutDriverInput> =
@@ -7033,7 +9145,7 @@ export const CompanyUpdateWithoutDriversInputSchema: z.ZodType<Prisma.CompanyUpd
     users: z
       .lazy(() => UserUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
   });
@@ -7078,10 +9190,119 @@ export const CompanyUncheckedUpdateWithoutDriversInputSchema: z.ZodType<Prisma.C
     users: z
       .lazy(() => UserUncheckedUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedUpdateManyWithoutCompanyNestedInputSchema,
+      )
+      .optional(),
+  });
+
+export const VehicleUpsertWithoutDriverInputSchema: z.ZodType<Prisma.VehicleUpsertWithoutDriverInput> =
+  z.strictObject({
+    update: z.union([
+      z.lazy(() => VehicleUpdateWithoutDriverInputSchema),
+      z.lazy(() => VehicleUncheckedUpdateWithoutDriverInputSchema),
+    ]),
+    create: z.union([
+      z.lazy(() => VehicleCreateWithoutDriverInputSchema),
+      z.lazy(() => VehicleUncheckedCreateWithoutDriverInputSchema),
+    ]),
+    where: z.lazy(() => VehicleWhereInputSchema).optional(),
+  });
+
+export const VehicleUpdateToOneWithWhereWithoutDriverInputSchema: z.ZodType<Prisma.VehicleUpdateToOneWithWhereWithoutDriverInput> =
+  z.strictObject({
+    where: z.lazy(() => VehicleWhereInputSchema).optional(),
+    data: z.union([
+      z.lazy(() => VehicleUpdateWithoutDriverInputSchema),
+      z.lazy(() => VehicleUncheckedUpdateWithoutDriverInputSchema),
+    ]),
+  });
+
+export const VehicleUpdateWithoutDriverInputSchema: z.ZodType<Prisma.VehicleUpdateWithoutDriverInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    plate: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    is_active: z
+      .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
+      .optional(),
+    createdAt: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    updatedAt: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    company: z
+      .lazy(() => CompanyUpdateOneRequiredWithoutVehiclesNestedInputSchema)
+      .optional(),
+    operational_events: z
+      .lazy(() => OperationalEventUpdateManyWithoutVehicleNestedInputSchema)
+      .optional(),
+  });
+
+export const VehicleUncheckedUpdateWithoutDriverInputSchema: z.ZodType<Prisma.VehicleUncheckedUpdateWithoutDriverInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    companyId: z
+      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    plate: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    is_active: z
+      .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
+      .optional(),
+    createdAt: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    updatedAt: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    operational_events: z
+      .lazy(
+        () =>
+          OperationalEventUncheckedUpdateManyWithoutVehicleNestedInputSchema,
       )
       .optional(),
   });
@@ -7131,7 +9352,7 @@ export const CompanyCreateWithoutUsersInputSchema: z.ZodType<Prisma.CompanyCreat
     drivers: z
       .lazy(() => DriverCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
   });
@@ -7150,7 +9371,7 @@ export const CompanyUncheckedCreateWithoutUsersInputSchema: z.ZodType<Prisma.Com
     drivers: z
       .lazy(() => DriverUncheckedCreateNestedManyWithoutCompanyInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedCreateNestedManyWithoutCompanyInputSchema,
@@ -7170,8 +9391,8 @@ export const CompanyCreateOrConnectWithoutUsersInputSchema: z.ZodType<Prisma.Com
 export const OperationalEventCreateWithoutCreatedByInputSchema: z.ZodType<Prisma.OperationalEventCreateWithoutCreatedByInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -7180,34 +9401,37 @@ export const OperationalEventCreateWithoutCreatedByInputSchema: z.ZodType<Prisma
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
     company: z.lazy(
-      () => CompanyCreateNestedOneWithoutOperationalEventsInputSchema,
+      () => CompanyCreateNestedOneWithoutOperational_eventsInputSchema,
     ),
     vehicle: z
-      .lazy(() => VehicleCreateNestedOneWithoutOperationalEventsInputSchema)
+      .lazy(() => VehicleCreateNestedOneWithoutOperational_eventsInputSchema)
       .optional(),
     driver: z
-      .lazy(() => DriverCreateNestedOneWithoutOperationalEventsInputSchema)
+      .lazy(() => DriverCreateNestedOneWithoutOperational_eventsInputSchema)
+      .optional(),
+    inspection_details: z
+      .lazy(() => InspectionDetailCreateNestedManyWithoutEventInputSchema)
       .optional(),
   });
 
 export const OperationalEventUncheckedCreateWithoutCreatedByInputSchema: z.ZodType<Prisma.OperationalEventUncheckedCreateWithoutCreatedByInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    companyId: z.string(),
-    vehicleId: z.string().optional().nullable(),
-    driverId: z.string().optional().nullable(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    company_id: z.string(),
+    vehicle_id: z.string().optional().nullable(),
+    driver_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -7216,15 +9440,20 @@ export const OperationalEventUncheckedCreateWithoutCreatedByInputSchema: z.ZodTy
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    inspection_details: z
+      .lazy(
+        () => InspectionDetailUncheckedCreateNestedManyWithoutEventInputSchema,
+      )
+      .optional(),
   });
 
 export const OperationalEventCreateOrConnectWithoutCreatedByInputSchema: z.ZodType<Prisma.OperationalEventCreateOrConnectWithoutCreatedByInput> =
@@ -7307,7 +9536,7 @@ export const CompanyUpdateWithoutUsersInputSchema: z.ZodType<Prisma.CompanyUpdat
     drivers: z
       .lazy(() => DriverUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
   });
@@ -7352,7 +9581,7 @@ export const CompanyUncheckedUpdateWithoutUsersInputSchema: z.ZodType<Prisma.Com
     drivers: z
       .lazy(() => DriverUncheckedUpdateManyWithoutCompanyNestedInputSchema)
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedUpdateManyWithoutCompanyNestedInputSchema,
@@ -7393,7 +9622,7 @@ export const OperationalEventUpdateManyWithWhereWithoutCreatedByInputSchema: z.Z
     ]),
   });
 
-export const CompanyCreateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.CompanyCreateWithoutOperationalEventsInput> =
+export const CompanyCreateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.CompanyCreateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z.uuid().optional(),
     name: z.string(),
@@ -7412,7 +9641,7 @@ export const CompanyCreateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.
       .optional(),
   });
 
-export const CompanyUncheckedCreateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.CompanyUncheckedCreateWithoutOperationalEventsInput> =
+export const CompanyUncheckedCreateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.CompanyUncheckedCreateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z.uuid().optional(),
     name: z.string(),
@@ -7431,78 +9660,88 @@ export const CompanyUncheckedCreateWithoutOperationalEventsInputSchema: z.ZodTyp
       .optional(),
   });
 
-export const CompanyCreateOrConnectWithoutOperationalEventsInputSchema: z.ZodType<Prisma.CompanyCreateOrConnectWithoutOperationalEventsInput> =
+export const CompanyCreateOrConnectWithoutOperational_eventsInputSchema: z.ZodType<Prisma.CompanyCreateOrConnectWithoutOperational_eventsInput> =
   z.strictObject({
     where: z.lazy(() => CompanyWhereUniqueInputSchema),
     create: z.union([
-      z.lazy(() => CompanyCreateWithoutOperationalEventsInputSchema),
-      z.lazy(() => CompanyUncheckedCreateWithoutOperationalEventsInputSchema),
+      z.lazy(() => CompanyCreateWithoutOperational_eventsInputSchema),
+      z.lazy(() => CompanyUncheckedCreateWithoutOperational_eventsInputSchema),
     ]),
   });
 
-export const VehicleCreateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.VehicleCreateWithoutOperationalEventsInput> =
+export const VehicleCreateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.VehicleCreateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    unitNumber: z.string(),
+    unit_number: z.string().optional().nullable(),
     plate: z.string().optional().nullable(),
-    isActive: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
     company: z.lazy(() => CompanyCreateNestedOneWithoutVehiclesInputSchema),
+    driver: z
+      .lazy(() => DriverCreateNestedOneWithoutVehicleInputSchema)
+      .optional(),
   });
 
-export const VehicleUncheckedCreateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.VehicleUncheckedCreateWithoutOperationalEventsInput> =
+export const VehicleUncheckedCreateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.VehicleUncheckedCreateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z.uuid().optional(),
     companyId: z.string(),
-    unitNumber: z.string(),
+    driverId: z.string().optional().nullable(),
+    unit_number: z.string().optional().nullable(),
     plate: z.string().optional().nullable(),
-    isActive: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
   });
 
-export const VehicleCreateOrConnectWithoutOperationalEventsInputSchema: z.ZodType<Prisma.VehicleCreateOrConnectWithoutOperationalEventsInput> =
+export const VehicleCreateOrConnectWithoutOperational_eventsInputSchema: z.ZodType<Prisma.VehicleCreateOrConnectWithoutOperational_eventsInput> =
   z.strictObject({
     where: z.lazy(() => VehicleWhereUniqueInputSchema),
     create: z.union([
-      z.lazy(() => VehicleCreateWithoutOperationalEventsInputSchema),
-      z.lazy(() => VehicleUncheckedCreateWithoutOperationalEventsInputSchema),
+      z.lazy(() => VehicleCreateWithoutOperational_eventsInputSchema),
+      z.lazy(() => VehicleUncheckedCreateWithoutOperational_eventsInputSchema),
     ]),
   });
 
-export const DriverCreateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.DriverCreateWithoutOperationalEventsInput> =
+export const DriverCreateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.DriverCreateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z.uuid().optional(),
     name: z.string(),
-    licenseNumber: z.string(),
-    isActive: z.boolean().optional(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    license_number: z.string(),
+    is_active: z.boolean().optional(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
     company: z.lazy(() => CompanyCreateNestedOneWithoutDriversInputSchema),
+    vehicle: z
+      .lazy(() => VehicleCreateNestedOneWithoutDriverInputSchema)
+      .optional(),
   });
 
-export const DriverUncheckedCreateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.DriverUncheckedCreateWithoutOperationalEventsInput> =
+export const DriverUncheckedCreateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.DriverUncheckedCreateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z.uuid().optional(),
     companyId: z.string(),
     name: z.string(),
-    licenseNumber: z.string(),
-    isActive: z.boolean().optional(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    license_number: z.string(),
+    is_active: z.boolean().optional(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    vehicle: z
+      .lazy(() => VehicleUncheckedCreateNestedOneWithoutDriverInputSchema)
+      .optional(),
   });
 
-export const DriverCreateOrConnectWithoutOperationalEventsInputSchema: z.ZodType<Prisma.DriverCreateOrConnectWithoutOperationalEventsInput> =
+export const DriverCreateOrConnectWithoutOperational_eventsInputSchema: z.ZodType<Prisma.DriverCreateOrConnectWithoutOperational_eventsInput> =
   z.strictObject({
     where: z.lazy(() => DriverWhereUniqueInputSchema),
     create: z.union([
-      z.lazy(() => DriverCreateWithoutOperationalEventsInputSchema),
-      z.lazy(() => DriverUncheckedCreateWithoutOperationalEventsInputSchema),
+      z.lazy(() => DriverCreateWithoutOperational_eventsInputSchema),
+      z.lazy(() => DriverUncheckedCreateWithoutOperational_eventsInputSchema),
     ]),
   });
 
-export const UserCreateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.UserCreateWithoutOperationalEventsInput> =
+export const UserCreateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.UserCreateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z.uuid().optional(),
     name: z.string(),
@@ -7510,11 +9749,13 @@ export const UserCreateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.Use
     passwordHash: z.string(),
     role: z.lazy(() => UserRoleSchema).optional(),
     isActive: z.boolean().optional(),
+    resetPasswordToken: z.string().optional().nullable(),
+    resetPasswordExpires: z.coerce.date().optional().nullable(),
     createdAt: z.coerce.date().optional(),
     company: z.lazy(() => CompanyCreateNestedOneWithoutUsersInputSchema),
   });
 
-export const UserUncheckedCreateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.UserUncheckedCreateWithoutOperationalEventsInput> =
+export const UserUncheckedCreateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.UserUncheckedCreateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z.uuid().optional(),
     companyId: z.string(),
@@ -7523,41 +9764,97 @@ export const UserUncheckedCreateWithoutOperationalEventsInputSchema: z.ZodType<P
     passwordHash: z.string(),
     role: z.lazy(() => UserRoleSchema).optional(),
     isActive: z.boolean().optional(),
+    resetPasswordToken: z.string().optional().nullable(),
+    resetPasswordExpires: z.coerce.date().optional().nullable(),
     createdAt: z.coerce.date().optional(),
   });
 
-export const UserCreateOrConnectWithoutOperationalEventsInputSchema: z.ZodType<Prisma.UserCreateOrConnectWithoutOperationalEventsInput> =
+export const UserCreateOrConnectWithoutOperational_eventsInputSchema: z.ZodType<Prisma.UserCreateOrConnectWithoutOperational_eventsInput> =
   z.strictObject({
     where: z.lazy(() => UserWhereUniqueInputSchema),
     create: z.union([
-      z.lazy(() => UserCreateWithoutOperationalEventsInputSchema),
-      z.lazy(() => UserUncheckedCreateWithoutOperationalEventsInputSchema),
+      z.lazy(() => UserCreateWithoutOperational_eventsInputSchema),
+      z.lazy(() => UserUncheckedCreateWithoutOperational_eventsInputSchema),
     ]),
   });
 
-export const CompanyUpsertWithoutOperationalEventsInputSchema: z.ZodType<Prisma.CompanyUpsertWithoutOperationalEventsInput> =
+export const InspectionDetailCreateWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailCreateWithoutEventInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    type_inspection: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+    documentation_verified: z.boolean().optional().nullable(),
+    vehicle_condition: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+    lights_ok: z.boolean().optional().nullable(),
+    tires_ok: z.boolean().optional().nullable(),
+    brakes_ok: z.boolean().optional().nullable(),
+    safety_elements_ok: z.boolean().optional().nullable(),
+  });
+
+export const InspectionDetailUncheckedCreateWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailUncheckedCreateWithoutEventInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    type_inspection: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+    documentation_verified: z.boolean().optional().nullable(),
+    vehicle_condition: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+    lights_ok: z.boolean().optional().nullable(),
+    tires_ok: z.boolean().optional().nullable(),
+    brakes_ok: z.boolean().optional().nullable(),
+    safety_elements_ok: z.boolean().optional().nullable(),
+  });
+
+export const InspectionDetailCreateOrConnectWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailCreateOrConnectWithoutEventInput> =
+  z.strictObject({
+    where: z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+    create: z.union([
+      z.lazy(() => InspectionDetailCreateWithoutEventInputSchema),
+      z.lazy(() => InspectionDetailUncheckedCreateWithoutEventInputSchema),
+    ]),
+  });
+
+export const InspectionDetailCreateManyEventInputEnvelopeSchema: z.ZodType<Prisma.InspectionDetailCreateManyEventInputEnvelope> =
+  z.strictObject({
+    data: z.union([
+      z.lazy(() => InspectionDetailCreateManyEventInputSchema),
+      z.lazy(() => InspectionDetailCreateManyEventInputSchema).array(),
+    ]),
+    skipDuplicates: z.boolean().optional(),
+  });
+
+export const CompanyUpsertWithoutOperational_eventsInputSchema: z.ZodType<Prisma.CompanyUpsertWithoutOperational_eventsInput> =
   z.strictObject({
     update: z.union([
-      z.lazy(() => CompanyUpdateWithoutOperationalEventsInputSchema),
-      z.lazy(() => CompanyUncheckedUpdateWithoutOperationalEventsInputSchema),
+      z.lazy(() => CompanyUpdateWithoutOperational_eventsInputSchema),
+      z.lazy(() => CompanyUncheckedUpdateWithoutOperational_eventsInputSchema),
     ]),
     create: z.union([
-      z.lazy(() => CompanyCreateWithoutOperationalEventsInputSchema),
-      z.lazy(() => CompanyUncheckedCreateWithoutOperationalEventsInputSchema),
+      z.lazy(() => CompanyCreateWithoutOperational_eventsInputSchema),
+      z.lazy(() => CompanyUncheckedCreateWithoutOperational_eventsInputSchema),
     ]),
     where: z.lazy(() => CompanyWhereInputSchema).optional(),
   });
 
-export const CompanyUpdateToOneWithWhereWithoutOperationalEventsInputSchema: z.ZodType<Prisma.CompanyUpdateToOneWithWhereWithoutOperationalEventsInput> =
+export const CompanyUpdateToOneWithWhereWithoutOperational_eventsInputSchema: z.ZodType<Prisma.CompanyUpdateToOneWithWhereWithoutOperational_eventsInput> =
   z.strictObject({
     where: z.lazy(() => CompanyWhereInputSchema).optional(),
     data: z.union([
-      z.lazy(() => CompanyUpdateWithoutOperationalEventsInputSchema),
-      z.lazy(() => CompanyUncheckedUpdateWithoutOperationalEventsInputSchema),
+      z.lazy(() => CompanyUpdateWithoutOperational_eventsInputSchema),
+      z.lazy(() => CompanyUncheckedUpdateWithoutOperational_eventsInputSchema),
     ]),
   });
 
-export const CompanyUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.CompanyUpdateWithoutOperationalEventsInput> =
+export const CompanyUpdateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.CompanyUpdateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
@@ -7602,7 +9899,7 @@ export const CompanyUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.
       .optional(),
   });
 
-export const CompanyUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.CompanyUncheckedUpdateWithoutOperationalEventsInput> =
+export const CompanyUncheckedUpdateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.CompanyUncheckedUpdateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
@@ -7647,36 +9944,40 @@ export const CompanyUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodTyp
       .optional(),
   });
 
-export const VehicleUpsertWithoutOperationalEventsInputSchema: z.ZodType<Prisma.VehicleUpsertWithoutOperationalEventsInput> =
+export const VehicleUpsertWithoutOperational_eventsInputSchema: z.ZodType<Prisma.VehicleUpsertWithoutOperational_eventsInput> =
   z.strictObject({
     update: z.union([
-      z.lazy(() => VehicleUpdateWithoutOperationalEventsInputSchema),
-      z.lazy(() => VehicleUncheckedUpdateWithoutOperationalEventsInputSchema),
+      z.lazy(() => VehicleUpdateWithoutOperational_eventsInputSchema),
+      z.lazy(() => VehicleUncheckedUpdateWithoutOperational_eventsInputSchema),
     ]),
     create: z.union([
-      z.lazy(() => VehicleCreateWithoutOperationalEventsInputSchema),
-      z.lazy(() => VehicleUncheckedCreateWithoutOperationalEventsInputSchema),
+      z.lazy(() => VehicleCreateWithoutOperational_eventsInputSchema),
+      z.lazy(() => VehicleUncheckedCreateWithoutOperational_eventsInputSchema),
     ]),
     where: z.lazy(() => VehicleWhereInputSchema).optional(),
   });
 
-export const VehicleUpdateToOneWithWhereWithoutOperationalEventsInputSchema: z.ZodType<Prisma.VehicleUpdateToOneWithWhereWithoutOperationalEventsInput> =
+export const VehicleUpdateToOneWithWhereWithoutOperational_eventsInputSchema: z.ZodType<Prisma.VehicleUpdateToOneWithWhereWithoutOperational_eventsInput> =
   z.strictObject({
     where: z.lazy(() => VehicleWhereInputSchema).optional(),
     data: z.union([
-      z.lazy(() => VehicleUpdateWithoutOperationalEventsInputSchema),
-      z.lazy(() => VehicleUncheckedUpdateWithoutOperationalEventsInputSchema),
+      z.lazy(() => VehicleUpdateWithoutOperational_eventsInputSchema),
+      z.lazy(() => VehicleUncheckedUpdateWithoutOperational_eventsInputSchema),
     ]),
   });
 
-export const VehicleUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.VehicleUpdateWithoutOperationalEventsInput> =
+export const VehicleUpdateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.VehicleUpdateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    unitNumber: z
-      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
-      .optional(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     plate: z
       .union([
         z.string(),
@@ -7684,7 +9985,7 @@ export const VehicleUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.
       ])
       .optional()
       .nullable(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
     createdAt: z
@@ -7702,9 +10003,12 @@ export const VehicleUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.
     company: z
       .lazy(() => CompanyUpdateOneRequiredWithoutVehiclesNestedInputSchema)
       .optional(),
+    driver: z
+      .lazy(() => DriverUpdateOneWithoutVehicleNestedInputSchema)
+      .optional(),
   });
 
-export const VehicleUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.VehicleUncheckedUpdateWithoutOperationalEventsInput> =
+export const VehicleUncheckedUpdateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.VehicleUncheckedUpdateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
@@ -7712,9 +10016,20 @@ export const VehicleUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodTyp
     companyId: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    unitNumber: z
-      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
-      .optional(),
+    driverId: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     plate: z
       .union([
         z.string(),
@@ -7722,7 +10037,7 @@ export const VehicleUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodTyp
       ])
       .optional()
       .nullable(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
     createdAt: z
@@ -7739,29 +10054,29 @@ export const VehicleUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodTyp
       .optional(),
   });
 
-export const DriverUpsertWithoutOperationalEventsInputSchema: z.ZodType<Prisma.DriverUpsertWithoutOperationalEventsInput> =
+export const DriverUpsertWithoutOperational_eventsInputSchema: z.ZodType<Prisma.DriverUpsertWithoutOperational_eventsInput> =
   z.strictObject({
     update: z.union([
-      z.lazy(() => DriverUpdateWithoutOperationalEventsInputSchema),
-      z.lazy(() => DriverUncheckedUpdateWithoutOperationalEventsInputSchema),
+      z.lazy(() => DriverUpdateWithoutOperational_eventsInputSchema),
+      z.lazy(() => DriverUncheckedUpdateWithoutOperational_eventsInputSchema),
     ]),
     create: z.union([
-      z.lazy(() => DriverCreateWithoutOperationalEventsInputSchema),
-      z.lazy(() => DriverUncheckedCreateWithoutOperationalEventsInputSchema),
+      z.lazy(() => DriverCreateWithoutOperational_eventsInputSchema),
+      z.lazy(() => DriverUncheckedCreateWithoutOperational_eventsInputSchema),
     ]),
     where: z.lazy(() => DriverWhereInputSchema).optional(),
   });
 
-export const DriverUpdateToOneWithWhereWithoutOperationalEventsInputSchema: z.ZodType<Prisma.DriverUpdateToOneWithWhereWithoutOperationalEventsInput> =
+export const DriverUpdateToOneWithWhereWithoutOperational_eventsInputSchema: z.ZodType<Prisma.DriverUpdateToOneWithWhereWithoutOperational_eventsInput> =
   z.strictObject({
     where: z.lazy(() => DriverWhereInputSchema).optional(),
     data: z.union([
-      z.lazy(() => DriverUpdateWithoutOperationalEventsInputSchema),
-      z.lazy(() => DriverUncheckedUpdateWithoutOperationalEventsInputSchema),
+      z.lazy(() => DriverUpdateWithoutOperational_eventsInputSchema),
+      z.lazy(() => DriverUncheckedUpdateWithoutOperational_eventsInputSchema),
     ]),
   });
 
-export const DriverUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.DriverUpdateWithoutOperationalEventsInput> =
+export const DriverUpdateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.DriverUpdateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
@@ -7769,19 +10084,19 @@ export const DriverUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.D
     name: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -7790,9 +10105,12 @@ export const DriverUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.D
     company: z
       .lazy(() => CompanyUpdateOneRequiredWithoutDriversNestedInputSchema)
       .optional(),
+    vehicle: z
+      .lazy(() => VehicleUpdateOneWithoutDriverNestedInputSchema)
+      .optional(),
   });
 
-export const DriverUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.DriverUncheckedUpdateWithoutOperationalEventsInput> =
+export const DriverUncheckedUpdateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.DriverUncheckedUpdateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
@@ -7803,49 +10121,52 @@ export const DriverUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodType
     name: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
+      .optional(),
+    vehicle: z
+      .lazy(() => VehicleUncheckedUpdateOneWithoutDriverNestedInputSchema)
       .optional(),
   });
 
-export const UserUpsertWithoutOperationalEventsInputSchema: z.ZodType<Prisma.UserUpsertWithoutOperationalEventsInput> =
+export const UserUpsertWithoutOperational_eventsInputSchema: z.ZodType<Prisma.UserUpsertWithoutOperational_eventsInput> =
   z.strictObject({
     update: z.union([
-      z.lazy(() => UserUpdateWithoutOperationalEventsInputSchema),
-      z.lazy(() => UserUncheckedUpdateWithoutOperationalEventsInputSchema),
+      z.lazy(() => UserUpdateWithoutOperational_eventsInputSchema),
+      z.lazy(() => UserUncheckedUpdateWithoutOperational_eventsInputSchema),
     ]),
     create: z.union([
-      z.lazy(() => UserCreateWithoutOperationalEventsInputSchema),
-      z.lazy(() => UserUncheckedCreateWithoutOperationalEventsInputSchema),
+      z.lazy(() => UserCreateWithoutOperational_eventsInputSchema),
+      z.lazy(() => UserUncheckedCreateWithoutOperational_eventsInputSchema),
     ]),
     where: z.lazy(() => UserWhereInputSchema).optional(),
   });
 
-export const UserUpdateToOneWithWhereWithoutOperationalEventsInputSchema: z.ZodType<Prisma.UserUpdateToOneWithWhereWithoutOperationalEventsInput> =
+export const UserUpdateToOneWithWhereWithoutOperational_eventsInputSchema: z.ZodType<Prisma.UserUpdateToOneWithWhereWithoutOperational_eventsInput> =
   z.strictObject({
     where: z.lazy(() => UserWhereInputSchema).optional(),
     data: z.union([
-      z.lazy(() => UserUpdateWithoutOperationalEventsInputSchema),
-      z.lazy(() => UserUncheckedUpdateWithoutOperationalEventsInputSchema),
+      z.lazy(() => UserUpdateWithoutOperational_eventsInputSchema),
+      z.lazy(() => UserUncheckedUpdateWithoutOperational_eventsInputSchema),
     ]),
   });
 
-export const UserUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.UserUpdateWithoutOperationalEventsInput> =
+export const UserUpdateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.UserUpdateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
@@ -7868,6 +10189,20 @@ export const UserUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.Use
     isActive: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
+    resetPasswordToken: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([
         z.coerce.date(),
@@ -7879,7 +10214,7 @@ export const UserUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.Use
       .optional(),
   });
 
-export const UserUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodType<Prisma.UserUncheckedUpdateWithoutOperationalEventsInput> =
+export const UserUncheckedUpdateWithoutOperational_eventsInputSchema: z.ZodType<Prisma.UserUncheckedUpdateWithoutOperational_eventsInput> =
   z.strictObject({
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
@@ -7905,7 +10240,400 @@ export const UserUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodType<P
     isActive: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
+    resetPasswordToken: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     createdAt: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+  });
+
+export const InspectionDetailUpsertWithWhereUniqueWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailUpsertWithWhereUniqueWithoutEventInput> =
+  z.strictObject({
+    where: z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+    update: z.union([
+      z.lazy(() => InspectionDetailUpdateWithoutEventInputSchema),
+      z.lazy(() => InspectionDetailUncheckedUpdateWithoutEventInputSchema),
+    ]),
+    create: z.union([
+      z.lazy(() => InspectionDetailCreateWithoutEventInputSchema),
+      z.lazy(() => InspectionDetailUncheckedCreateWithoutEventInputSchema),
+    ]),
+  });
+
+export const InspectionDetailUpdateWithWhereUniqueWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailUpdateWithWhereUniqueWithoutEventInput> =
+  z.strictObject({
+    where: z.lazy(() => InspectionDetailWhereUniqueInputSchema),
+    data: z.union([
+      z.lazy(() => InspectionDetailUpdateWithoutEventInputSchema),
+      z.lazy(() => InspectionDetailUncheckedUpdateWithoutEventInputSchema),
+    ]),
+  });
+
+export const InspectionDetailUpdateManyWithWhereWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailUpdateManyWithWhereWithoutEventInput> =
+  z.strictObject({
+    where: z.lazy(() => InspectionDetailScalarWhereInputSchema),
+    data: z.union([
+      z.lazy(() => InspectionDetailUpdateManyMutationInputSchema),
+      z.lazy(() => InspectionDetailUncheckedUpdateManyWithoutEventInputSchema),
+    ]),
+  });
+
+export const InspectionDetailScalarWhereInputSchema: z.ZodType<Prisma.InspectionDetailScalarWhereInput> =
+  z.strictObject({
+    AND: z
+      .union([
+        z.lazy(() => InspectionDetailScalarWhereInputSchema),
+        z.lazy(() => InspectionDetailScalarWhereInputSchema).array(),
+      ])
+      .optional(),
+    OR: z
+      .lazy(() => InspectionDetailScalarWhereInputSchema)
+      .array()
+      .optional(),
+    NOT: z
+      .union([
+        z.lazy(() => InspectionDetailScalarWhereInputSchema),
+        z.lazy(() => InspectionDetailScalarWhereInputSchema).array(),
+      ])
+      .optional(),
+    id: z.union([z.lazy(() => StringFilterSchema), z.string()]).optional(),
+    event_id: z
+      .union([z.lazy(() => StringFilterSchema), z.string()])
+      .optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => EnumTypeInspectionNullableFilterSchema),
+        z.lazy(() => TypeInspectionSchema),
+      ])
+      .optional()
+      .nullable(),
+    documentation_verified: z
+      .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+      .optional()
+      .nullable(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => EnumInspectionStatusNullableFilterSchema),
+        z.lazy(() => InspectionStatusSchema),
+      ])
+      .optional()
+      .nullable(),
+    lights_ok: z
+      .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+      .optional()
+      .nullable(),
+    tires_ok: z
+      .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+      .optional()
+      .nullable(),
+    brakes_ok: z
+      .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+      .optional()
+      .nullable(),
+    safety_elements_ok: z
+      .union([z.lazy(() => BoolNullableFilterSchema), z.boolean()])
+      .optional()
+      .nullable(),
+  });
+
+export const OperationalEventCreateWithoutInspection_detailsInputSchema: z.ZodType<Prisma.OperationalEventCreateWithoutInspection_detailsInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
+    location: z
+      .lazy(() => LocationTypeSchema)
+      .optional()
+      .nullable(),
+    context: z
+      .lazy(() => ContextTypeSchema)
+      .optional()
+      .nullable(),
+    general_result: z
+      .lazy(() => GeneralResultSchema)
+      .optional()
+      .nullable(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+    company: z.lazy(
+      () => CompanyCreateNestedOneWithoutOperational_eventsInputSchema,
+    ),
+    vehicle: z
+      .lazy(() => VehicleCreateNestedOneWithoutOperational_eventsInputSchema)
+      .optional(),
+    driver: z
+      .lazy(() => DriverCreateNestedOneWithoutOperational_eventsInputSchema)
+      .optional(),
+    createdBy: z.lazy(
+      () => UserCreateNestedOneWithoutOperational_eventsInputSchema,
+    ),
+  });
+
+export const OperationalEventUncheckedCreateWithoutInspection_detailsInputSchema: z.ZodType<Prisma.OperationalEventUncheckedCreateWithoutInspection_detailsInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    company_id: z.string(),
+    vehicle_id: z.string().optional().nullable(),
+    driver_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
+    location: z
+      .lazy(() => LocationTypeSchema)
+      .optional()
+      .nullable(),
+    context: z
+      .lazy(() => ContextTypeSchema)
+      .optional()
+      .nullable(),
+    general_result: z
+      .lazy(() => GeneralResultSchema)
+      .optional()
+      .nullable(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_by_user_id: z.string(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
+  });
+
+export const OperationalEventCreateOrConnectWithoutInspection_detailsInputSchema: z.ZodType<Prisma.OperationalEventCreateOrConnectWithoutInspection_detailsInput> =
+  z.strictObject({
+    where: z.lazy(() => OperationalEventWhereUniqueInputSchema),
+    create: z.union([
+      z.lazy(() => OperationalEventCreateWithoutInspection_detailsInputSchema),
+      z.lazy(
+        () =>
+          OperationalEventUncheckedCreateWithoutInspection_detailsInputSchema,
+      ),
+    ]),
+  });
+
+export const OperationalEventUpsertWithoutInspection_detailsInputSchema: z.ZodType<Prisma.OperationalEventUpsertWithoutInspection_detailsInput> =
+  z.strictObject({
+    update: z.union([
+      z.lazy(() => OperationalEventUpdateWithoutInspection_detailsInputSchema),
+      z.lazy(
+        () =>
+          OperationalEventUncheckedUpdateWithoutInspection_detailsInputSchema,
+      ),
+    ]),
+    create: z.union([
+      z.lazy(() => OperationalEventCreateWithoutInspection_detailsInputSchema),
+      z.lazy(
+        () =>
+          OperationalEventUncheckedCreateWithoutInspection_detailsInputSchema,
+      ),
+    ]),
+    where: z.lazy(() => OperationalEventWhereInputSchema).optional(),
+  });
+
+export const OperationalEventUpdateToOneWithWhereWithoutInspection_detailsInputSchema: z.ZodType<Prisma.OperationalEventUpdateToOneWithWhereWithoutInspection_detailsInput> =
+  z.strictObject({
+    where: z.lazy(() => OperationalEventWhereInputSchema).optional(),
+    data: z.union([
+      z.lazy(() => OperationalEventUpdateWithoutInspection_detailsInputSchema),
+      z.lazy(
+        () =>
+          OperationalEventUncheckedUpdateWithoutInspection_detailsInputSchema,
+      ),
+    ]),
+  });
+
+export const OperationalEventUpdateWithoutInspection_detailsInputSchema: z.ZodType<Prisma.OperationalEventUpdateWithoutInspection_detailsInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    event_type: z
+      .union([
+        z.lazy(() => EventTypeSchema),
+        z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    event_datetime: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    location: z
+      .union([
+        z.lazy(() => LocationTypeSchema),
+        z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    context: z
+      .union([
+        z.lazy(() => ContextTypeSchema),
+        z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    general_result: z
+      .union([
+        z.lazy(() => GeneralResultSchema),
+        z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    e_signature: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    final_observations: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    is_confirmed: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    created_at: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    updated_at: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    company: z
+      .lazy(
+        () =>
+          CompanyUpdateOneRequiredWithoutOperational_eventsNestedInputSchema,
+      )
+      .optional(),
+    vehicle: z
+      .lazy(() => VehicleUpdateOneWithoutOperational_eventsNestedInputSchema)
+      .optional(),
+    driver: z
+      .lazy(() => DriverUpdateOneWithoutOperational_eventsNestedInputSchema)
+      .optional(),
+    createdBy: z
+      .lazy(
+        () => UserUpdateOneRequiredWithoutOperational_eventsNestedInputSchema,
+      )
+      .optional(),
+  });
+
+export const OperationalEventUncheckedUpdateWithoutInspection_detailsInputSchema: z.ZodType<Prisma.OperationalEventUncheckedUpdateWithoutInspection_detailsInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    company_id: z
+      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    vehicle_id: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    driver_id: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    event_type: z
+      .union([
+        z.lazy(() => EventTypeSchema),
+        z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    event_datetime: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    location: z
+      .union([
+        z.lazy(() => LocationTypeSchema),
+        z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    context: z
+      .union([
+        z.lazy(() => ContextTypeSchema),
+        z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    general_result: z
+      .union([
+        z.lazy(() => GeneralResultSchema),
+        z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    e_signature: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    final_observations: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    is_confirmed: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    created_by_user_id: z
+      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    created_at: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional(),
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -7916,9 +10644,10 @@ export const UserUncheckedUpdateWithoutOperationalEventsInputSchema: z.ZodType<P
 export const VehicleCreateManyCompanyInputSchema: z.ZodType<Prisma.VehicleCreateManyCompanyInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    unitNumber: z.string(),
+    driverId: z.string().optional().nullable(),
+    unit_number: z.string().optional().nullable(),
     plate: z.string().optional().nullable(),
-    isActive: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
   });
@@ -7927,10 +10656,10 @@ export const DriverCreateManyCompanyInputSchema: z.ZodType<Prisma.DriverCreateMa
   z.strictObject({
     id: z.uuid().optional(),
     name: z.string(),
-    licenseNumber: z.string(),
-    isActive: z.boolean().optional(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    license_number: z.string(),
+    is_active: z.boolean().optional(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
   });
 
 export const UserCreateManyCompanyInputSchema: z.ZodType<Prisma.UserCreateManyCompanyInput> =
@@ -7941,16 +10670,18 @@ export const UserCreateManyCompanyInputSchema: z.ZodType<Prisma.UserCreateManyCo
     passwordHash: z.string(),
     role: z.lazy(() => UserRoleSchema).optional(),
     isActive: z.boolean().optional(),
+    resetPasswordToken: z.string().optional().nullable(),
+    resetPasswordExpires: z.coerce.date().optional().nullable(),
     createdAt: z.coerce.date().optional(),
   });
 
 export const OperationalEventCreateManyCompanyInputSchema: z.ZodType<Prisma.OperationalEventCreateManyCompanyInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    vehicleId: z.string().optional().nullable(),
-    driverId: z.string().optional().nullable(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    vehicle_id: z.string().optional().nullable(),
+    driver_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -7959,16 +10690,16 @@ export const OperationalEventCreateManyCompanyInputSchema: z.ZodType<Prisma.Oper
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdByUserId: z.string(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_by_user_id: z.string(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
   });
 
 export const VehicleUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.VehicleUpdateWithoutCompanyInput> =
@@ -7976,9 +10707,13 @@ export const VehicleUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.VehicleUpd
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    unitNumber: z
-      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
-      .optional(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     plate: z
       .union([
         z.string(),
@@ -7986,7 +10721,7 @@ export const VehicleUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.VehicleUpd
       ])
       .optional()
       .nullable(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
     createdAt: z
@@ -8001,7 +10736,10 @@ export const VehicleUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.VehicleUpd
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    driver: z
+      .lazy(() => DriverUpdateOneWithoutVehicleNestedInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(() => OperationalEventUpdateManyWithoutVehicleNestedInputSchema)
       .optional(),
   });
@@ -8011,9 +10749,20 @@ export const VehicleUncheckedUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.V
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    unitNumber: z
-      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
-      .optional(),
+    driverId: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     plate: z
       .union([
         z.string(),
@@ -8021,7 +10770,7 @@ export const VehicleUncheckedUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.V
       ])
       .optional()
       .nullable(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
     createdAt: z
@@ -8036,7 +10785,7 @@ export const VehicleUncheckedUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.V
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedUpdateManyWithoutVehicleNestedInputSchema,
@@ -8049,9 +10798,20 @@ export const VehicleUncheckedUpdateManyWithoutCompanyInputSchema: z.ZodType<Pris
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    unitNumber: z
-      .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
-      .optional(),
+    driverId: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    unit_number: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     plate: z
       .union([
         z.string(),
@@ -8059,7 +10819,7 @@ export const VehicleUncheckedUpdateManyWithoutCompanyInputSchema: z.ZodType<Pris
       ])
       .optional()
       .nullable(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
     createdAt: z
@@ -8084,25 +10844,28 @@ export const DriverUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.DriverUpdat
     name: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    vehicle: z
+      .lazy(() => VehicleUpdateOneWithoutDriverNestedInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(() => OperationalEventUpdateManyWithoutDriverNestedInputSchema)
       .optional(),
   });
@@ -8115,25 +10878,28 @@ export const DriverUncheckedUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.Dr
     name: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    vehicle: z
+      .lazy(() => VehicleUncheckedUpdateOneWithoutDriverNestedInputSchema)
+      .optional(),
+    operational_events: z
       .lazy(
         () => OperationalEventUncheckedUpdateManyWithoutDriverNestedInputSchema,
       )
@@ -8148,19 +10914,19 @@ export const DriverUncheckedUpdateManyWithoutCompanyInputSchema: z.ZodType<Prism
     name: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    licenseNumber: z
+    license_number: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    isActive: z
+    is_active: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8191,13 +10957,27 @@ export const UserUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.UserUpdateWit
     isActive: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
+    resetPasswordToken: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(() => OperationalEventUpdateManyWithoutCreatedByNestedInputSchema)
       .optional(),
   });
@@ -8225,13 +11005,27 @@ export const UserUncheckedUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.User
     isActive: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
+    resetPasswordToken: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    operationalEvents: z
+    operational_events: z
       .lazy(
         () =>
           OperationalEventUncheckedUpdateManyWithoutCreatedByNestedInputSchema,
@@ -8262,6 +11056,20 @@ export const UserUncheckedUpdateManyWithoutCompanyInputSchema: z.ZodType<Prisma.
     isActive: z
       .union([z.boolean(), z.lazy(() => BoolFieldUpdateOperationsInputSchema)])
       .optional(),
+    resetPasswordToken: z
+      .union([
+        z.string(),
+        z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    resetPasswordExpires: z
+      .union([
+        z.coerce.date(),
+        z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
     createdAt: z
       .union([
         z.coerce.date(),
@@ -8275,13 +11083,13 @@ export const OperationalEventUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.O
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8301,56 +11109,59 @@ export const OperationalEventUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.O
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
     vehicle: z
-      .lazy(() => VehicleUpdateOneWithoutOperationalEventsNestedInputSchema)
+      .lazy(() => VehicleUpdateOneWithoutOperational_eventsNestedInputSchema)
       .optional(),
     driver: z
-      .lazy(() => DriverUpdateOneWithoutOperationalEventsNestedInputSchema)
+      .lazy(() => DriverUpdateOneWithoutOperational_eventsNestedInputSchema)
       .optional(),
     createdBy: z
       .lazy(
-        () => UserUpdateOneRequiredWithoutOperationalEventsNestedInputSchema,
+        () => UserUpdateOneRequiredWithoutOperational_eventsNestedInputSchema,
       )
+      .optional(),
+    inspection_details: z
+      .lazy(() => InspectionDetailUpdateManyWithoutEventNestedInputSchema)
       .optional(),
   });
 
@@ -8359,27 +11170,27 @@ export const OperationalEventUncheckedUpdateWithoutCompanyInputSchema: z.ZodType
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    driverId: z
+    driver_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8399,48 +11210,53 @@ export const OperationalEventUncheckedUpdateWithoutCompanyInputSchema: z.ZodType
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
+      .optional(),
+    inspection_details: z
+      .lazy(
+        () => InspectionDetailUncheckedUpdateManyWithoutEventNestedInputSchema,
+      )
       .optional(),
   });
 
@@ -8449,27 +11265,27 @@ export const OperationalEventUncheckedUpdateManyWithoutCompanyInputSchema: z.Zod
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    driverId: z
+    driver_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8489,44 +11305,44 @@ export const OperationalEventUncheckedUpdateManyWithoutCompanyInputSchema: z.Zod
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8537,10 +11353,10 @@ export const OperationalEventUncheckedUpdateManyWithoutCompanyInputSchema: z.Zod
 export const OperationalEventCreateManyVehicleInputSchema: z.ZodType<Prisma.OperationalEventCreateManyVehicleInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    companyId: z.string(),
-    driverId: z.string().optional().nullable(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    company_id: z.string(),
+    driver_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -8549,16 +11365,16 @@ export const OperationalEventCreateManyVehicleInputSchema: z.ZodType<Prisma.Oper
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdByUserId: z.string(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_by_user_id: z.string(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
   });
 
 export const OperationalEventUpdateWithoutVehicleInputSchema: z.ZodType<Prisma.OperationalEventUpdateWithoutVehicleInput> =
@@ -8566,13 +11382,13 @@ export const OperationalEventUpdateWithoutVehicleInputSchema: z.ZodType<Prisma.O
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8592,41 +11408,41 @@ export const OperationalEventUpdateWithoutVehicleInputSchema: z.ZodType<Prisma.O
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8634,16 +11450,20 @@ export const OperationalEventUpdateWithoutVehicleInputSchema: z.ZodType<Prisma.O
       .optional(),
     company: z
       .lazy(
-        () => CompanyUpdateOneRequiredWithoutOperationalEventsNestedInputSchema,
+        () =>
+          CompanyUpdateOneRequiredWithoutOperational_eventsNestedInputSchema,
       )
       .optional(),
     driver: z
-      .lazy(() => DriverUpdateOneWithoutOperationalEventsNestedInputSchema)
+      .lazy(() => DriverUpdateOneWithoutOperational_eventsNestedInputSchema)
       .optional(),
     createdBy: z
       .lazy(
-        () => UserUpdateOneRequiredWithoutOperationalEventsNestedInputSchema,
+        () => UserUpdateOneRequiredWithoutOperational_eventsNestedInputSchema,
       )
+      .optional(),
+    inspection_details: z
+      .lazy(() => InspectionDetailUpdateManyWithoutEventNestedInputSchema)
       .optional(),
   });
 
@@ -8652,23 +11472,23 @@ export const OperationalEventUncheckedUpdateWithoutVehicleInputSchema: z.ZodType
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    companyId: z
+    company_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    driverId: z
+    driver_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8688,48 +11508,53 @@ export const OperationalEventUncheckedUpdateWithoutVehicleInputSchema: z.ZodType
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
+      .optional(),
+    inspection_details: z
+      .lazy(
+        () => InspectionDetailUncheckedUpdateManyWithoutEventNestedInputSchema,
+      )
       .optional(),
   });
 
@@ -8738,23 +11563,23 @@ export const OperationalEventUncheckedUpdateManyWithoutVehicleInputSchema: z.Zod
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    companyId: z
+    company_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    driverId: z
+    driver_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8774,44 +11599,44 @@ export const OperationalEventUncheckedUpdateManyWithoutVehicleInputSchema: z.Zod
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8822,10 +11647,10 @@ export const OperationalEventUncheckedUpdateManyWithoutVehicleInputSchema: z.Zod
 export const OperationalEventCreateManyDriverInputSchema: z.ZodType<Prisma.OperationalEventCreateManyDriverInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    companyId: z.string(),
-    vehicleId: z.string().optional().nullable(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    company_id: z.string(),
+    vehicle_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -8834,16 +11659,16 @@ export const OperationalEventCreateManyDriverInputSchema: z.ZodType<Prisma.Opera
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdByUserId: z.string(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_by_user_id: z.string(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
   });
 
 export const OperationalEventUpdateWithoutDriverInputSchema: z.ZodType<Prisma.OperationalEventUpdateWithoutDriverInput> =
@@ -8851,13 +11676,13 @@ export const OperationalEventUpdateWithoutDriverInputSchema: z.ZodType<Prisma.Op
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8877,41 +11702,41 @@ export const OperationalEventUpdateWithoutDriverInputSchema: z.ZodType<Prisma.Op
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8919,16 +11744,20 @@ export const OperationalEventUpdateWithoutDriverInputSchema: z.ZodType<Prisma.Op
       .optional(),
     company: z
       .lazy(
-        () => CompanyUpdateOneRequiredWithoutOperationalEventsNestedInputSchema,
+        () =>
+          CompanyUpdateOneRequiredWithoutOperational_eventsNestedInputSchema,
       )
       .optional(),
     vehicle: z
-      .lazy(() => VehicleUpdateOneWithoutOperationalEventsNestedInputSchema)
+      .lazy(() => VehicleUpdateOneWithoutOperational_eventsNestedInputSchema)
       .optional(),
     createdBy: z
       .lazy(
-        () => UserUpdateOneRequiredWithoutOperationalEventsNestedInputSchema,
+        () => UserUpdateOneRequiredWithoutOperational_eventsNestedInputSchema,
       )
+      .optional(),
+    inspection_details: z
+      .lazy(() => InspectionDetailUpdateManyWithoutEventNestedInputSchema)
       .optional(),
   });
 
@@ -8937,23 +11766,23 @@ export const OperationalEventUncheckedUpdateWithoutDriverInputSchema: z.ZodType<
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    companyId: z
+    company_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -8973,48 +11802,53 @@ export const OperationalEventUncheckedUpdateWithoutDriverInputSchema: z.ZodType<
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
+      .optional(),
+    inspection_details: z
+      .lazy(
+        () => InspectionDetailUncheckedUpdateManyWithoutEventNestedInputSchema,
+      )
       .optional(),
   });
 
@@ -9023,23 +11857,23 @@ export const OperationalEventUncheckedUpdateManyWithoutDriverInputSchema: z.ZodT
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    companyId: z
+    company_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -9059,44 +11893,44 @@ export const OperationalEventUncheckedUpdateManyWithoutDriverInputSchema: z.ZodT
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdByUserId: z
+    created_by_user_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -9107,11 +11941,11 @@ export const OperationalEventUncheckedUpdateManyWithoutDriverInputSchema: z.ZodT
 export const OperationalEventCreateManyCreatedByInputSchema: z.ZodType<Prisma.OperationalEventCreateManyCreatedByInput> =
   z.strictObject({
     id: z.uuid().optional(),
-    companyId: z.string(),
-    vehicleId: z.string().optional().nullable(),
-    driverId: z.string().optional().nullable(),
-    eventType: z.lazy(() => EventTypeSchema),
-    eventDatetime: z.coerce.date(),
+    company_id: z.string(),
+    vehicle_id: z.string().optional().nullable(),
+    driver_id: z.string().optional().nullable(),
+    event_type: z.lazy(() => EventTypeSchema),
+    event_datetime: z.coerce.date(),
     location: z
       .lazy(() => LocationTypeSchema)
       .optional()
@@ -9120,15 +11954,15 @@ export const OperationalEventCreateManyCreatedByInputSchema: z.ZodType<Prisma.Op
       .lazy(() => ContextTypeSchema)
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .lazy(() => GeneralResultSchema)
       .optional()
       .nullable(),
-    eSignature: z.string().optional().nullable(),
-    finalObservations: z.string().optional().nullable(),
-    isConfirmed: z.boolean().optional().nullable(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    e_signature: z.string().optional().nullable(),
+    final_observations: z.string().optional().nullable(),
+    is_confirmed: z.boolean().optional().nullable(),
+    created_at: z.coerce.date().optional(),
+    updated_at: z.coerce.date().optional(),
   });
 
 export const OperationalEventUpdateWithoutCreatedByInputSchema: z.ZodType<Prisma.OperationalEventUpdateWithoutCreatedByInput> =
@@ -9136,13 +11970,13 @@ export const OperationalEventUpdateWithoutCreatedByInputSchema: z.ZodType<Prisma
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -9162,41 +11996,41 @@ export const OperationalEventUpdateWithoutCreatedByInputSchema: z.ZodType<Prisma
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -9204,14 +12038,18 @@ export const OperationalEventUpdateWithoutCreatedByInputSchema: z.ZodType<Prisma
       .optional(),
     company: z
       .lazy(
-        () => CompanyUpdateOneRequiredWithoutOperationalEventsNestedInputSchema,
+        () =>
+          CompanyUpdateOneRequiredWithoutOperational_eventsNestedInputSchema,
       )
       .optional(),
     vehicle: z
-      .lazy(() => VehicleUpdateOneWithoutOperationalEventsNestedInputSchema)
+      .lazy(() => VehicleUpdateOneWithoutOperational_eventsNestedInputSchema)
       .optional(),
     driver: z
-      .lazy(() => DriverUpdateOneWithoutOperationalEventsNestedInputSchema)
+      .lazy(() => DriverUpdateOneWithoutOperational_eventsNestedInputSchema)
+      .optional(),
+    inspection_details: z
+      .lazy(() => InspectionDetailUpdateManyWithoutEventNestedInputSchema)
       .optional(),
   });
 
@@ -9220,30 +12058,30 @@ export const OperationalEventUncheckedUpdateWithoutCreatedByInputSchema: z.ZodTy
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    companyId: z
+    company_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    driverId: z
+    driver_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -9263,45 +12101,50 @@ export const OperationalEventUncheckedUpdateWithoutCreatedByInputSchema: z.ZodTy
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
+      .optional(),
+    inspection_details: z
+      .lazy(
+        () => InspectionDetailUncheckedUpdateManyWithoutEventNestedInputSchema,
+      )
       .optional(),
   });
 
@@ -9310,30 +12153,30 @@ export const OperationalEventUncheckedUpdateManyWithoutCreatedByInputSchema: z.Z
     id: z
       .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    companyId: z
+    company_id: z
       .union([z.string(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
       .optional(),
-    vehicleId: z
+    vehicle_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    driverId: z
+    driver_id: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eventType: z
+    event_type: z
       .union([
         z.lazy(() => EventTypeSchema),
         z.lazy(() => EnumEventTypeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    eventDatetime: z
+    event_datetime: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
@@ -9353,46 +12196,244 @@ export const OperationalEventUncheckedUpdateManyWithoutCreatedByInputSchema: z.Z
       ])
       .optional()
       .nullable(),
-    generalResult: z
+    general_result: z
       .union([
         z.lazy(() => GeneralResultSchema),
         z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    eSignature: z
+    e_signature: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    finalObservations: z
+    final_observations: z
       .union([
         z.string(),
         z.lazy(() => NullableStringFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    isConfirmed: z
+    is_confirmed: z
       .union([
         z.boolean(),
         z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
       ])
       .optional()
       .nullable(),
-    createdAt: z
+    created_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
-    updatedAt: z
+    updated_at: z
       .union([
         z.coerce.date(),
         z.lazy(() => DateTimeFieldUpdateOperationsInputSchema),
       ])
       .optional(),
+  });
+
+export const InspectionDetailCreateManyEventInputSchema: z.ZodType<Prisma.InspectionDetailCreateManyEventInput> =
+  z.strictObject({
+    id: z.uuid().optional(),
+    type_inspection: z
+      .lazy(() => TypeInspectionSchema)
+      .optional()
+      .nullable(),
+    documentation_verified: z.boolean().optional().nullable(),
+    vehicle_condition: z
+      .lazy(() => InspectionStatusSchema)
+      .optional()
+      .nullable(),
+    lights_ok: z.boolean().optional().nullable(),
+    tires_ok: z.boolean().optional().nullable(),
+    brakes_ok: z.boolean().optional().nullable(),
+    safety_elements_ok: z.boolean().optional().nullable(),
+  });
+
+export const InspectionDetailUpdateWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailUpdateWithoutEventInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(
+          () => NullableEnumTypeInspectionFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    documentation_verified: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(
+          () => NullableEnumInspectionStatusFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    lights_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    tires_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    brakes_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    safety_elements_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+  });
+
+export const InspectionDetailUncheckedUpdateWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailUncheckedUpdateWithoutEventInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(
+          () => NullableEnumTypeInspectionFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    documentation_verified: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(
+          () => NullableEnumInspectionStatusFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    lights_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    tires_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    brakes_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    safety_elements_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+  });
+
+export const InspectionDetailUncheckedUpdateManyWithoutEventInputSchema: z.ZodType<Prisma.InspectionDetailUncheckedUpdateManyWithoutEventInput> =
+  z.strictObject({
+    id: z
+      .union([z.uuid(), z.lazy(() => StringFieldUpdateOperationsInputSchema)])
+      .optional(),
+    type_inspection: z
+      .union([
+        z.lazy(() => TypeInspectionSchema),
+        z.lazy(
+          () => NullableEnumTypeInspectionFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    documentation_verified: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    vehicle_condition: z
+      .union([
+        z.lazy(() => InspectionStatusSchema),
+        z.lazy(
+          () => NullableEnumInspectionStatusFieldUpdateOperationsInputSchema,
+        ),
+      ])
+      .optional()
+      .nullable(),
+    lights_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    tires_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    brakes_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
+    safety_elements_ok: z
+      .union([
+        z.boolean(),
+        z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema),
+      ])
+      .optional()
+      .nullable(),
   });
 
 /////////////////////////////////////////
@@ -9993,6 +13034,129 @@ export const OperationalEventFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.Opera
     })
     .strict();
 
+export const InspectionDetailFindFirstArgsSchema: z.ZodType<Prisma.InspectionDetailFindFirstArgs> =
+  z
+    .object({
+      select: InspectionDetailSelectSchema.optional(),
+      include: InspectionDetailIncludeSchema.optional(),
+      where: InspectionDetailWhereInputSchema.optional(),
+      orderBy: z
+        .union([
+          InspectionDetailOrderByWithRelationInputSchema.array(),
+          InspectionDetailOrderByWithRelationInputSchema,
+        ])
+        .optional(),
+      cursor: InspectionDetailWhereUniqueInputSchema.optional(),
+      take: z.number().optional(),
+      skip: z.number().optional(),
+      distinct: z
+        .union([
+          InspectionDetailScalarFieldEnumSchema,
+          InspectionDetailScalarFieldEnumSchema.array(),
+        ])
+        .optional(),
+    })
+    .strict();
+
+export const InspectionDetailFindFirstOrThrowArgsSchema: z.ZodType<Prisma.InspectionDetailFindFirstOrThrowArgs> =
+  z
+    .object({
+      select: InspectionDetailSelectSchema.optional(),
+      include: InspectionDetailIncludeSchema.optional(),
+      where: InspectionDetailWhereInputSchema.optional(),
+      orderBy: z
+        .union([
+          InspectionDetailOrderByWithRelationInputSchema.array(),
+          InspectionDetailOrderByWithRelationInputSchema,
+        ])
+        .optional(),
+      cursor: InspectionDetailWhereUniqueInputSchema.optional(),
+      take: z.number().optional(),
+      skip: z.number().optional(),
+      distinct: z
+        .union([
+          InspectionDetailScalarFieldEnumSchema,
+          InspectionDetailScalarFieldEnumSchema.array(),
+        ])
+        .optional(),
+    })
+    .strict();
+
+export const InspectionDetailFindManyArgsSchema: z.ZodType<Prisma.InspectionDetailFindManyArgs> =
+  z
+    .object({
+      select: InspectionDetailSelectSchema.optional(),
+      include: InspectionDetailIncludeSchema.optional(),
+      where: InspectionDetailWhereInputSchema.optional(),
+      orderBy: z
+        .union([
+          InspectionDetailOrderByWithRelationInputSchema.array(),
+          InspectionDetailOrderByWithRelationInputSchema,
+        ])
+        .optional(),
+      cursor: InspectionDetailWhereUniqueInputSchema.optional(),
+      take: z.number().optional(),
+      skip: z.number().optional(),
+      distinct: z
+        .union([
+          InspectionDetailScalarFieldEnumSchema,
+          InspectionDetailScalarFieldEnumSchema.array(),
+        ])
+        .optional(),
+    })
+    .strict();
+
+export const InspectionDetailAggregateArgsSchema: z.ZodType<Prisma.InspectionDetailAggregateArgs> =
+  z
+    .object({
+      where: InspectionDetailWhereInputSchema.optional(),
+      orderBy: z
+        .union([
+          InspectionDetailOrderByWithRelationInputSchema.array(),
+          InspectionDetailOrderByWithRelationInputSchema,
+        ])
+        .optional(),
+      cursor: InspectionDetailWhereUniqueInputSchema.optional(),
+      take: z.number().optional(),
+      skip: z.number().optional(),
+    })
+    .strict();
+
+export const InspectionDetailGroupByArgsSchema: z.ZodType<Prisma.InspectionDetailGroupByArgs> =
+  z
+    .object({
+      where: InspectionDetailWhereInputSchema.optional(),
+      orderBy: z
+        .union([
+          InspectionDetailOrderByWithAggregationInputSchema.array(),
+          InspectionDetailOrderByWithAggregationInputSchema,
+        ])
+        .optional(),
+      by: InspectionDetailScalarFieldEnumSchema.array(),
+      having: InspectionDetailScalarWhereWithAggregatesInputSchema.optional(),
+      take: z.number().optional(),
+      skip: z.number().optional(),
+    })
+    .strict();
+
+export const InspectionDetailFindUniqueArgsSchema: z.ZodType<Prisma.InspectionDetailFindUniqueArgs> =
+  z
+    .object({
+      select: InspectionDetailSelectSchema.optional(),
+      include: InspectionDetailIncludeSchema.optional(),
+      where: InspectionDetailWhereUniqueInputSchema,
+    })
+    .strict();
+
+export const InspectionDetailFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.InspectionDetailFindUniqueOrThrowArgs> =
+  z
+    .object({
+      select: InspectionDetailSelectSchema.optional(),
+      include: InspectionDetailIncludeSchema.optional(),
+      where: InspectionDetailWhereUniqueInputSchema,
+    })
+    .strict();
+
 export const CompanyCreateArgsSchema: z.ZodType<Prisma.CompanyCreateArgs> = z
   .object({
     select: CompanySelectSchema.optional(),
@@ -10477,6 +13641,111 @@ export const OperationalEventDeleteManyArgsSchema: z.ZodType<Prisma.OperationalE
   z
     .object({
       where: OperationalEventWhereInputSchema.optional(),
+      limit: z.number().optional(),
+    })
+    .strict();
+
+export const InspectionDetailCreateArgsSchema: z.ZodType<Prisma.InspectionDetailCreateArgs> =
+  z
+    .object({
+      select: InspectionDetailSelectSchema.optional(),
+      include: InspectionDetailIncludeSchema.optional(),
+      data: z.union([
+        InspectionDetailCreateInputSchema,
+        InspectionDetailUncheckedCreateInputSchema,
+      ]),
+    })
+    .strict();
+
+export const InspectionDetailUpsertArgsSchema: z.ZodType<Prisma.InspectionDetailUpsertArgs> =
+  z
+    .object({
+      select: InspectionDetailSelectSchema.optional(),
+      include: InspectionDetailIncludeSchema.optional(),
+      where: InspectionDetailWhereUniqueInputSchema,
+      create: z.union([
+        InspectionDetailCreateInputSchema,
+        InspectionDetailUncheckedCreateInputSchema,
+      ]),
+      update: z.union([
+        InspectionDetailUpdateInputSchema,
+        InspectionDetailUncheckedUpdateInputSchema,
+      ]),
+    })
+    .strict();
+
+export const InspectionDetailCreateManyArgsSchema: z.ZodType<Prisma.InspectionDetailCreateManyArgs> =
+  z
+    .object({
+      data: z.union([
+        InspectionDetailCreateManyInputSchema,
+        InspectionDetailCreateManyInputSchema.array(),
+      ]),
+      skipDuplicates: z.boolean().optional(),
+    })
+    .strict();
+
+export const InspectionDetailCreateManyAndReturnArgsSchema: z.ZodType<Prisma.InspectionDetailCreateManyAndReturnArgs> =
+  z
+    .object({
+      data: z.union([
+        InspectionDetailCreateManyInputSchema,
+        InspectionDetailCreateManyInputSchema.array(),
+      ]),
+      skipDuplicates: z.boolean().optional(),
+    })
+    .strict();
+
+export const InspectionDetailDeleteArgsSchema: z.ZodType<Prisma.InspectionDetailDeleteArgs> =
+  z
+    .object({
+      select: InspectionDetailSelectSchema.optional(),
+      include: InspectionDetailIncludeSchema.optional(),
+      where: InspectionDetailWhereUniqueInputSchema,
+    })
+    .strict();
+
+export const InspectionDetailUpdateArgsSchema: z.ZodType<Prisma.InspectionDetailUpdateArgs> =
+  z
+    .object({
+      select: InspectionDetailSelectSchema.optional(),
+      include: InspectionDetailIncludeSchema.optional(),
+      data: z.union([
+        InspectionDetailUpdateInputSchema,
+        InspectionDetailUncheckedUpdateInputSchema,
+      ]),
+      where: InspectionDetailWhereUniqueInputSchema,
+    })
+    .strict();
+
+export const InspectionDetailUpdateManyArgsSchema: z.ZodType<Prisma.InspectionDetailUpdateManyArgs> =
+  z
+    .object({
+      data: z.union([
+        InspectionDetailUpdateManyMutationInputSchema,
+        InspectionDetailUncheckedUpdateManyInputSchema,
+      ]),
+      where: InspectionDetailWhereInputSchema.optional(),
+      limit: z.number().optional(),
+    })
+    .strict();
+
+export const InspectionDetailUpdateManyAndReturnArgsSchema: z.ZodType<Prisma.InspectionDetailUpdateManyAndReturnArgs> =
+  z
+    .object({
+      data: z.union([
+        InspectionDetailUpdateManyMutationInputSchema,
+        InspectionDetailUncheckedUpdateManyInputSchema,
+      ]),
+      where: InspectionDetailWhereInputSchema.optional(),
+      limit: z.number().optional(),
+    })
+    .strict();
+
+export const InspectionDetailDeleteManyArgsSchema: z.ZodType<Prisma.InspectionDetailDeleteManyArgs> =
+  z
+    .object({
+      where: InspectionDetailWhereInputSchema.optional(),
       limit: z.number().optional(),
     })
     .strict();
