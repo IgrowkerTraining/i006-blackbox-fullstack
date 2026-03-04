@@ -11,6 +11,8 @@ export default defineConfig({
   datasource: {
     // Provide a dummy URL during build if DATABASE_URL is not set.
     // This allows the build to succeed without exposing real credentials.
-    url: process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy?schema=public",
+    url:
+      process.env.DATABASE_URL ||
+      "postgresql://dummy:dummy@localhost:5432/dummy?schema=public",
   },
 });
