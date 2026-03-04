@@ -1,16 +1,19 @@
 export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
+  RESET: '/auth/password/rest',
   DASHBOARD: '/dashboard',
   CHOFERES: '/choferes',
   HOME: '/',
 } as const;
 
 export const API_ENDPOINTS = {
-  BASE: 'http://localhost:3000/api',
+  BASE: import.meta.env.VITE_API_BASE_URL,
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
   },
   HEALTH: '/health',
 } as const;
