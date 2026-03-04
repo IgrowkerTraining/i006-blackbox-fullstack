@@ -51,8 +51,8 @@ export const Layout: React.FC<LayoutProps> = ({
           </aside>
         )}
 
-        
-        <main className="flex-1 min-w-0 overflow-auto p-4 h-full">
+
+        <main className="flex-1 min-w-0 overflow-auto  h-full p-0">
           {children}
         </main>
       </div>
