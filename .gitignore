@@ -26,6 +26,3 @@ dist-ssr
 
 # Documentation
 apps/backend/AGENT.md
-
-# Test
-apps/backend/prisma/seed.ts
