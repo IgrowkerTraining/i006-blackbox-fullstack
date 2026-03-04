@@ -22,21 +22,22 @@ export const Layout: React.FC<LayoutProps> = ({
     <div
       className={`min-h-screen flex flex-col bg-[var(--page)] text-slate-200 ${className}`}
     >
-      {header !== null && (
-        <header className="sticky top-0 z-10 h-14 flex-shrink-0 border-b border-slate-800 bg-slate-950 overflow-hidden">
-          {header === undefined ? (
-            <div className="px-4 py-3 flex items-center h-full">
-              <span className="text-sm text-slate-400">Header placeholder</span>
-            </div>
-          ) : (
-            header
-          )}
-        </header>
-      )}
+      {/* ── Header ── */}
+      <header className="sticky top-0 z-10 h-14 flex-shrink-0 border-b border-slate-800 bg-slate-950 overflow-hidden">
+        {header === undefined ? (
+          <div className="px-4 py-3 flex items-center h-full">
+            <span className="text-sm text-slate-400">Header placeholder</span>
+          </div>
+        ) : (
+          header
+        )}
+      </header>
 
+      {/* ── Body (sidebar + main) ── */}
+      {/* flex-1 + flex-row makes sidebar and main sit side by side */}
       <div className="flex flex-1 overflow-hidden">
 
-
+        {/* ── Sidebar ── */}
         {hasSidebar && (
           <aside className="hidden md:flex flex-col w-64 flex-shrink-0 min-h-0 border-r border-slate-800 bg-slate-950 overflow-y-auto">
             {sidebar === undefined ? (
@@ -51,8 +52,8 @@ export const Layout: React.FC<LayoutProps> = ({
           </aside>
         )}
 
-
-        <main className="flex-1 min-w-0 overflow-auto  h-full p-0">
+        {/* ── Main content ── */}
+        <main className="flex-1 min-w-0 overflow-auto p-4 h-full">
           {children}
         </main>
       </div>
