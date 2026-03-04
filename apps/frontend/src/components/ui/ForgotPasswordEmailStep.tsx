@@ -32,23 +32,8 @@ export default function ForgotPasswordEmailStep({ onSubmit, isLoading = false, e
         Escribe tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
       </p>
 
-      {/* Quick test buttons for development */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-        <p className="text-xs text-blue-700 font-medium mb-2">Pruebas rápidas (desarrollo):</p>
-        <div className="flex flex-wrap gap-2">
-          {TEST_EMAILS.map((testEmail) => (
-            <button
-              key={testEmail}
-              type="button"
-              onClick={() => handleQuickTest(testEmail)}
-              disabled={isLoading}
-              className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded transition-colors disabled:opacity-50"
-            >
-              {testEmail}
-            </button>
-          ))}
-        </div>
-      </div>
+
+     
 
       <div className="space-y-4">
         <div className="space-y-2">
