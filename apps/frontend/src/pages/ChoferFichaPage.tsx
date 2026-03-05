@@ -6,6 +6,7 @@ import { PageDataContainer } from "../components/dataPage";
 import { useApi } from "../hooks/useApi";
 import { api } from "../services/api";
 import type { ChoferFicha } from "../types/dataPages";
+import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 const StatusTruckIcon = () => (
   <svg
@@ -27,6 +28,7 @@ const StatusTruckIcon = () => (
 );
 
 const ChoferFichaPage: React.FC = () => {
+  useDocumentTitle("Ficha de Chofer");
   const { idChofer } = useParams();
 
   const fetchChofer = useCallback(() => api.getChoferById(idChofer ?? ""), [idChofer]);

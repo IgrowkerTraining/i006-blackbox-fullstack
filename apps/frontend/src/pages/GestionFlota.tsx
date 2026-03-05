@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 interface FlotaRow {
   id: string;
@@ -75,6 +76,7 @@ const SearchIcon = () => (
 );
 
 export default function GestionFlota() {
+  useDocumentTitle("Gestion de Flota");
   const [currentPage, setCurrentPage] = useState("2");
 
   return (

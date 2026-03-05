@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
+import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 const IconPlus = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-[#3F51B5]">
@@ -57,6 +58,7 @@ const activities = [
 ];
 
 const Dashboard: React.FC = () => {
+  useDocumentTitle("Dashboard");
   const navigate = useNavigate();
   return (
     <div className="min-h-full">

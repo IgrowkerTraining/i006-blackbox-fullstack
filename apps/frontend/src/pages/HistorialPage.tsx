@@ -14,6 +14,7 @@ import {
 import { useApi } from "../hooks/useApi";
 import { api } from "../services/api";
 import type { RegistroHistorial, CriterioHistorial } from "../types/dataPages";
+import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 const PAGE_SIZE = 5;
 
@@ -56,6 +57,7 @@ export interface HistorialFilterState {
 }
 
 const HistorialPage: React.FC = () => {
+  useDocumentTitle("Historial de eventos");
   const [criterio, setCriterio] = useState<CriterioHistorial>("idUnidad");
   const [inputVal, setInputVal] = useState("");
   const [filterVal, setFilterVal] = useState("");
