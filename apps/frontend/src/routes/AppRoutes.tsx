@@ -14,6 +14,7 @@ import ChoferesPage from "../pages/ChoferesPage";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import NuevaInspeccionPage from "../pages/NuevaInspeccionPage";
 import PassworsRecovery from "../pages/auth/recovery/PassworsRecovery";
+import FleetManagement from "../pages/GestionFlota";
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -88,7 +89,7 @@ export const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <AppLayout>
-              <PlaceholderPage title="Flota" />
+              <FleetManagement />
             </AppLayout>
           </ProtectedRoute>
         }
