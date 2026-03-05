@@ -7,7 +7,7 @@ import PublicRoute from "./PublicRoute";
 import AppLayout from "../components/layout/AppLayout";
 import AuthLayout from "../components/layout/AuthLayout";
 
-import Login from "../pages/Login";
+import Login from "../pages/auth/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import ChoferesPage from "../pages/ChoferesPage";
@@ -17,6 +17,7 @@ import HistorialPage from "../pages/HistorialPage";
 import HistorialReportePage from "../pages/HistorialReportePage";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import NuevaInspeccionPage from "../pages/NuevaInspeccionPage";
+import PassworsRecovery from "../pages/auth/recovery/PassworsRecovery";
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -31,7 +32,19 @@ export const AppRoutes: React.FC = () => {
             </AuthLayout>
           </PublicRoute>
         }
+      />,
+      <Route
+        path="/auth/password/reset/"
+        element={
+          <PublicRoute>
+            <AuthLayout>
+              <PassworsRecovery />
+
+            </AuthLayout>
+          </PublicRoute>
+        }
       />
+      ,
       <Route
         path="/register"
         element={

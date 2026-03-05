@@ -55,7 +55,8 @@ const getVehiclesById = async (
 
 const register = async (companyData: {
   name: string;
-  usdotNumber?: string;
+  usdotNumber: string;
+  state: string;
 }) => {
   const company = await prisma.company.create({
     data: companyData,
