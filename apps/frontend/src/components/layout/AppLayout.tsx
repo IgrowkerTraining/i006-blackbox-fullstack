@@ -35,7 +35,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col min-h-0">
-        <header className="sticky top-0 z-10 flex h-14 flex-shrink-0 items-stretch rounded-lg bg-black shadow-sm">
+        <header className="sticky top-0 z-10 flex h-14 flex-shrink-0 items-stretch rounded-lg bg-blackbox-green shadow-sm">
           <AppHeader title={title} />
         </header>
         <main className="min-h-0 flex-1 overflow-auto p-6 bg-main">

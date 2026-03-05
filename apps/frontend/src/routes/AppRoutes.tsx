@@ -18,6 +18,7 @@ import HistorialReportePage from "../pages/HistorialReportePage";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import NuevaInspeccionPage from "../pages/NuevaInspeccionPage";
 import PassworsRecovery from "../pages/auth/recovery/PassworsRecovery";
+import FleetManagement from "../pages/GestionFlota";
 
 export const AppRoutes: React.FC = () => {
   return (
