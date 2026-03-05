@@ -35,7 +35,7 @@ export const AppRoutes: React.FC = () => {
         }
       />,
       <Route
-        path="/auth/password/reset/"
+        path="/reset-password"
         element={
           <PublicRoute>
             <AuthLayout>
