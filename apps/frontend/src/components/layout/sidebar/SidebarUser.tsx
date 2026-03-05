@@ -29,7 +29,7 @@ export const SidebarUser: React.FC<SidebarUserProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-3 border-t border-slate-600 bg-slate-700/80 px-4 py-3 ${className}`}
+      className={`flex items-center gap-3 border-t border-slate-600 bg-main-dark px-4 py-3 ${className}`}
       role="region"
       aria-label="Información del usuario"
     >
@@ -41,7 +41,7 @@ export const SidebarUser: React.FC<SidebarUserProps> = ({
         />
       ) : (
         <div
-          className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center flex-shrink-0 text-white font-semibold text-sm"
+          className="w-10 h-10 rounded-full bg-menu-active flex items-center justify-center flex-shrink-0 text-white font-semibold text-sm"
           aria-hidden
         >
           {displayInitials}

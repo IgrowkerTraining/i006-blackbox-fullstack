@@ -7,7 +7,7 @@ const routeTitles: Record<string, string> = {
   "/dashboard": "Dashboard Operativo",
   "/choferes": "Gestión de Choferes",
   "/flota": "Gestión de Flota",
-  "/historial": "Historial",
+  "/historial": "Gestión de Eventos",
   "/blackbox-engine": "BlackBox Engine",
   "/inspeccion/nueva": "Nueva inspección de Activo",
 };
@@ -22,11 +22,15 @@ interface AppLayoutProps {
  */
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { pathname } = useLocation();
-  const title = routeTitles[pathname] ?? "Gestión";
+  const title =
+    routeTitles[pathname] ??
+    (pathname.startsWith("/choferes/") ? routeTitles["/choferes"] : null) ??
+    (pathname.startsWith("/historial/") ? routeTitles["/historial"] : null) ??
+    "Gestión";
 
   return (
-    <div className="flex h-screen overflow-hidden bg-blackbox-white font-lato text-blackbox-green">
-      <aside className="hidden md:flex w-64 flex-shrink-0 flex-col h-full min-h-0 overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-white">
+      <aside className="hidden md:flex w-56 flex-shrink-0 flex-col h-full min-h-0 overflow-hidden">
         <Sidebar />
       </aside>
 
@@ -34,7 +38,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <header className="sticky top-0 z-10 flex h-14 flex-shrink-0 items-stretch rounded-lg bg-blackbox-green shadow-sm">
           <AppHeader title={title} />
         </header>
-        <main className="min-h-0 flex-1 overflow-auto p-6 bg-blackbox-white">
+        <main className="min-h-0 flex-1 overflow-auto p-6 bg-main">
           {children}
         </main>
       </div>

@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { Input } from "../components/common/Input";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { ErrorMessage } from "../components/common/ErrorMessage";
@@ -11,7 +10,7 @@ import {
 } from "../components/dataPage";
 import { useApi } from "../hooks/useApi";
 import { api } from "../services/api";
-import type { Chofer } from "../types/dataPages";
+import type { UnidadFlota } from "../types/dataPages";
 
 const PAGE_SIZE = 5;
 
@@ -32,17 +31,30 @@ const SearchIcon = () => (
   </svg>
 );
 
-const ChoferesPage: React.FC = () => {
+function EstadoBadge({ estado }: { estado: string }) {
+  const isActivo = estado.toUpperCase() === "ACTIVO";
+  return (
+    <span
+      className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
+        isActivo ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"
+      }`}
+    >
+      {estado}
+    </span>
+  );
+}
+
+const FlotaPage: React.FC = () => {
   const [searchId, setSearchId] = useState("");
 
-  const fetchChoferes = useCallback(() => api.getChoferes(), []);
-  const { data: apiData, loading, error, execute } = useApi<Chofer[]>(fetchChoferes);
+  const fetchFlota = useCallback(() => api.getFlota(), []);
+  const { data: apiData, loading, error, execute } = useApi<UnidadFlota[]>(fetchFlota);
 
   useEffect(() => {
     execute();
   }, [execute]);
 
-  const choferes: Chofer[] = apiData ?? [];
+  const flota: UnidadFlota[] = apiData ?? [];
 
   const {
     paginatedData,
@@ -52,59 +64,54 @@ const ChoferesPage: React.FC = () => {
     sortColumn,
     sortDirection,
     handleSort,
-  } = useDataPage<Chofer, string>({
-    data: choferes,
+  } = useDataPage<UnidadFlota, string>({
+    data: flota,
     pageSize: PAGE_SIZE,
     filterState: searchId,
     filterFn: (data, term) => {
       if (!term.trim()) return data;
       const lower = term.trim().toLowerCase();
-      return data.filter((row) => row.idChofer.toLowerCase().includes(lower));
+      return data.filter((row) => row.idUnidad.toLowerCase().includes(lower));
     },
-    initialSortColumn: "idChofer",
+    initialSortColumn: "idUnidad",
     initialSortDirection: "asc",
   });
 
   const columns = [
     {
-      id: "unidadAsignada",
-      label: "Unidad asignada",
-      sortable: false,
-      accessor: "unidadAsignada" as keyof Chofer,
+      id: "idUnidad",
+      label: "ID UNIDAD",
+      sortable: true,
+      accessor: "idUnidad" as keyof UnidadFlota,
     },
     {
-      id: "idChofer",
-      label: "ID Chofer",
+      id: "estado",
+      label: "ESTADO",
       sortable: true,
-      accessor: "idChofer" as keyof Chofer,
+      accessor: "estado" as keyof UnidadFlota,
+      render: (row: UnidadFlota) => <EstadoBadge estado={row.estado} />,
     },
     {
-      id: "nombre",
-      label: "Nombre",
+      id: "chofer",
+      label: "CHOFER",
       sortable: true,
-      accessor: "nombre" as keyof Chofer,
+      accessor: "chofer" as keyof UnidadFlota,
     },
     {
-      id: "licencia",
-      label: "Licencia",
+      id: "ultimaInspeccion",
+      label: "ÚLTIMA INSPECCIÓN",
       sortable: true,
-      accessor: "licencia" as keyof Chofer,
-    },
-    {
-      id: "estadoOperativo",
-      label: "Estado operativo",
-      sortable: true,
-      accessor: "estadoOperativo" as keyof Chofer,
+      accessor: "ultimaInspeccion" as keyof UnidadFlota,
     },
   ];
 
   return (
     <div className="max-w-5xl mx-auto w-full">
       <PageDataContainer
-        title="Información de Choferes"
+        title="Inventario Flota"
         filters={
           <Input
-            placeholder="Buscar por ID chofer"
+            placeholder="Buscar ID unidad..."
             value={searchId}
             onChange={(e) => setSearchId(e.target.value)}
             icon={<SearchIcon />}
@@ -127,30 +134,25 @@ const ChoferesPage: React.FC = () => {
         {loading ? (
           <LoadingSpinner message="Cargando..." inline />
         ) : (
-          <>
-            <DataTable<Chofer>
-              columns={columns}
-              data={paginatedData}
-              sortColumn={sortColumn}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-              renderAction={(row) => (
-                <Link
-                  to={`/choferes/${row.idChofer}/ficha`}
-                  className="text-menu-active hover:opacity-90 font-medium transition-colors"
-                >
-                  Ver ficha
-                </Link>
-              )}
-            />
-            <p className="mt-4 text-xs text-slate-700">
-              Nota: El estado operativo se actualiza en tiempo real basado en el registro de horas de servicio y la vigencia de la documentación cargada en el sistema.
-            </p>
-          </>
+          <DataTable<UnidadFlota>
+            columns={columns}
+            data={paginatedData}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            renderAction={(row) => (
+              <a
+                href={`#/flota/${row.idUnidad}/historial`}
+                className="text-accent hover:opacity-90 font-medium transition-colors"
+              >
+                Ver historial
+              </a>
+            )}
+          />
         )}
       </PageDataContainer>
     </div>
   );
 };
 
-export default ChoferesPage;
+export default FlotaPage;

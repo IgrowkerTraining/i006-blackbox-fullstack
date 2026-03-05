@@ -11,6 +11,10 @@ import Login from "../pages/auth/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import ChoferesPage from "../pages/ChoferesPage";
+import ChoferFichaPage from "../pages/ChoferFichaPage";
+import FlotaPage from "../pages/FlotaPage";
+import HistorialPage from "../pages/HistorialPage";
+import HistorialReportePage from "../pages/HistorialReportePage";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import NuevaInspeccionPage from "../pages/NuevaInspeccionPage";
 import PassworsRecovery from "../pages/auth/recovery/PassworsRecovery";
@@ -85,11 +89,21 @@ export const AppRoutes: React.FC = () => {
         }
       />
       <Route
+        path="/choferes/:idChofer/ficha"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <ChoferFichaPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/flota"
         element={
           <ProtectedRoute>
             <AppLayout>
-              <FleetManagement />
+              <FlotaPage />
             </AppLayout>
           </ProtectedRoute>
         }
@@ -99,7 +113,17 @@ export const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <AppLayout>
-              <PlaceholderPage title="Historial" />
+              <HistorialPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/historial/reporte/:idUnidad"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <HistorialReportePage />
             </AppLayout>
           </ProtectedRoute>
         }

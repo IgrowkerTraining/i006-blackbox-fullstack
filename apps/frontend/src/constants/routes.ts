@@ -17,6 +17,9 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/auth/reset-password',
   },
   HEALTH: '/health',
+  CHOFERES: '/choferes',
+  FLOTA: '/flota',
+  HISTORIAL: '/historial',
 } as const;
 
 export const STORAGE_KEYS = {

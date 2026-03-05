@@ -1,0 +1,31 @@
+/**
+ * Design tokens – single source of truth for colors and spacing.
+ * Use in Tailwind: bg-main or bg-[var(--color-main-bg)] (see index.html).
+ */
+:root {
+  /* Backgrounds */
+  --color-main-bg: #f3f4f6;
+  --color-main-dark: #0b1001;
+  --color-card-bg: #ffffff;
+  --color-input-bg: #f9fafb;
+  /* Shared by table header and filter inputs */
+  --color-surface-subtle: #f9f9f9;
+
+  /* Text */
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-text-accent: #4e63a8;
+
+  /* Borders */
+  --color-border: #e2e8f0;
+  --color-border-focus: #6366f1;
+
+  /* Menu active uses accent */
+  --color-menu-active: var(--color-text-accent);
+
+  /* Brand / Actions */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-light: #818cf8;
+}

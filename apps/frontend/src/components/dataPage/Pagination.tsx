@@ -48,7 +48,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         type="button"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
-        className="px-3 py-2 text-sm font-medium text-slate-400 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="px-3 py-2 text-sm font-medium text-accent hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         aria-label="Previous page"
       >
         &lt; Previous
@@ -73,8 +73,8 @@ export const Pagination: React.FC<PaginationProps> = ({
                 min-w-[2rem] px-3 py-2 text-sm font-medium rounded-lg transition-colors
                 ${
                   page === currentPage
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                    ? "bg-menu-active text-white shadow-lg shadow-menu-active/20"
+                    : "text-accent hover:bg-surface-subtle hover:opacity-90"
                 }
               `}
               aria-label={`Page ${page}`}
@@ -90,7 +90,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         type="button"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
-        className="px-3 py-2 text-sm font-medium text-slate-400 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="px-3 py-2 text-sm font-medium text-accent hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         aria-label="Next page"
       >
         Next &gt;

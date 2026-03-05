@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 interface ApiState<T> {
   data: T | null;
@@ -19,10 +19,13 @@ export const useApi = <T>(
     loading: false,
     error: null,
   });
+  const inFlightRef = useRef(false);
 
   const execute = useCallback(async (): Promise<T | null> => {
+    if (inFlightRef.current) return null;
+    inFlightRef.current = true;
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
       const result = await apiFunction();
       setState({ data: result, loading: false, error: null });
@@ -31,6 +34,8 @@ export const useApi = <T>(
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setState(prev => ({ ...prev, loading: false, error: errorMessage }));
       return null;
+    } finally {
+      inFlightRef.current = false;
     }
   }, [apiFunction]);
 
