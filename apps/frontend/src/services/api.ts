@@ -15,6 +15,17 @@ import {
   MOCK_HISTORIAL_REPORTE,
 } from "../data/mockData";
 
+const buildErrorMessage = async (response: Response, fallback: string) => {
+  try {
+    const data = await response.json();
+    const msg = data?.error || data?.message;
+    if (msg) return `${fallback} `;
+  } catch {
+
+  }
+  return `${fallback} )`;
+};
+
 export const api = {
   async register(data: any): Promise<{ user: User; message: string }> {
     const response = await fetch(
@@ -26,16 +37,13 @@ export const api = {
       },
     );
 
-    const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || "Registration failed");
+      throw new Error(await buildErrorMessage(response, "Registration failed"));
     }
-    return result;
+    return response.json();
   },
 
-  async login(
-    data: any,
-  ): Promise<{ user: User; token: string; message: string }> {
+  async login(data: any,): Promise<{ user: User; token: string; message: string }> {
     const response = await fetch(
       `${API_ENDPOINTS.BASE}${API_ENDPOINTS.AUTH.LOGIN}`,
       {
@@ -45,12 +53,13 @@ export const api = {
       },
     );
 
-    const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.error || "Login failed");
+      throw new Error(await buildErrorMessage(response, "Credenciales inválidas"));
     }
-    return result;
+    return response.json();
   },
+
+
 
   async checkHealth(): Promise<boolean> {
     try {
@@ -70,8 +79,7 @@ export const api = {
       const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.CHOFERES}`);
       if (!response.ok) {
         if (response.status === 404) return MOCK_CHOFERES;
-        const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || `Error ${response.status}`);
+        throw new Error(await buildErrorMessage(response, "Error"));
       }
       return response.json() as Promise<Chofer[]>;
     } catch {
@@ -103,8 +111,7 @@ export const api = {
       const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.FLOTA}`);
       if (!response.ok) {
         if (response.status === 404) return MOCK_FLOTA;
-        const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || `Error ${response.status}`);
+        throw new Error(await buildErrorMessage(response, "Error"));
       }
       return response.json() as Promise<UnidadFlota[]>;
     } catch {
@@ -120,8 +127,7 @@ export const api = {
       const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HISTORIAL}`);
       if (!response.ok) {
         if (response.status === 404) return MOCK_HISTORIAL;
-        const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || `Error ${response.status}`);
+        throw new Error(await buildErrorMessage(response, "Error"));
       }
       return response.json() as Promise<RegistroHistorial[]>;
     } catch {
