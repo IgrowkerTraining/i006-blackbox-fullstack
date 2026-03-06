@@ -54,7 +54,7 @@ template-react-node-fullstack/
 - **CORS**: Middleware para cross-origin
 - **body-parser**: Middleware para parsear JSON
 
-## � Docker (Opcional)
+## 🐋 Docker (Opcional)
 
 ### Usar Docker Compose para Desarrollo
 
