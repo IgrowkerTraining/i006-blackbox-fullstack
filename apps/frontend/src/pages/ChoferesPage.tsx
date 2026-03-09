@@ -44,7 +44,18 @@ const ChoferesPage: React.FC = () => {
     execute();
   }, [execute]);
 
-  const choferes: Chofer[] = apiData ?? [];
+  // Normalizar datos del backend (id, name, license_number, is_active) al formato de la tabla
+  const choferes: Chofer[] = (apiData ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      ...row,
+      idChofer: (r.idChofer ?? r.id ?? "") as string,
+      nombre: (r.nombre ?? r.name ?? "") as string,
+      licencia: (r.licencia ?? r.license_number ?? "") as string,
+      estadoOperativo: (r.estadoOperativo ?? (r.is_active === true ? "Activo" : r.is_active === false ? "Inactivo" : "")) as string,
+      unidadAsignada: (r.unidadAsignada ?? "") as string,
+    };
+  });
 
   const {
     paginatedData,
@@ -61,7 +72,12 @@ const ChoferesPage: React.FC = () => {
     filterFn: (data, term) => {
       if (!term.trim()) return data;
       const lower = term.trim().toLowerCase();
-      return data.filter((row) => row.idChofer.toLowerCase().includes(lower));
+      return data.filter(
+        (row) =>
+          String(row.idChofer ?? "").toLowerCase().includes(lower) ||
+          String(row.nombre ?? "").toLowerCase().includes(lower) ||
+          String(row.licencia ?? "").toLowerCase().includes(lower)
+      );
     },
     initialSortColumn: "idChofer",
     initialSortDirection: "asc",

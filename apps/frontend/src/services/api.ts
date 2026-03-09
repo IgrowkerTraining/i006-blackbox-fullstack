@@ -197,5 +197,34 @@ export const api = {
     return json.data ?? json;
   },
 
-
+  /**
+   * Crea una inspección. Requiere auth (JWT).
+   * POST /api/events/inspection
+   */
+  async createInspection(payload: CreateInspectionPayload): Promise<{ success: boolean; data: unknown }> {
+    const response = await fetch(
+      `${API_ENDPOINTS.BASE}${API_ENDPOINTS.EVENTS}/inspection`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(await buildErrorMessage(response, "Error al guardar la inspección"));
+    }
+    return response.json();
+  },
 };
+
+/** Payload para POST /api/events/inspection (alineado con backend CreateInspectionDto) */
+export interface CreateInspectionPayload {
+  vehicleId: string;
+  driverId: string;
+  typeInspection: "ARRIVAL" | "DEPARTURE";
+  documentationVerified: boolean;
+  lightsOk: boolean;
+  safetyElementsOk: boolean;
+  eSignature: string;
+  isConfirmed: boolean;
+}
