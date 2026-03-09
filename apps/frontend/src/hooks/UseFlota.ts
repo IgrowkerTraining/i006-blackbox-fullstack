@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { api } from '@/src/services/api';
 
 export type TimelineItem = {
   id: string;
@@ -27,21 +28,19 @@ export const useFlota = (idUnidad?: string, { pageSize = 10 }: UseFlotaProps = {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-
-  const [page, setPage] = useState(1);
+  const [unitPage, setUnitPage] = useState(1);
+  const [eventPage, setEventPage] = useState(1);
   const [hasMoreUnits, setHasMoreUnits] = useState(true);
   const [hasMoreEvents, setHasMoreEvents] = useState(true);
+  const hasMoreEventsRef = useRef(true);
 
-  // Función para traer todas las unidades de la flota
   const fetchAllUnits = async (nextPage: number = 1) => {
     if (!hasMoreUnits) return;
     try {
       setLoading(true);
-      const res = await fetch(`/api/vehicles?page=${nextPage}&limit=${pageSize}`);
-      if (!res.ok) throw new Error('Error al cargar flota');
-      const data = await res.json();
+      const data = await api.getFlota(); // ya usa tu capa api
 
-      if (data.length < pageSize) setHasMoreUnits(false); // fin de la lista
+      if (data.length < pageSize) setHasMoreUnits(false);
 
       const vehicles: Unit[] = data.map((v: any) => ({
         idUnidad: v.id,
@@ -51,7 +50,7 @@ export const useFlota = (idUnidad?: string, { pageSize = 10 }: UseFlotaProps = {
       }));
 
       setAllUnits(prev => [...prev, ...vehicles]);
-      setPage(nextPage + 1);
+      setUnitPage(nextPage + 1);
     } catch (err: any) {
       setError(err.message || 'Error desconocido');
     } finally {
@@ -59,24 +58,37 @@ export const useFlota = (idUnidad?: string, { pageSize = 10 }: UseFlotaProps = {
     }
   };
 
-  // Función para traer el evento de una unidad específica y su historial
-  const fetchUnitDetails = async (unitId: string, nextPage: number = 1) => {
-    if (!hasMoreEvents) return;
+  const fetchUnitDetails = async (vehicleId: string, nextPage: number = 1) => {
+    if (!hasMoreEventsRef.current) return;
     try {
       setLoading(true);
-      const res = await fetch(`/api/vehicles/${unitId}/events?page=${nextPage}&limit=${pageSize}`);
-      if (!res.ok) throw new Error('Error al cargar la unidad');
-      const data = await res.json();
+
+      // ✅ Usa api.getHistorialUnidad en vez de fetch directo
+      const events = await api.getHistorialUnidad(vehicleId, nextPage, pageSize);
+
+      const mapped: TimelineItem[] = events.map((e) => ({
+        id: e.id,
+        timeLabel: new Date(e.timestamp).toLocaleString('es-MX', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }),
+        title: e.type,
+        description: e.description,
+        status: e.type,
+      }));
 
       if (nextPage === 1) {
-        setUnit({ idUnidad: unitId, name: data.unitName, driver: data.driver, status: data.status });
-        setTimeline(data.events || []);
+        setTimeline(mapped);
       } else {
-        setTimeline(prev => [...prev, ...(data.events || [])]);
+        setTimeline(prev => [...prev, ...mapped]);
       }
 
-      if (!data.events || data.events.length < pageSize) setHasMoreEvents(false);
-      setPage(nextPage + 1);
+      if (events.length < pageSize) {
+        hasMoreEventsRef.current = false;
+        setHasMoreEvents(false);
+      }
+
+      setEventPage(nextPage + 1);
     } catch (err: any) {
       setError(err.message || 'Error desconocido');
     } finally {
@@ -84,9 +96,14 @@ export const useFlota = (idUnidad?: string, { pageSize = 10 }: UseFlotaProps = {
     }
   };
 
-  // useEffect principal
   useEffect(() => {
     if (idUnidad) {
+      setUnit(null);
+      setTimeline([]);
+      setError(null);
+      setEventPage(1);
+      hasMoreEventsRef.current = true;
+      setHasMoreEvents(true);
       fetchUnitDetails(idUnidad, 1);
     } else {
       fetchAllUnits(1);
@@ -94,9 +111,8 @@ export const useFlota = (idUnidad?: string, { pageSize = 10 }: UseFlotaProps = {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idUnidad]);
 
-  // Funciones para cargar más
-  const loadMoreUnits = () => fetchAllUnits(page);
-  const loadMoreEvents = () => idUnidad && fetchUnitDetails(idUnidad, page);
+  const loadMoreUnits = () => fetchAllUnits(unitPage);
+  const loadMoreEvents = () => idUnidad && fetchUnitDetails(idUnidad, eventPage);
 
   return {
     unit,
