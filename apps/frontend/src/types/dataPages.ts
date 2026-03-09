@@ -26,10 +26,10 @@ export interface ChoferesFilters {
 }
 
 export interface UnidadFlota extends Record<string, unknown> {
-  idUnidad: string;
-  estado: string;
-  chofer: string;
-  ultimaInspeccion: string;
+  id: string;
+  status: string;
+  driver: string;
+  lastInspection: string;
 }
 
 export interface FlotaFilters {
