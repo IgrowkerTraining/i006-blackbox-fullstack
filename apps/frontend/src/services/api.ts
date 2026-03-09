@@ -14,6 +14,15 @@ import {
   MOCK_HISTORIAL_REPORTE,
 } from "../data/mockData";
 
+/** Cabeceras con JWT para peticiones autenticadas. */
+function getAuthHeaders(): HeadersInit {
+  const token = storage.getToken();
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 const buildErrorMessage = async (response: Response, fallback: string) => {
   try {
     const data = await response.json();
@@ -32,8 +41,23 @@ const authHeaders = (): HeadersInit => {
   };
 };
 
+/** Extrae el array de respuestas con formato { success, data }. Si ya es array, lo devuelve. */
+function unwrapData<T>(json: unknown): T[] {
+  if (Array.isArray(json)) return json;
+  if (json && typeof json === "object" && "data" in json && Array.isArray((json as { data: unknown }).data)) {
+    return (json as { data: T[] }).data;
+  }
+  return [];
+}
+
 export const api = {
   async register(data: any): Promise<{ user: User; message: string }> {
+    data.company = {
+      "name": "Logistica Veloz",
+      "usdotNumber": "US-123456",
+      "state": "TX"
+    }
+
     const response = await fetch(
       `${API_ENDPOINTS.BASE}${API_ENDPOINTS.AUTH.REGISTER}`,
       {
@@ -70,7 +94,9 @@ export const api = {
 
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HEALTH}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HEALTH}`, {
+        headers: getAuthHeaders(),
+      });
       return response.ok;
     } catch {
       return false;
