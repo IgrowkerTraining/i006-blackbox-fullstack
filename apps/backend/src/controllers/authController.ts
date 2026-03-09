@@ -10,6 +10,79 @@ import { RegisterSchema, LoginSchema } from "../utils/authSchema";
 import crypto from "crypto";
 
 class AuthController {
+  /**
+   * @swagger
+   * /api/auth/register:
+   *   post:
+   *     summary: Register a new company and admin user
+   *     tags: [Auth]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - company
+   *               - user
+   *             properties:
+   *               company:
+   *                 type: object
+   *                 properties:
+   *                   name:
+   *                     type: string
+   *                     example: "Lone Star Freight"
+   *                   usdotNumber:
+   *                     type: string
+   *                     example: "TX-123456"
+   *                   state:
+   *                     type: string
+   *                     example: "Texas"
+   *               user:
+   *                 type: object
+   *                 properties:
+   *                   name:
+   *                     type: string
+   *                     example: "Rick Ramirez"
+   *                   email:
+   *                     type: string
+   *                     example: "rick@lonestar.com"
+   *                   password:
+   *                     type: string
+   *                     example: "SecurePass123!"
+   *     responses:
+   *       201:
+   *         description: Registration successful
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 token:
+   *                   type: string
+   *                 company:
+   *                   type: object
+   *                   properties:
+   *                     id:
+   *                       type: string
+   *                     name:
+   *                       type: string
+   *                 user:
+   *                   type: object
+   *                   properties:
+   *                     id:
+   *                       type: string
+   *                     name:
+   *                       type: string
+   *                     email:
+   *                       type: string
+   *                     role:
+   *                       type: string
+   *       400:
+   *         description: Validation failed
+   *       409:
+   *         description: Email already registered
+   */
   register = async (req: Request, res: Response) => {
     try {
       const data = RegisterSchema.parse(req.body);
@@ -90,6 +163,65 @@ class AuthController {
     }
   };
 
+  /**
+   * @swagger
+   * /api/auth/login:
+   *   post:
+   *     summary: Login with email and password
+   *     tags: [Auth]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - email
+   *               - password
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 format: email
+   *                 example: "rick@lonestar.com"
+   *               password:
+   *                 type: string
+   *                 format: password
+   *                 example: "SecurePass123!"
+   *     responses:
+   *       200:
+   *         description: Login successful
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 token:
+   *                   type: string
+   *                 company:
+   *                   type: object
+   *                   properties:
+   *                     id:
+   *                       type: string
+   *                     name:
+   *                       type: string
+   *                 user:
+   *                   type: object
+   *                   properties:
+   *                     id:
+   *                       type: string
+   *                     name:
+   *                       type: string
+   *                     email:
+   *                       type: string
+   *                     role:
+   *                       type: string
+   *       400:
+   *         description: Validation failed
+   *       401:
+   *         description: Invalid credentials
+   *       403:
+   *         description: User is inactive
+   */
   login = async (req: Request, res: Response) => {
     try {
       const data = LoginSchema.parse(req.body);
@@ -157,6 +289,41 @@ class AuthController {
     }
   };
 
+  /**
+   * @swagger
+   * /api/auth/forgot-password:
+   *   post:
+   *     summary: Request password reset email
+   *     tags: [Auth]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - email
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 format: email
+   *                 example: "rick@lonestar.com"
+   *     responses:
+   *       200:
+   *         description: Reset email sent (or not, for security)
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: "If the email exists, a reset link has been sent"
+   *       400:
+   *         description: Email is required
+   *       500:
+   *         description: Failed to process request
+   */
   async forgotPassword(req: Request, res: Response) {
     try {
       const { email } = req.body;
@@ -192,6 +359,54 @@ class AuthController {
     }
   }
 
+  /**
+   * @swagger
+   * /api/auth/reset-password:
+   *   post:
+   *     summary: Reset password with token
+   *     tags: [Auth]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - token
+   *               - newPassword
+   *             properties:
+   *               token:
+   *                 type: string
+   *                 example: "a1b2c3d4e5f6..."
+   *               newPassword:
+   *                 type: string
+   *                 format: password
+   *                 minLength: 6
+   *                 example: "NewSecurePass123!"
+   *     responses:
+   *       200:
+   *         description: Password updated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: "Password updated successfully"
+   *       400:
+   *         description: Invalid token or password validation failed
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *                   example: "Invalid or expired token"
+   *       500:
+   *         description: Failed to reset password
+   */
   async resetPassword(req: Request, res: Response) {
     try {
       const { token, newPassword } = req.body;
