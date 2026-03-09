@@ -33,7 +33,7 @@ export default function ForgotPasswordEmailStep({ onSubmit, isLoading = false, e
       </p>
 
 
-     
+
 
       <div className="space-y-4">
         <div className="space-y-2">
@@ -61,7 +61,7 @@ export default function ForgotPasswordEmailStep({ onSubmit, isLoading = false, e
           type="button"
           onClick={() => onSubmit(email)}
           disabled={isLoading || !email}
-          className={`w-full py-2.5 bg-[var(--accent)] text-[var(--bg)] font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-['DM_Sans',sans-serif] ${isLoading || !email
+          className={`w-full py-2.5 bg-blackbox-yellow text-black font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-lato ${isLoading || !email
               ? "cursor-not-allowed opacity-80"
               : "hover:shadow-lg shadow-[var(--accent)]/30"
             }`}

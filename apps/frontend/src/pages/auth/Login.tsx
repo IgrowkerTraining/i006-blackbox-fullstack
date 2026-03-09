@@ -5,32 +5,36 @@ import isotipoBlackbox from "@/src/assets/Isotipos/isotipo_blackbox.png";
 import Maskgroup from "@/src/assets/Logo/Maskgroup.png";
 import { Eye, EyeOff } from "lucide-react";
 import ForgotPasswordModal from "@/src/components/ForgotPasswordModal";
+import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
+
+
 
 const Login: React.FC = () => {
+  useDocumentTitle("Iniciar sesion");
   const navigate = useNavigate();
-  const { login, loading, error, testUsers } = useAuth();
+  const { login, loading, error } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
 
-    try {
-      await login(email, password);
-      navigate("/dashboard");
-    } catch (err) {
-    }
-  };
 
-  const handleQuickLogin = (testEmail: string, testPassword: string) => {
-    setEmail(testEmail);
-    setPassword(testPassword);
-  };
+const handleSubmit = async (e:React.FormEvent) => {
+  e.preventDefault();
+  await login(email, password);
+try{
+ navigate("/dashboard");
+}catch(err){
+  console.error("hubo un error al iniciar seccion:", err);
+}
+
+
+}
+
 
   return (
-    <div className="min-h-screen overflow-hidden flex items-center justify-center gap-12 p-8 md:p-6 md:gap-8 lg:gap-8 font-['DM_Sans',sans-serif]">
+    <div className="min-h-screen bg-white overflow-hidden flex items-center justify-center gap-12 p-8 md:p-6 md:gap-8 lg:gap-8 font-['DM_Sans',sans-serif]">
       <div className="hidden md:flex lg:flex flex-shrink-0 md:max-w-[280px] lg:max-w-none">
         <img
           src={isotipoBlackbox}
@@ -49,24 +53,9 @@ const Login: React.FC = () => {
           Ingresa a tu cuenta
         </h2>
 
-        <div className="bg-blue-900/30 border border-blue-700/50 rounded-lg p-3 mb-4">
-          <p className="text-xs text-blue-300 font-medium mb-2">Pruebas rápidas:</p>
-          <div className="flex flex-wrap gap-2">
-            {testUsers.map((user, index) => (
-              <button
-                key={index}
-                type="button"
-                onClick={() => handleQuickLogin(user.email, user.password)}
-                disabled={loading}
-                className="text-xs bg-blue-800 hover:bg-blue-700 text-blue-100 px-2 py-1 rounded transition-colors disabled:opacity-50"
-              >
-                {user.email}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+
+        <form onSubmit={handleSubmit}  className="space-y-5">
           <div>
             <label
               htmlFor="email"
@@ -142,13 +131,15 @@ const Login: React.FC = () => {
 
           <button
             type="submit"
-            disabled={loading}
-            className={`w-full py-2.5 bg-[var(--accent)] text-[var(--bg)] font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-['DM_Sans',sans-serif] ${loading
-                ? "bg-[var(--accent)] cursor-not-allowed"
-                : "hover:bg-[var(--accent)] shadow-lg shadow-[var(--accent)]/30 hover:shadow-[var(--accent)]/50"
+
+
+            className={`w-full py-2.5 bg-blackbox-yellow text-blackbox-white font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-lato ${loading
+                ? "bg-blackbox-yellow cursor-not-allowed"
+                : "hover:bg-blackbox-yellow/90 shadow-lg shadow-blackbox-yellow/30 hover:shadow-blackblox-yellow/50"
               }`}>
             {loading ? "Iniciando sesión..." : "Iniciar sesión"}
           </button>
+          
         </form>
       </div>
     </div>

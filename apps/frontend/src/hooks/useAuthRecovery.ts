@@ -1,22 +1,15 @@
 import { useState } from "react";
 import { API_ENDPOINTS } from "@/src/constants/routes";
 
-// Mock data for testing
-const MOCK_USERS = [
-  { email: "test@example.com", name: "Usuario Test" },
-  { email: "admin@blackbox.com", name: "Administrador" },
-  { email: "user@demo.com", name: "Usuario Demo" }
-];
-
-const MOCK_RESPONSES = {
-  success: {
-    message: "Correo de recuperación enviado exitosamente",
-    resetToken: "mock-reset-token-12345"
-  },
-  error: {
-    notFound: "No existe una cuenta con este correo electrónico",
-    serverError: "Error del servidor al enviar el correo"
+const buildErrorMessage = async (response: Response, fallback: string) => {
+  try {
+    const data = await response.json();
+    const msg = data?.error || data?.message;
+    if (msg) return msg;
+  } catch {
+    // ignore JSON parse errors
   }
+  return fallback;
 };
 
 export function useAuthRecovery() {
@@ -30,29 +23,23 @@ export function useAuthRecovery() {
     setError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await fetch(
+        `${API_ENDPOINTS.BASE}${API_ENDPOINTS.AUTH.FORGOT_PASSWORD}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        },
+      );
 
-      // Mock validation - check if email exists in our mock data
-      const userExists = MOCK_USERS.some(user => user.email.toLowerCase() === email.toLowerCase());
-
-      if (!userExists) {
-        throw new Error(MOCK_RESPONSES.error.notFound);
+      if (!response.ok) {
+        throw new Error(await buildErrorMessage(response, "Error al enviar correo de recuperación"));
       }
-
-      // Mock successful API response
-      const response = MOCK_RESPONSES.success;
-      console.log('Mock API Response:', response);
-
-      // Simulate storing the reset token (in real app, this would be handled by backend)
-      localStorage.setItem('mockResetToken', response.resetToken);
-      localStorage.setItem('resetEmail', email);
 
       setSentEmail(email);
       setStep("success");
-
     } catch (err: any) {
-      setError(err.message || "Lo sentimos, no se pudo enviar el correo de recuperación, inténtalo de nuevo.");
+      setError(err.message || "Lo sentimos, hubo un error al enviar el correo de recuperación");
     } finally {
       setIsLoading(false);
     }
@@ -63,31 +50,29 @@ export function useAuthRecovery() {
     setError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (newPassword.length < 6) {
+        throw new Error("La contraseña debe tener al menos 6 caracteres");
+      }
 
-      // Mock token validation
-      const storedToken = token || localStorage.getItem('mockResetToken');
-      const storedEmail = localStorage.getItem('resetEmail');
-
+      const storedToken = token;
       if (!storedToken) {
         throw new Error("Token de restablecimiento inválido o expirado");
       }
 
-      // Mock password validation
-      if (newPassword.length < 8) {
-        throw new Error("La contraseña debe tener al menos 8 caracteres");
+      const response = await fetch(
+        `${API_ENDPOINTS.BASE}${API_ENDPOINTS.AUTH.RESET_PASSWORD}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: storedToken, newPassword }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(await buildErrorMessage(response, "Error al restablecer la contraseña"));
       }
 
-      // Mock successful password reset
-      console.log('Mock: Password reset successfully for email:', storedEmail);
-
-      // Clean up mock data
-      localStorage.removeItem('mockResetToken');
-      localStorage.removeItem('resetEmail');
-
       return { success: true };
-
     } catch (err: any) {
       setError(err.message || "Error al restablecer la contraseña");
       throw err;
@@ -100,14 +85,10 @@ export function useAuthRecovery() {
     setStep("email");
     setSentEmail("");
     setError(null);
-    // Clean up any existing mock data
-    localStorage.removeItem('mockResetToken');
-    localStorage.removeItem('resetEmail');
   };
 
-  // Helper function to check if we have a valid reset flow
   const hasActiveResetFlow = () => {
-    return localStorage.getItem('mockResetToken') !== null;
+    return false;
   };
 
   return {
@@ -119,10 +100,5 @@ export function useAuthRecovery() {
     resetPassword,
     reset,
     hasActiveResetFlow,
-    // Mock data for testing
-    mockData: {
-      testEmails: MOCK_USERS.map(u => u.email),
-      availableUsers: MOCK_USERS
-    }
   };
 }

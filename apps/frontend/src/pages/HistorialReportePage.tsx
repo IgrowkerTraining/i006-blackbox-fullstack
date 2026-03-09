@@ -11,10 +11,12 @@ import {
 import { useApi } from "../hooks/useApi";
 import { api } from "../services/api";
 import type { EventoReporte } from "../types/dataPages";
+import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 const PAGE_SIZE = 5;
 
 const HistorialReportePage: React.FC = () => {
+  useDocumentTitle("Registro Consolidado de Eventos");
   const { idUnidad } = useParams<{ idUnidad: string }>();
 
   const fetchReporte = useCallback(

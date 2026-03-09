@@ -12,6 +12,7 @@ import {
 import { useApi } from "../hooks/useApi";
 import { api } from "../services/api";
 import type { Chofer } from "../types/dataPages";
+import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 const PAGE_SIZE = 5;
 
@@ -33,6 +34,7 @@ const SearchIcon = () => (
 );
 
 const ChoferesPage: React.FC = () => {
+  useDocumentTitle("Informacion de Choferes");
   const [searchId, setSearchId] = useState("");
 
   const fetchChoferes = useCallback(() => api.getChoferes(), []);

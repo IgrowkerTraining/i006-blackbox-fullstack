@@ -11,6 +11,7 @@ import {
 import { useApi } from "../hooks/useApi";
 import { api } from "../services/api";
 import type { UnidadFlota } from "../types/dataPages";
+import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 const PAGE_SIZE = 5;
 
@@ -45,6 +46,7 @@ function EstadoBadge({ estado }: { estado: string }) {
 }
 
 const FlotaPage: React.FC = () => {
+  useDocumentTitle("Inventario Flota");
   const [searchId, setSearchId] = useState("");
 
   const fetchFlota = useCallback(() => api.getFlota(), []);

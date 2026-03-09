@@ -1,3 +1,6 @@
+
+
+
 export const getSecurityTip = async (): Promise<string> => {
   // Mock security tips - in production, this would call an actual AI service
   const tips = [

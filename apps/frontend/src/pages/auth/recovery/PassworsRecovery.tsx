@@ -1,40 +1,48 @@
 import isotipoBlackbox from "@/src/assets/Isotipos/isotipo_blackbox.png";
 import logotipoBlackbox from "@/src/assets/Logo/logotipo_blackbox.png";
 import { Eye, EyeOff } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthRecovery } from "@/src/hooks/useAuthRecovery";
+import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 export default function PasswordRecovery() {
+  useDocumentTitle("Recuperar contraseña");
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  const { isLoading, error, resetPassword, hasActiveResetFlow, mockData } = useAuthRecovery();
+  const { isLoading, error, resetPassword, hasActiveResetFlow } = useAuthRecovery();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const token = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("token") || "";
+  }, [location.search]);
 
-  // Check if user has a valid reset flow when component mounts
+
   useEffect(() => {
-    if (!hasActiveResetFlow()) {
-      console.log('No active reset flow found. Redirecting to forgot password...');
-      // In a real app, you would redirect to the forgot password page
-      console.log('Available test emails:', mockData.testEmails);
+    if (!token && !hasActiveResetFlow()) {
+      navigate("/reset-password", { replace: true });
+
     }
-  }, [hasActiveResetFlow, mockData.testEmails]);
+  }, [hasActiveResetFlow, token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      // Error will be handled by the hook
+      alert("Las contraseñas no coinciden. Por favor, verifica e intenta nuevamente.");
       return;
     }
 
     try {
-      await resetPassword(newPassword);
+      await resetPassword(newPassword, token);
       setShowModal(true);
     } catch (err: any) {
-      // Error is handled by the hook, but we can add additional logging
+      
       console.error('Password reset failed:', err.message);
     }
   };
@@ -42,7 +50,7 @@ export default function PasswordRecovery() {
   return (
     <div className="h-screen flex w-full font-lato overflow-hidden">
       {/* ── Panel izquierdo: fondo gris claro + isotipo ── */}
-      <div className="hidden lg:flex flex-1 h-screen items-center justify-center overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-white h-screen items-center justify-center overflow-hidden">
         <img
           src={isotipoBlackbox}
           alt="BlackBox Isotipo"
@@ -71,7 +79,7 @@ export default function PasswordRecovery() {
             <p className="text-xs md:text-sm text-slate-500">
               Define tu nueva contraseña para mantener segura tu cuenta.
             </p>
-            
+
           </div>
 
           {/* Formulario */}
@@ -179,7 +187,7 @@ export default function PasswordRecovery() {
             <button
               onClick={() => {
                 setShowModal(false);
-                // navigate("/login"); // Redirigir al login
+                navigate("/login", { replace: true });
               }}
               className="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-2.5 md:py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-300 text-sm md:text-base"
             >

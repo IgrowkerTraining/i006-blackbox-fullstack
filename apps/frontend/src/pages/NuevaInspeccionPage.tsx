@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
+import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 // Mock data
 interface MockVehicle {
@@ -69,6 +70,7 @@ const IconArrowRight = () => (
 );
 
 const NuevaInspeccionPage: React.FC = () => {
+  useDocumentTitle("Nueva Inspeccion");
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
