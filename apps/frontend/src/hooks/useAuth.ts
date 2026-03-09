@@ -25,17 +25,19 @@ export const useAuth = () => {
     try {
       const response = await api.login({ email, password });
       if (response.token) {
+
         storage.setToken(response.token);
       }
       login(response.user);
       return response;
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesiÃ³n');
+      setError(err.message || 'Error al iniciar sesión');
       throw err;
     } finally {
       await ensureMinDelay(startedAt, 800);
       setLoading(false);
     }
+
   };
 
   const registerUser = async (userData: any) => {
@@ -64,6 +66,7 @@ export const useAuth = () => {
     setError(null);
   };
 
+  
   return {
     user: authState.user,
     isAuthenticated: authState.isAuthenticated,
