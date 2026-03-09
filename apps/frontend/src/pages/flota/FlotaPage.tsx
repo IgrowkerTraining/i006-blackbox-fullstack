@@ -1,16 +1,16 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Input } from "../components/common/Input";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { ErrorMessage } from "../components/common/ErrorMessage";
+import { Input } from "@/src/components/common/Input";
+import { LoadingSpinner } from "@/src/components/common/LoadingSpinner";
+import { ErrorMessage } from "@/src/components/common/ErrorMessage";
 import {
   PageDataContainer,
   DataTable,
   Pagination,
   useDataPage,
-} from "../components/dataPage";
-import { useApi } from "../hooks/useApi";
-import { api } from "../services/api";
-import type { UnidadFlota } from "../types/dataPages";
+} from "@/src/components/dataPage";
+import { useApi } from "@/src/hooks/useApi";
+import { api } from "@/src/services/api";
+import type { UnidadFlota } from "@/src/types/dataPages";
 import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 const PAGE_SIZE = 5;
@@ -144,7 +144,7 @@ const FlotaPage: React.FC = () => {
             onSort={handleSort}
             renderAction={(row) => (
               <a
-                href={`#/flota/${row.idUnidad}/historial`}
+                href={`/flota/${row.idUnidad}/historial`}
                 className="text-accent hover:opacity-90 font-medium transition-colors"
               >
                 Ver historial

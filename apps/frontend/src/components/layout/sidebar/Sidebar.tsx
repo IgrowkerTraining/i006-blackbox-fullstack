@@ -4,6 +4,8 @@ import { useAuth } from "../../../hooks/useAuth";
 import { MenuItem } from "./MenuItem";
 import { MenuSection } from "./MenuSection";
 import { SidebarUser } from "./SidebarUser";
+import Logo from "@/src/assets/Logo/logotipo_blackbox.png"
+import Isotipo from "@/src/assets/Isotipos/isotipo_blackbox.png"
 
 const IconDashboard = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -46,16 +48,26 @@ function isActive(pathname: string, to: string): boolean {
   return pathname === to || pathname.startsWith(to + "/");
 }
 
+const HamburgerIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.5}
+    stroke="currentColor"
+  />
+);
+
 export const Sidebar: React.FC = () => {
   const { pathname } = useLocation();
   const { user } = useAuth();
 
   return (
-    <div className="flex flex-col h-full min-h-0 w-56 flex-shrink-0 bg-main-dark">
-      <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-main">
-        <LogoHexagon />
+    <div className="flex flex-col h-full min-h-0 w-56 flex-shrink-0 bg-main-dark ">
+      <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-main rounded">
+        <img src={Isotipo} alt="" className="w-8 h-8" />
         <span className="text-lg font-bold tracking-tight text-black uppercase">
-          BLACKBOX
+          <img src={Logo} alt="Logo de BlackBox" />
         </span>
       </div>
       <nav className="flex-1 flex flex-col overflow-y-auto pb-6 min-h-0">

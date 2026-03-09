@@ -12,13 +12,14 @@ import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import ChoferesPage from "../pages/ChoferesPage";
 import ChoferFichaPage from "../pages/ChoferFichaPage";
-import FlotaPage from "../pages/FlotaPage";
+import FlotaPage from "../pages/flota/FlotaPage";
 import HistorialPage from "../pages/HistorialPage";
 import HistorialReportePage from "../pages/HistorialReportePage";
 import PlaceholderPage from "../pages/PlaceholderPage";
 import NuevaInspeccionPage from "../pages/NuevaInspeccionPage";
 import PassworsRecovery from "../pages/auth/recovery/PassworsRecovery";
 import FleetManagement from "../pages/GestionFlota";
+import HistorialFlotaPage from "../pages/flota/HistorialFlotaPage";
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -107,6 +108,16 @@ export const AppRoutes: React.FC = () => {
             </AppLayout>
           </ProtectedRoute>
         }
+      />
+      <Route
+      path="/flota/:idUnidad/historial"
+      element= {
+        <ProtectedRoute>
+          <AppLayout>
+            <HistorialFlotaPage />
+          </AppLayout>
+        </ProtectedRoute>
+      }
       />
       <Route
         path="/historial"

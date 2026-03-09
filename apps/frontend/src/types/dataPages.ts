@@ -69,3 +69,18 @@ export interface EventoReporte extends Record<string, unknown> {
   tipoResultado: TipoResultadoEvento;
   registradoPor: string;
 }
+
+
+export interface EventoReporte {
+  tipo: "Arrival" | "Departure" | "Mantenimiento";
+  fecha: string;
+  descripcion: string;
+}
+
+export interface HistorialFlota {
+  idUnidad: string;
+  nombreUnidad: string;
+  choferAsignado: string;
+  estadoActual: string;
+  eventos: EventoReporte[];
+}
