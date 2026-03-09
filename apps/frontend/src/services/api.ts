@@ -1,5 +1,6 @@
 import { User } from "../types";
 import { API_ENDPOINTS } from "../constants/routes";
+import { storage } from "../utils/storage";
 import type {
   Chofer,
   ChoferFicha,
@@ -15,6 +16,15 @@ import {
   MOCK_HISTORIAL_REPORTE,
 } from "../data/mockData";
 
+/** Cabeceras con JWT para peticiones autenticadas. */
+function getAuthHeaders(): HeadersInit {
+  const token = storage.getToken();
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 const buildErrorMessage = async (response: Response, fallback: string) => {
   try {
     const data = await response.json();
@@ -26,8 +36,23 @@ const buildErrorMessage = async (response: Response, fallback: string) => {
   return `${fallback} )`;
 };
 
+/** Extrae el array de respuestas con formato { success, data }. Si ya es array, lo devuelve. */
+function unwrapData<T>(json: unknown): T[] {
+  if (Array.isArray(json)) return json;
+  if (json && typeof json === "object" && "data" in json && Array.isArray((json as { data: unknown }).data)) {
+    return (json as { data: T[] }).data;
+  }
+  return [];
+}
+
 export const api = {
   async register(data: any): Promise<{ user: User; message: string }> {
+    data.company = {
+      "name": "Logistica Veloz",
+      "usdotNumber": "US-123456",
+      "state": "TX"
+    }
+
     const response = await fetch(
       `${API_ENDPOINTS.BASE}${API_ENDPOINTS.AUTH.REGISTER}`,
       {
@@ -63,7 +88,9 @@ export const api = {
 
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HEALTH}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HEALTH}`, {
+        headers: getAuthHeaders(),
+      });
       return response.ok;
     } catch {
       return false;
@@ -76,12 +103,15 @@ export const api = {
    */
   async getChoferes(): Promise<Chofer[]> {
     try {
-      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.CHOFERES}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.CHOFERES}`, {
+        headers: getAuthHeaders(),
+      });
       if (!response.ok) {
         if (response.status === 404) return MOCK_CHOFERES;
         throw new Error(await buildErrorMessage(response, "Error"));
       }
-      return response.json() as Promise<Chofer[]>;
+      const json = await response.json();
+      return unwrapData<Chofer>(json);
     } catch {
       return MOCK_CHOFERES;
     }
@@ -95,6 +125,7 @@ export const api = {
     try {
       const response = await fetch(
         `${API_ENDPOINTS.BASE}${API_ENDPOINTS.CHOFERES}/${encodeURIComponent(idChofer)}`,
+        { headers: getAuthHeaders() },
       );
       if (!response.ok) return MOCK_CHOFER_FICHA;
       return response.json() as Promise<ChoferFicha>;
@@ -108,12 +139,15 @@ export const api = {
    */
   async getFlota(): Promise<UnidadFlota[]> {
     try {
-      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.FLOTA}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.FLOTA}`, {
+        headers: getAuthHeaders(),
+      });
       if (!response.ok) {
         if (response.status === 404) return MOCK_FLOTA;
         throw new Error(await buildErrorMessage(response, "Error"));
       }
-      return response.json() as Promise<UnidadFlota[]>;
+      const json = await response.json();
+      return unwrapData<UnidadFlota>(json);
     } catch {
       return MOCK_FLOTA;
     }
@@ -124,12 +158,15 @@ export const api = {
    */
   async getHistorial(): Promise<RegistroHistorial[]> {
     try {
-      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HISTORIAL}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HISTORIAL}`, {
+        headers: getAuthHeaders(),
+      });
       if (!response.ok) {
         if (response.status === 404) return MOCK_HISTORIAL;
         throw new Error(await buildErrorMessage(response, "Error"));
       }
-      return response.json() as Promise<RegistroHistorial[]>;
+      const json = await response.json();
+      return unwrapData<RegistroHistorial>(json);
     } catch {
       return MOCK_HISTORIAL;
     }
@@ -143,9 +180,11 @@ export const api = {
     try {
       const response = await fetch(
         `${API_ENDPOINTS.BASE}${API_ENDPOINTS.HISTORIAL}/reporte/${encodeURIComponent(idUnidad)}`,
+        { headers: getAuthHeaders() },
       );
       if (!response.ok) return MOCK_HISTORIAL_REPORTE;
-      return response.json() as Promise<EventoReporte[]>;
+      const json = await response.json();
+      return unwrapData<EventoReporte>(json);
     } catch {
       return MOCK_HISTORIAL_REPORTE;
     }
