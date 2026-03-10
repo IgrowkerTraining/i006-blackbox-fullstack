@@ -14,6 +14,15 @@ import {
   MOCK_HISTORIAL_REPORTE,
 } from "../data/mockData";
 
+/** Cabeceras con JWT para peticiones autenticadas. */
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 const buildErrorMessage = async (response: Response, fallback: string) => {
   try {
     const data = await response.json();
@@ -32,8 +41,23 @@ const authHeaders = (): HeadersInit => {
   };
 };
 
+/** Extrae el array de respuestas con formato { success, data }. Si ya es array, lo devuelve. */
+function unwrapData<T>(json: unknown): T[] {
+  if (Array.isArray(json)) return json;
+  if (json && typeof json === "object" && "data" in json && Array.isArray((json as { data: unknown }).data)) {
+    return (json as { data: T[] }).data;
+  }
+  return [];
+}
+
 export const api = {
   async register(data: any): Promise<{ user: User; message: string }> {
+    data.company = {
+      "name": "Logistica Veloz",
+      "usdotNumber": "US-123456",
+      "state": "TX"
+    }
+
     const response = await fetch(
       `${API_ENDPOINTS.BASE}${API_ENDPOINTS.AUTH.REGISTER}`,
       {
@@ -70,7 +94,9 @@ export const api = {
 
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HEALTH}`);
+      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HEALTH}`, {
+        headers: getAuthHeaders(),
+      });
       return response.ok;
     } catch {
       return false;
@@ -116,7 +142,10 @@ export const api = {
     const data = json.data ?? json;
 
     return data.map((v: any) => ({
+      id: v.id,
       idUnidad: v.unit_number,
+      unit_number: v.unit_number,
+      plate: v.plate,
       estado: v.is_active ? "ACTIVO" : "INACTIVO",
       chofer: v.driverId ?? "Sin asignar",
       ultimaInspeccion: v.updatedAt,
@@ -171,5 +200,37 @@ export const api = {
     return json.data ?? json;
   },
 
-
+  /**
+   * Crea una inspección. Requiere auth (JWT).
+   * POST /api/events/inspection
+   */
+  async createInspection(payload: CreateInspectionPayload): Promise<{ success: boolean; data: unknown }> {
+    const response = await fetch(
+      `${API_ENDPOINTS.BASE}${API_ENDPOINTS.EVENTS}/inspection`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(await buildErrorMessage(response, "Error al guardar la inspección"));
+    }
+    return response.json();
+  },
 };
+
+/** Payload para POST /api/events/inspection (alineado con backend CreateInspectionDto) */
+export interface CreateInspectionPayload {
+  vehicleId: string;
+  driverId: string;
+  typeInspection: "ARRIVAL" | "DEPARTURE";
+  documentationVerified: boolean;
+  vehicleCondition: "ACCEPTABLE" | "NOT_ACCEPTABLE";
+  lightsOk: boolean;
+  tiresOk: boolean;
+  brakesOk: boolean;
+  safetyElementsOk: boolean;
+  eSignature: string;
+  isConfirmed: boolean;
+}

@@ -1,33 +1,53 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
+import { api, type CreateInspectionPayload } from "@/src/services/api";
 
-// Mock data
-interface MockVehicle {
+interface OptionItem {
   id: string;
   label: string;
 }
-interface MockDriver {
-  id: string;
-  name: string;
-  license_number: string;
-  label: string;
+
+/** Backend vehicle: { id, unit_number?, plate? } | UnidadFlota: idUnidad */
+function toVehicleOption(v: Record<string, unknown>): OptionItem {
+  const id = (v.id ?? v.idUnidad) as string;
+  const label = (v.unit_number ?? v.plate ?? v.idUnidad ?? id) as string;
+  return { id, label: String(label) || id };
 }
 
-const MOCK_VEHICLES: MockVehicle[] = [
-  { id: "v1", label: "U302 Volvo VNL" },
-  { id: "v2", label: "U505 Kenworth T680" },
-  { id: "v3", label: "U201 Freightliner Cascadia" },
-];
-
-const MOCK_DRIVERS: MockDriver[] = [
-  { id: "d1", name: "Mario Hernández", license_number: "TX-99281", label: "Mario Hernández (Lic:TX-99281)" },
-  { id: "d2", name: "Julio Fernandez", license_number: "TX-88452", label: "Julio Fernandez (Lic:TX-88452)" },
-];
+/** Backend driver: { id, name, license_number } | Chofer: idChofer, nombre, licencia */
+function toDriverOption(d: Record<string, unknown>): OptionItem & { name?: string } {
+  const id = (d.id ?? d.idChofer) as string;
+  const name = (d.name ?? d.nombre) as string;
+  const license = (d.license_number ?? d.licencia) as string;
+  const label = name && license ? `${name} (Lic: ${license})` : String(name || id);
+  return { id, label, name };
+}
 
 type InspectionType = "SALIDA" | "LLEGADA" | null;
 type ChecklistResult = boolean | null; // true = OK, false = fail, null = not set
+
+const CHECKLIST_KEYS = [
+  "documentationVerified",
+  "vehicleCondition",
+  "lightsOk",
+  "tiresOk",
+  "brakesOk",
+  "safetyElementsOk",
+] as const;
+type ChecklistKey = (typeof CHECKLIST_KEYS)[number];
+
+type ChecklistState = Record<ChecklistKey, ChecklistResult>;
+
+const INITIAL_CHECKLIST: ChecklistState = {
+  documentationVerified: null,
+  vehicleCondition: null,
+  lightsOk: null,
+  tiresOk: null,
+  brakesOk: null,
+  safetyElementsOk: null,
+};
 
 const IconTruck = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-slate-600">
@@ -77,16 +97,39 @@ const NuevaInspeccionPage: React.FC = () => {
   const [vehicleId, setVehicleId] = useState<string>("");
   const [driverId, setDriverId] = useState<string>("");
   const [inspectionType, setInspectionType] = useState<InspectionType>(null);
-  const [checklist, setChecklist] = useState<{ doc: ChecklistResult; luces: ChecklistResult; neumaticos: ChecklistResult }>({
-    doc: null,
-    luces: null,
-    neumaticos: null,
-  });
+  const [checklist, setChecklist] = useState<ChecklistState>(INITIAL_CHECKLIST);
   const [hasSignature, setHasSignature] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [vehicles, setVehicles] = useState<OptionItem[]>([]);
+  const [drivers, setDrivers] = useState<(OptionItem & { name?: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const selectedDriver = MOCK_DRIVERS.find((d) => d.id === driverId);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const [flota, choferes] = await Promise.all([api.getFlota(), api.getChoferes()]);
+        if (!cancelled) {
+          setVehicles(flota.map((v) => toVehicleOption(v as Record<string, unknown>)));
+          setDrivers(choferes.map((d) => toDriverOption(d as Record<string, unknown>)));
+        }
+      } catch {
+        if (!cancelled) {
+          setVehicles([]);
+          setDrivers([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const selectedDriver = drivers.find((d) => d.id === driverId);
 
   // Signature canvas: sync internal size with display size so drawing stays aligned
   const resizeCanvas = () => {
@@ -162,8 +205,38 @@ const NuevaInspeccionPage: React.FC = () => {
     setHasSignature(false);
   };
 
-  const handleSave = () => {
-    setShowSuccessModal(true);
+  const getSignatureDataUrl = useCallback((): string | null => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    return canvas.toDataURL("image/png");
+  }, []);
+
+  const handleSave = async () => {
+    setSaveError(null);
+    setSaving(true);
+    try {
+      const eSignature = getSignatureDataUrl() ?? "";
+      const typeInspection = inspectionType === "SALIDA" ? "DEPARTURE" : inspectionType === "LLEGADA" ? "ARRIVAL" : "ARRIVAL";
+      const payload: CreateInspectionPayload = {
+        vehicleId,
+        driverId,
+        typeInspection,
+        documentationVerified: checklist.documentationVerified === true,
+        vehicleCondition: checklist.vehicleCondition === true ? "ACCEPTABLE" : "NOT_ACCEPTABLE",
+        lightsOk: checklist.lightsOk === true,
+        tiresOk: checklist.tiresOk === true,
+        brakesOk: checklist.brakesOk === true,
+        safetyElementsOk: checklist.safetyElementsOk === true,
+        eSignature,
+        isConfirmed: true,
+      };
+      await api.createInspection(payload);
+      setShowSuccessModal(true);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : "Error al guardar la inspección");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const closeSuccessAndGoToDashboard = () => {
@@ -172,7 +245,7 @@ const NuevaInspeccionPage: React.FC = () => {
   };
 
   const canGoNextStep1 = vehicleId && driverId && inspectionType !== null;
-  const canGoStep3 = checklist.doc !== null && checklist.luces !== null && checklist.neumaticos !== null;
+  const canGoStep3 = CHECKLIST_KEYS.every((k) => checklist[k] !== null);
 
   return (
     <div className="min-h-full bg-slate-100 rounded-lg p-8 md:p-10">
@@ -204,10 +277,11 @@ const NuevaInspeccionPage: React.FC = () => {
               <select
                 value={vehicleId}
                 onChange={(e) => setVehicleId(e.target.value)}
-                className="select-dropdown w-full rounded-lg border border-slate-300 pl-3 py-2.5 text-slate-800 bg-white focus:ring-2 focus:ring-[#3F51B5] focus:border-[#3F51B5]"
+                disabled={loading}
+                className="select-dropdown w-full rounded-lg border border-slate-300 pl-3 py-2.5 text-slate-800 bg-white focus:ring-2 focus:ring-[#3F51B5] focus:border-[#3F51B5] disabled:opacity-60"
               >
-                <option value="">Seleccionar vehículo...</option>
-                {MOCK_VEHICLES.map((v) => (
+                <option value="">{loading ? "Cargando vehículos..." : "Seleccionar vehículo..."}</option>
+                {vehicles.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.label}
                   </option>
@@ -219,10 +293,11 @@ const NuevaInspeccionPage: React.FC = () => {
               <select
                 value={driverId}
                 onChange={(e) => setDriverId(e.target.value)}
-                className="select-dropdown w-full rounded-lg border border-slate-300 pl-3 py-2.5 text-slate-800 bg-white focus:ring-2 focus:ring-[#3F51B5] focus:border-[#3F51B5]"
+                disabled={loading}
+                className="select-dropdown w-full rounded-lg border border-slate-300 pl-3 py-2.5 text-slate-800 bg-white focus:ring-2 focus:ring-[#3F51B5] focus:border-[#3F51B5] disabled:opacity-60"
               >
-                <option value="">Seleccionar chofer...</option>
-                {MOCK_DRIVERS.map((d) => (
+                <option value="">{loading ? "Cargando choferes..." : "Seleccionar chofer..."}</option>
+                {drivers.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.label}
                   </option>
@@ -275,14 +350,17 @@ const NuevaInspeccionPage: React.FC = () => {
             </div>
             <div className="space-y-6">
               {[
-                { key: "doc" as const, title: "Documentación y Permisos", desc: "Licencia, Seguro, Registro." },
-                { key: "luces" as const, title: "Luces y Señalización", desc: "Frontales, Traseras, Freno, Direccionales." },
-                { key: "neumaticos" as const, title: "Neumáticos y Ruedas", desc: "Presión, Profundidad, Pernos." },
+                { key: "documentationVerified" as const, title: "Documentación y permisos", desc: "Licencia, Seguro, Registro." },
+                { key: "vehicleCondition" as const, title: "Condición del vehículo", desc: "Estado general." },
+                { key: "lightsOk" as const, title: "Luces", desc: "Frontales, traseras, direccionales." },
+                { key: "tiresOk" as const, title: "Neumáticos", desc: "Presión, profundidad, pernos." },
+                { key: "brakesOk" as const, title: "Frenos", desc: "" },
+                { key: "safetyElementsOk" as const, title: "Elementos de seguridad", desc: "" },
               ].map(({ key, title, desc }) => (
                 <div key={key} className="flex items-start justify-between gap-4 rounded-lg border border-slate-200 py-[28px] pl-[27px] pr-[24px]" style={{ backgroundColor: "#F2F2F2" }}>
                   <div>
                     <p className="font-medium text-slate-800">{title}</p>
-                    <p className="text-sm text-slate-500 mt-0.5">{desc}</p>
+                    {desc ? <p className="text-sm text-slate-500 mt-0.5">{desc}</p> : null}
                   </div>
                   <div className="flex items-center gap-[50px] flex-shrink-0">
                     <button
@@ -372,9 +450,14 @@ const NuevaInspeccionPage: React.FC = () => {
                 <strong>Declaración:</strong> Certifico que he revisado el vehículo y que los datos ingresados son veraces conforme a las regulaciones FMCSA.
               </p>
             </div>
+            {saveError && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {saveError}
+              </div>
+            )}
             <div className="mb-4">
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Firma del Conductor: {selectedDriver ? selectedDriver.name : "—"}
+                Firma del Conductor: {selectedDriver ? (selectedDriver.name ?? selectedDriver.label) : "—"}
               </label>
               <canvas
                 ref={canvasRef}
@@ -408,13 +491,13 @@ const NuevaInspeccionPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!hasSignature}
+                disabled={!hasSignature || saving}
                 className="inline-flex items-center gap-2 rounded-lg bg-green-600 py-[15px] px-[65px] text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                   <path fillRule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zm6 16.5c.66 0 1.277-.19 1.797-.518l1.048 1.048a.75.75 0 001.06-1.06l-1.047-1.048A3.375 3.375 0 1011.625 18z" clipRule="evenodd" />
                 </svg>
-                Guardar Inspección
+                {saving ? "Guardando..." : "Guardar Inspección"}
               </button>
             </div>
           </div>
