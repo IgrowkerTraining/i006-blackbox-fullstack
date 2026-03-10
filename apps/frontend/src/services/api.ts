@@ -1,5 +1,5 @@
 import { User } from "../types";
-import { API_ENDPOINTS } from "../constants/routes";
+import { API_ENDPOINTS, STORAGE_KEYS } from "../constants/routes";
 import type {
   Chofer,
   ChoferFicha,
@@ -10,7 +10,6 @@ import type {
 import {
   MOCK_CHOFERES,
   MOCK_CHOFER_FICHA,
-  MOCK_FLOTA,
   MOCK_HISTORIAL,
   MOCK_HISTORIAL_REPORTE,
 } from "../data/mockData";
@@ -20,10 +19,17 @@ const buildErrorMessage = async (response: Response, fallback: string) => {
     const data = await response.json();
     const msg = data?.error || data?.message;
     if (msg) return `${fallback} `;
-  } catch {
+  } catch {}
+  return `${fallback}`;
+};
 
-  }
-  return `${fallback} )`;
+
+const authHeaders = (): HeadersInit => {
+  const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 };
 
 export const api = {
@@ -36,14 +42,13 @@ export const api = {
         body: JSON.stringify(data),
       },
     );
-
     if (!response.ok) {
       throw new Error(await buildErrorMessage(response, "Registration failed"));
     }
     return response.json();
   },
 
-  async login(data: any,): Promise<{ user: User; token: string; message: string }> {
+  async login(data: any): Promise<{ user: User; token: string; message: string }> {
     const response = await fetch(
       `${API_ENDPOINTS.BASE}${API_ENDPOINTS.AUTH.LOGIN}`,
       {
@@ -52,14 +57,16 @@ export const api = {
         body: JSON.stringify(data),
       },
     );
+     if (response.status === 401) {
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    throw new Error("Sesión expirada. Por favor, inicia sesión nuevamente.");
+  }
 
     if (!response.ok) {
       throw new Error(await buildErrorMessage(response, "Credenciales inválidas"));
     }
     return response.json();
   },
-
-
 
   async checkHealth(): Promise<boolean> {
     try {
@@ -70,84 +77,99 @@ export const api = {
     }
   },
 
-  /**
-   * Lista de choferes. Si el backend no tiene el endpoint aún, devuelve mock data.
-   * Los filtros se aplican en el frontend.
-   */
   async getChoferes(): Promise<Chofer[]> {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.CHOFERES}`);
-      if (!response.ok) {
-        if (response.status === 404) return MOCK_CHOFERES;
-        throw new Error(await buildErrorMessage(response, "Error"));
-      }
-      return response.json() as Promise<Chofer[]>;
-    } catch {
-      return MOCK_CHOFERES;
+    const response = await fetch(
+      `${API_ENDPOINTS.BASE}${API_ENDPOINTS.CHOFERES}`,
+      { headers: authHeaders() },
+    );
+    if (!response.ok) {
+      throw new Error(await buildErrorMessage(response, "Error al cargar choferes"));
     }
+    const json = await response.json();
+    return json.data ?? json;
   },
 
-  /**
-   * Ficha de un chofer por ID. Mientras no exista el endpoint (hoy devuelve 400),
-   * retornamos siempre el mock para que la UI funcione.
-   */
   async getChoferById(idChofer: string): Promise<ChoferFicha> {
-    try {
-      const response = await fetch(
-        `${API_ENDPOINTS.BASE}${API_ENDPOINTS.CHOFERES}/${encodeURIComponent(idChofer)}`,
-      );
-      if (!response.ok) return MOCK_CHOFER_FICHA;
-      return response.json() as Promise<ChoferFicha>;
-    } catch {
-      return MOCK_CHOFER_FICHA;
+    const response = await fetch(
+      `${API_ENDPOINTS.BASE}${API_ENDPOINTS.CHOFERES}/${encodeURIComponent(idChofer)}`,
+      { headers: authHeaders() },
+    );
+    if (!response.ok) {
+      throw new Error(await buildErrorMessage(response, "Error al cargar el chofer"));
     }
+    const json = await response.json();
+    return json.data ?? json;
   },
 
-  /**
-   * Inventario de flota. Si el backend no tiene el endpoint aún, devuelve mock data.
-   */
+
+  // funcion para obtener la lista de unidades de la flota, con su estado y chofer asignado
+
   async getFlota(): Promise<UnidadFlota[]> {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.FLOTA}`);
-      if (!response.ok) {
-        if (response.status === 404) return MOCK_FLOTA;
-        throw new Error(await buildErrorMessage(response, "Error"));
-      }
-      return response.json() as Promise<UnidadFlota[]>;
-    } catch {
-      return MOCK_FLOTA;
+    const response = await fetch(
+      `${API_ENDPOINTS.BASE}${API_ENDPOINTS.FLOTA}`,
+      { headers: authHeaders() },
+    );
+    if (!response.ok) {
+      throw new Error(await buildErrorMessage(response, "Error al cargar la flota"));
     }
+    const json = await response.json();
+    const data = json.data ?? json;
+
+    return data.map((v: any) => ({
+      idUnidad: v.unit_number,
+      estado: v.is_active ? "ACTIVO" : "INACTIVO",
+      chofer: v.driverId ?? "Sin asignar",
+      ultimaInspeccion: v.updatedAt,
+    }));
   },
 
-  /**
-   * Historial de eventos. Si el backend no tiene el endpoint aún, devuelve mock data.
-   */
-  async getHistorial(): Promise<RegistroHistorial[]> {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.BASE}${API_ENDPOINTS.HISTORIAL}`);
-      if (!response.ok) {
-        if (response.status === 404) return MOCK_HISTORIAL;
-        throw new Error(await buildErrorMessage(response, "Error"));
-      }
-      return response.json() as Promise<RegistroHistorial[]>;
-    } catch {
-      return MOCK_HISTORIAL;
+ //Funcion para obtener el historial de una flota/unidad especifica, con paginacion
+ async getHistorialUnidad(
+    vehicleId: string,
+    page: number,
+    limit: number,
+  ): Promise<{ id: string; timestamp: string; type: string; description: string }[]> {
+    const response = await fetch(
+      `${API_ENDPOINTS.BASE}/events/vehicle/${encodeURIComponent(vehicleId)}/history?page=${page}&limit=${limit}`,
+      { headers: authHeaders() },
+    );
+    if (!response.ok) {
+      throw new Error(await buildErrorMessage(response, "Error al cargar el historial de la unidad"));
     }
+    const json = await response.json();
+    return json.data ?? json;
   },
 
-  /**
-   * Registro consolidado de eventos (reporte por unidad). Si el backend no tiene
-   * el endpoint, devuelve siempre el mock para cualquier idUnidad.
-   */
+  // funcion para obtener el historial completo de eventos, con paginacion y filtros
+  async getEvents(): Promise<RegistroHistorial[]> {
+  const response = await fetch(
+    `${API_ENDPOINTS.BASE}${API_ENDPOINTS.EVENTS}`,
+    { headers: authHeaders() },
+  );
+  //TODO: eliminar esta parte cuando el backend ya tenga implementado el endpoint de eventos
+  if (response.status === 404) return MOCK_HISTORIAL; // retorna datos mock si no se encuentra el endpoint
+
+  if (!response.ok) {
+    throw new Error(await buildErrorMessage(response, "Error al cargar el historial"));
+  }
+  const json = await response.json();
+  return json.data ?? json;
+},
+
+  // funcion para obtener el reporte completo de eventos de una unidad
+
   async getHistorialReporte(idUnidad: string): Promise<EventoReporte[]> {
-    try {
-      const response = await fetch(
-        `${API_ENDPOINTS.BASE}${API_ENDPOINTS.HISTORIAL}/reporte/${encodeURIComponent(idUnidad)}`,
-      );
-      if (!response.ok) return MOCK_HISTORIAL_REPORTE;
-      return response.json() as Promise<EventoReporte[]>;
-    } catch {
-      return MOCK_HISTORIAL_REPORTE;
+    const response = await fetch(
+      `${API_ENDPOINTS.BASE}${API_ENDPOINTS.EVENTS}/reporte/${encodeURIComponent(idUnidad)}`,
+      { headers: authHeaders() },
+    );
+    if (!response.ok) {
+      if (response.status === 404) return MOCK_HISTORIAL_REPORTE;
+      throw new Error(await buildErrorMessage(response, "Error al cargar el reporte"));
     }
+    const json = await response.json();
+    return json.data ?? json;
   },
+
+
 };

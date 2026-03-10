@@ -17,6 +17,7 @@ export default function ForgotPasswordModal() {
   return (
     <div>
       <button
+      type="button"
 
         onClick={() => setOpen(true)}
         className="text-xs text-[#a0a890] hover:text-[#f0ede6] no-underline transition-colors"

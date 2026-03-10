@@ -20,17 +20,17 @@ const Login: React.FC = () => {
 
 
 
-const handleSubmit = async (e:React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  await login(email, password);
-try{
- navigate("/dashboard");
-}catch(err){
-  console.error("hubo un error al iniciar seccion:", err);
+  try {
+    await login(email, password); 
+    navigate("/dashboard");
+  } catch(err) {
+    console.error("Error al iniciar sesión:", err);
+  }
 }
 
 
-}
 
 
   return (
@@ -131,15 +131,14 @@ try{
 
           <button
             type="submit"
-
-
+            disabled={loading}
             className={`w-full py-2.5 bg-blackbox-yellow text-blackbox-white font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-lato ${loading
                 ? "bg-blackbox-yellow cursor-not-allowed"
                 : "hover:bg-blackbox-yellow/90 shadow-lg shadow-blackbox-yellow/30 hover:shadow-blackblox-yellow/50"
               }`}>
             {loading ? "Iniciando sesión..." : "Iniciar sesión"}
           </button>
-          
+
         </form>
       </div>
     </div>
