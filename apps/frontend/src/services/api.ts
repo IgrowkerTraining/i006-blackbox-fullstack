@@ -16,7 +16,7 @@ import {
 
 /** Cabeceras con JWT para peticiones autenticadas. */
 function getAuthHeaders(): HeadersInit {
-  const token = storage.getToken();
+  const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -142,7 +142,10 @@ export const api = {
     const data = json.data ?? json;
 
     return data.map((v: any) => ({
+      id: v.id,
       idUnidad: v.unit_number,
+      unit_number: v.unit_number,
+      plate: v.plate,
       estado: v.is_active ? "ACTIVO" : "INACTIVO",
       chofer: v.driverId ?? "Sin asignar",
       ultimaInspeccion: v.updatedAt,
@@ -223,7 +226,10 @@ export interface CreateInspectionPayload {
   driverId: string;
   typeInspection: "ARRIVAL" | "DEPARTURE";
   documentationVerified: boolean;
+  vehicleCondition: "ACCEPTABLE" | "NOT_ACCEPTABLE";
   lightsOk: boolean;
+  tiresOk: boolean;
+  brakesOk: boolean;
   safetyElementsOk: boolean;
   eSignature: string;
   isConfirmed: boolean;

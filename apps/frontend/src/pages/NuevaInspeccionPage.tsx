@@ -28,6 +28,27 @@ function toDriverOption(d: Record<string, unknown>): OptionItem & { name?: strin
 type InspectionType = "SALIDA" | "LLEGADA" | null;
 type ChecklistResult = boolean | null; // true = OK, false = fail, null = not set
 
+const CHECKLIST_KEYS = [
+  "documentationVerified",
+  "vehicleCondition",
+  "lightsOk",
+  "tiresOk",
+  "brakesOk",
+  "safetyElementsOk",
+] as const;
+type ChecklistKey = (typeof CHECKLIST_KEYS)[number];
+
+type ChecklistState = Record<ChecklistKey, ChecklistResult>;
+
+const INITIAL_CHECKLIST: ChecklistState = {
+  documentationVerified: null,
+  vehicleCondition: null,
+  lightsOk: null,
+  tiresOk: null,
+  brakesOk: null,
+  safetyElementsOk: null,
+};
+
 const IconTruck = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-slate-600">
     <path d="M3.375 4.5C2.339 4.5 1.5 5.34 1.5 6.375V13.5h12V6.375c0-1.036-.84-1.875-1.875-1.875h-8.25zM13.5 15h-12v2.625c0 1.036.84 1.875 1.875 1.875h.375a3 3 0 116 0h3a3 3 0 116 0h.375c1.035 0 1.875-.84 1.875-1.875V15z" />
@@ -76,11 +97,7 @@ const NuevaInspeccionPage: React.FC = () => {
   const [vehicleId, setVehicleId] = useState<string>("");
   const [driverId, setDriverId] = useState<string>("");
   const [inspectionType, setInspectionType] = useState<InspectionType>(null);
-  const [checklist, setChecklist] = useState<{ doc: ChecklistResult; luces: ChecklistResult; neumaticos: ChecklistResult }>({
-    doc: null,
-    luces: null,
-    neumaticos: null,
-  });
+  const [checklist, setChecklist] = useState<ChecklistState>(INITIAL_CHECKLIST);
   const [hasSignature, setHasSignature] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -204,9 +221,12 @@ const NuevaInspeccionPage: React.FC = () => {
         vehicleId,
         driverId,
         typeInspection,
-        documentationVerified: checklist.doc === true,
-        lightsOk: checklist.luces === true,
-        safetyElementsOk: checklist.neumaticos === true,
+        documentationVerified: checklist.documentationVerified === true,
+        vehicleCondition: checklist.vehicleCondition === true ? "ACCEPTABLE" : "NOT_ACCEPTABLE",
+        lightsOk: checklist.lightsOk === true,
+        tiresOk: checklist.tiresOk === true,
+        brakesOk: checklist.brakesOk === true,
+        safetyElementsOk: checklist.safetyElementsOk === true,
         eSignature,
         isConfirmed: true,
       };
@@ -225,7 +245,7 @@ const NuevaInspeccionPage: React.FC = () => {
   };
 
   const canGoNextStep1 = vehicleId && driverId && inspectionType !== null;
-  const canGoStep3 = checklist.doc !== null && checklist.luces !== null && checklist.neumaticos !== null;
+  const canGoStep3 = CHECKLIST_KEYS.every((k) => checklist[k] !== null);
 
   return (
     <div className="min-h-full bg-slate-100 rounded-lg p-8 md:p-10">
@@ -330,14 +350,17 @@ const NuevaInspeccionPage: React.FC = () => {
             </div>
             <div className="space-y-6">
               {[
-                { key: "doc" as const, title: "Documentación y Permisos", desc: "Licencia, Seguro, Registro." },
-                { key: "luces" as const, title: "Luces y Señalización", desc: "Frontales, Traseras, Freno, Direccionales." },
-                { key: "neumaticos" as const, title: "Neumáticos y Ruedas", desc: "Presión, Profundidad, Pernos." },
+                { key: "documentationVerified" as const, title: "Documentación y permisos", desc: "Licencia, Seguro, Registro." },
+                { key: "vehicleCondition" as const, title: "Condición del vehículo", desc: "Estado general." },
+                { key: "lightsOk" as const, title: "Luces", desc: "Frontales, traseras, direccionales." },
+                { key: "tiresOk" as const, title: "Neumáticos", desc: "Presión, profundidad, pernos." },
+                { key: "brakesOk" as const, title: "Frenos", desc: "" },
+                { key: "safetyElementsOk" as const, title: "Elementos de seguridad", desc: "" },
               ].map(({ key, title, desc }) => (
                 <div key={key} className="flex items-start justify-between gap-4 rounded-lg border border-slate-200 py-[28px] pl-[27px] pr-[24px]" style={{ backgroundColor: "#F2F2F2" }}>
                   <div>
                     <p className="font-medium text-slate-800">{title}</p>
-                    <p className="text-sm text-slate-500 mt-0.5">{desc}</p>
+                    {desc ? <p className="text-sm text-slate-500 mt-0.5">{desc}</p> : null}
                   </div>
                   <div className="flex items-center gap-[50px] flex-shrink-0">
                     <button
