@@ -102,25 +102,39 @@ export const api = {
     return response.json();
   },
 
-  async login(data: any): Promise<{ user: User; token: string; message: string }> {
-    const response = await fetch(
-      `${API_ENDPOINTS.BASE}${API_ENDPOINTS.AUTH.LOGIN}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      },
-    );
-     if (response.status === 401) {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    throw new Error("Sesión expirada. Por favor, inicia sesión nuevamente.");
+ async login(data: any): Promise<{ user: User; token: string; message: string }> {
+  const response = await fetch(
+    `${API_ENDPOINTS.BASE}${API_ENDPOINTS.AUTH.LOGIN}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    },
+  );
+
+  if (!response.ok) {
+    switch (response.status) {
+      case 400:
+        throw new Error("Datos inválidos. Verifica tu correo y contraseña.");
+      case 401:
+        throw new Error("Credenciales incorrectas. Verifica tu correo y contraseña.");
+      case 403:
+        throw new Error("Tu cuenta no tiene permisos para acceder.");
+      case 404:
+        throw new Error("Usuario no encontrado.");
+      case 429:
+        throw new Error("Demasiados intentos. Espera unos minutos e intenta de nuevo.");
+      case 500:
+        throw new Error("Error en el servidor. Intenta más tarde.");
+      case 503:
+        throw new Error("Servicio no disponible. Intenta más tarde.");
+      default:
+        throw new Error(await buildErrorMessage(response, "Error al iniciar sesión."));
+    }
   }
 
-    if (!response.ok) {
-      throw new Error(await buildErrorMessage(response, "Credenciales inválidas"));
-    }
-    return response.json();
-  },
+  return response.json();
+},
 
   async checkHealth(): Promise<boolean> {
     try {
@@ -246,7 +260,7 @@ export const api = {
       return json.data ?? json;
     }
 
-    // Si el endpoint aún no existe, usar mock solo si nunca se confirmó disponible.
+    // Si el endpoint aun no existe, usar mock solo si nunca se confirmo disponible.
     if (response.status === 404 && eventsApiAvailable !== true) return MOCK_HISTORIAL;
 
     throw new Error(await buildErrorMessage(response, "Error al cargar el historial"));
@@ -308,3 +322,4 @@ export interface CreateInspectionPayload {
   generalResult?: "WITH_OBS" | "WITHOUT_OBS";
   context?: "ARRIVAL" | "DEPARTURE";
 }
+
