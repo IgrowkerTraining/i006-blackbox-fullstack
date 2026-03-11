@@ -26,10 +26,19 @@ export interface ChoferesFilters {
 }
 
 export interface UnidadFlota extends Record<string, unknown> {
-  id: string;
-  status: string;
-  driver: string;
-  lastInspection: string;
+  // Campos usados por las tablas actuales
+  idUnidad: string;
+  estado: string;
+  chofer: string;
+  ultimaInspeccion: string;
+
+  // Campos de backend / compatibilidad
+  id?: string;
+  unit_number?: string;
+  plate?: string;
+  status?: string;
+  driver?: string;
+  lastInspection?: string;
 }
 
 export interface FlotaFilters {
