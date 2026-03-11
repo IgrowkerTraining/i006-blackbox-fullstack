@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Input } from "../components/common/Input";
-import { Select } from "../components/common/Select";
-import { Button } from "../components/common/Button";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { ErrorMessage } from "../components/common/ErrorMessage";
+import { Input } from "@/src/components/common/Input";
+import { Select } from "@/src/components/common/Select";
+import { Button } from "@/src/components/common/Button";
+import { LoadingSpinner } from "@/src/components/common/LoadingSpinner";
+import { ErrorMessage } from "@/src/components/common/ErrorMessage";
 import {
   PageDataContainer,
   DataTable,
   Pagination,
   useDataPage,
-} from "../components/dataPage";
-import type { RegistroHistorial, CriterioHistorial } from "../types/dataPages";
+} from "@/src/components/dataPage";
+import type { RegistroHistorial, CriterioHistorial } from "@/src/types/dataPages";
 import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
-import useHistorialEvents from "../hooks/useHistorialEvents";
+import useHistorialEvents from "@/src/hooks/useHistorialEvents";
 
 const PAGE_SIZE = 5;
 
@@ -61,7 +61,7 @@ const HistorialPage: React.FC = () => {
   const [inputVal, setInputVal] = useState("");
   const [filterVal, setFilterVal] = useState("");
 
- 
+
   const { events, loading, error, refetch } = useHistorialEvents();
 
   const filterState: HistorialFilterState = { criterio, valor: filterVal };

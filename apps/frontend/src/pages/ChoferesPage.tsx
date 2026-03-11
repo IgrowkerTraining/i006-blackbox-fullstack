@@ -47,13 +47,23 @@ const ChoferesPage: React.FC = () => {
   // Normalizar datos del backend (id, name, license_number, is_active) al formato de la tabla
   const choferes: Chofer[] = (apiData ?? []).map((row) => {
     const r = row as Record<string, unknown>;
+    const vehicle = (r.vehicle as Record<string, unknown> | undefined) ?? (r.assignedVehicle as Record<string, unknown> | undefined);
     return {
       ...row,
       idChofer: (r.idChofer ?? r.id ?? "") as string,
       nombre: (r.nombre ?? r.name ?? "") as string,
       licencia: (r.licencia ?? r.license_number ?? "") as string,
       estadoOperativo: (r.estadoOperativo ?? (r.is_active === true ? "Activo" : r.is_active === false ? "Inactivo" : "")) as string,
-      unidadAsignada: (r.unidadAsignada ?? "") as string,
+      unidadAsignada: (r.unidadAsignada ??
+        r.unit_number ??
+        r.unitNumber ??
+        r.plate ??
+        r.vehicleId ??
+        vehicle?.unit_number ??
+        vehicle?.unitNumber ??
+        vehicle?.plate ??
+        vehicle?.id ??
+        "") as string,
     };
   });
 

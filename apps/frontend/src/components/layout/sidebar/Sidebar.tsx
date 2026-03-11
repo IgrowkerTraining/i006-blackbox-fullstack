@@ -6,6 +6,7 @@ import { MenuSection } from "./MenuSection";
 import { SidebarUser } from "./SidebarUser";
 import Logo from "@/src/assets/Logo/logotipo_blackbox.png"
 import Isotipo from "@/src/assets/Isotipos/isotipo_blackbox.png"
+import { Truck } from "lucide-react";
 
 const IconDashboard = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -78,7 +79,7 @@ export const Sidebar: React.FC = () => {
           active={isActive(pathname, "/dashboard")}
         />
         <MenuItem
-          icon={<IconFlota />}
+          icon={<Truck />}
           label="Flota"
           to="/flota"
           active={isActive(pathname, "/flota")}
