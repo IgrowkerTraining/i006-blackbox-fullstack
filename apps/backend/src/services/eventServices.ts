@@ -150,7 +150,6 @@ const getAllEvents = async (companyId: string, filters: EventFilters) => {
     where.event_type = filters.eventType;
   }
 
-  // ✅ NUEVO: Filtro por severidad
   if (filters.severity) {
     where.severity = filters.severity;
   }
