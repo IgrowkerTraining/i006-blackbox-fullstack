@@ -156,7 +156,7 @@ const FlotaPage: React.FC = () => {
             onSort={handleSort}
             renderAction={(row) => (
               <a
-                href={`/flota/${row.idUnidad}/historial`}
+                href={`/flota/${String((row as Record<string, unknown>).id ?? row.idUnidad)}/historial`}
                 className="text-accent hover:opacity-90 font-medium transition-colors"
               >
                 Ver historial
