@@ -1,4 +1,4 @@
-import { Response } from "express";
+import express from "express";
 import { DriverService } from "../services/driverServices";
 import { AuthRequest } from "../types/auth";
 import { UserRole } from "../../generated/prisma/enums";
@@ -55,7 +55,7 @@ import { UserRole } from "../../generated/prisma/enums";
  *       500:
  *         description: Internal Server Error
  */
-const getAll = async (req: AuthRequest, res: Response) => {
+const getAll = async (req: AuthRequest, res: express.Response) => {
   try {
     const companyId = req.user?.companyId;
     if (!companyId) return res.status(401).json({ error: "Not authorized" });
@@ -90,7 +90,7 @@ const getAll = async (req: AuthRequest, res: Response) => {
  *       500:
  *         description: Internal Server Error
  */
-const getAllActive = async (req: AuthRequest, res: Response) => {
+const getAllActive = async (req: AuthRequest, res: express.Response) => {
   try {
     const companyId = req.user?.companyId;
     if (!companyId) return res.status(401).json({ error: "Not authorized" });
@@ -133,7 +133,7 @@ const getAllActive = async (req: AuthRequest, res: Response) => {
  *       500:
  *         description: Error fetching driver
  */
-const getDriverById = async (req: AuthRequest, res: Response) => {
+const getDriverById = async (req: AuthRequest, res: express.Response) => {
   try {
     const { id } = req.params;
     const companyId = req.user?.companyId;
@@ -188,18 +188,10 @@ const getDriverById = async (req: AuthRequest, res: Response) => {
  *         description: Only Admins can create drivers
  *       409:
  *         description: License number already exists or driver is inactive
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "A driver with this license number already exists in your company."
  *       500:
  *         description: Error creating driver
  */
-const createDriver = async (req: AuthRequest, res: Response) => {
+const createDriver = async (req: AuthRequest, res: express.Response) => {
   try {
     const companyId = req.user?.companyId;
     const userRole = req.user?.role;
@@ -208,7 +200,6 @@ const createDriver = async (req: AuthRequest, res: Response) => {
     if (userRole !== UserRole.ADMIN)
       return res.status(403).json({ error: "Only Admins can create drivers" });
 
-    // Validación básica de campos
     const { name, license_number } = req.body;
     if (!name || !license_number) {
       return res
@@ -217,10 +208,7 @@ const createDriver = async (req: AuthRequest, res: Response) => {
     }
 
     const newDriver = await DriverService.create(
-      {
-        name,
-        license_number,
-      },
+      { name, license_number },
       companyId,
     );
 
@@ -292,14 +280,14 @@ const createDriver = async (req: AuthRequest, res: Response) => {
  *       500:
  *         description: Error updating driver
  */
-const updateDriver = async (req: AuthRequest, res: Response) => {
+const updateDriver = async (req: AuthRequest, res: express.Response) => {
   try {
     const { id } = req.params;
     const companyId = req.user?.companyId;
 
     if (!companyId) return res.status(401).json({ error: "Not authorized" });
 
-    const dataToUpdate = req.body; // Debería ser validado con Zod idealmente
+    const dataToUpdate = req.body;
 
     const updatedDriver = await DriverService.update(
       id as string,
@@ -350,7 +338,7 @@ const updateDriver = async (req: AuthRequest, res: Response) => {
  *       500:
  *         description: Error deleting driver
  */
-const deleteDriver = async (req: AuthRequest, res: Response) => {
+const deleteDriver = async (req: AuthRequest, res: express.Response) => {
   try {
     const { id } = req.params;
     const companyId = req.user?.companyId;
@@ -358,7 +346,6 @@ const deleteDriver = async (req: AuthRequest, res: Response) => {
 
     if (!companyId) return res.status(401).json({ error: "Not authorized" });
 
-    // Solo ADMIN puede "borrar" conductores
     if (currentUserRole !== UserRole.ADMIN) {
       return res.status(403).json({ error: "Only Admins can delete drivers" });
     }
