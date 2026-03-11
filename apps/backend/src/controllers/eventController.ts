@@ -496,6 +496,7 @@ const createAccident = async (req: AuthRequest, res: Response) => {
  *                 example: "Dallas Auto Service Center"
  *               finalObservations:
  *                 type: string
+ *                 description: Additional notes
  *               eSignature:
  *                 type: string
  *                 example: "Rick Ramirez"
@@ -584,6 +585,7 @@ const createMaintenance = async (req: AuthRequest, res: Response) => {
  *                 example: "Refueled at Love's Travel Stop"
  *               finalObservations:
  *                 type: string
+ *                 description: Additional notes
  *               eSignature:
  *                 type: string
  *     responses:
