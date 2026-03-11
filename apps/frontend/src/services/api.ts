@@ -7,12 +7,7 @@ import type {
   RegistroHistorial,
   EventoReporte,
 } from "../types/dataPages";
-import {
-  MOCK_CHOFERES,
-  MOCK_CHOFER_FICHA,
-  MOCK_HISTORIAL,
-  MOCK_HISTORIAL_REPORTE,
-} from "../data/mockData";
+import { MOCK_CHOFER_FICHA, MOCK_HISTORIAL, MOCK_HISTORIAL_REPORTE } from "../data/mockData";
 
 /** Cabeceras con JWT para peticiones autenticadas. */
 function getAuthHeaders(): HeadersInit {
@@ -79,6 +74,70 @@ function unwrapList<T>(json: unknown): T[] {
   }
   return [];
 }
+
+const formatDate = (value?: string | null): string => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("es-EC", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+const formatTime = (value?: string | null): string => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("es-EC", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const toChofer = (raw: Record<string, unknown>): Chofer => {
+  const vehicle = (raw.vehicle as Record<string, unknown> | undefined) ?? undefined;
+  const unidad =
+    (raw.unidadAsignada ??
+      raw.unit_number ??
+      raw.unitNumber ??
+      raw.plate ??
+      raw.vehicleId ??
+      vehicle?.unit_number ??
+      vehicle?.unitNumber ??
+      vehicle?.plate ??
+      vehicle?.id ??
+      "Sin asignar") as string;
+  const isActive = raw.is_active ?? raw.isActive;
+  return {
+    unidadAsignada: String(unidad || "Sin asignar"),
+    idChofer: String((raw.idChofer ?? raw.id ?? "") as string),
+    nombre: String((raw.nombre ?? raw.name ?? "") as string),
+    licencia: String((raw.licencia ?? raw.license_number ?? "") as string),
+    estadoOperativo:
+      typeof isActive === "boolean" ? (isActive ? "Activo" : "Inactivo") : String(raw.estadoOperativo ?? ""),
+  };
+};
+
+const toChoferFicha = (raw: Record<string, unknown>): ChoferFicha => {
+  const base = toChofer(raw);
+  const createdAt = (raw.created_at ?? raw.createdAt) as string | undefined;
+  const years =
+    createdAt && !Number.isNaN(new Date(createdAt).getTime())
+      ? Math.max(0, new Date().getFullYear() - new Date(createdAt).getFullYear())
+      : 0;
+  const isActive = raw.is_active ?? raw.isActive;
+  return {
+    ...base,
+    fotoUrl: (raw.fotoUrl ?? MOCK_CHOFER_FICHA.fotoUrl) as string,
+    antiguedadAnios: years,
+    estadoActual: typeof isActive === "boolean" ? (isActive ? "Activo" : "Inactivo") : "Sin estado",
+    unidadAsignadaActual: base.unidadAsignada,
+    metricaCumplimiento: (raw.metricaCumplimiento ?? "Sin datos") as string,
+    inspeccionesRegistradas: (raw.inspeccionesRegistradas ?? "N/D") as string,
+  };
+};
 
 export const api = {
   async register(data: any): Promise<{ user: User; message: string }> {
@@ -156,7 +215,8 @@ export const api = {
       throw new Error(await buildErrorMessage(response, "Error al cargar choferes"));
     }
     const json = await response.json();
-    return json.data ?? json;
+    const data = unwrapData<Record<string, unknown>>(json);
+    return data.map(toChofer);
   },
 
   async getChoferById(idChofer: string): Promise<ChoferFicha> {
@@ -168,7 +228,11 @@ export const api = {
       throw new Error(await buildErrorMessage(response, "Error al cargar el chofer"));
     }
     const json = await response.json();
-    return json.data ?? json;
+    const raw =
+      json && typeof json === "object" && "data" in json
+        ? ((json as { data?: unknown }).data as Record<string, unknown> | undefined)
+        : (json as Record<string, unknown>);
+    return toChoferFicha(raw ?? {});
   },
 
 
@@ -183,21 +247,35 @@ export const api = {
       throw new Error(await buildErrorMessage(response, "Error al cargar la flota"));
     }
     const json = await response.json();
-    const data = json.data ?? json;
+    const data = unwrapData<Record<string, unknown>>(json);
 
-    return data.map((v: any) => ({
-      id: v.id,
-      idUnidad: v.unit_number,
-      unit_number: v.unit_number,
-      plate: v.plate,
-      estado: v.is_active ? "ACTIVO" : "INACTIVO",
-      chofer: v.driverId ?? "Sin asignar",
-      ultimaInspeccion: v.updatedAt,
-    }));
+    return data.map((v: Record<string, unknown>) => {
+      const unitNumber = (v.unit_number ?? v.unitNumber ?? v.idUnidad ?? v.plate ?? v.id ?? "") as string;
+      const driver = (v.driver as Record<string, unknown> | undefined) ?? undefined;
+      return {
+        ...v,
+        id: (v.id ?? v.vehicleId ?? v.vehicle_id ?? v.idUnidad ?? "") as string,
+        idUnidad: String(unitNumber || v.plate || v.id || ""),
+        unit_number: unitNumber,
+        plate: (v.plate ?? "") as string,
+        estado:
+          typeof v.is_active === "boolean"
+            ? v.is_active
+              ? "ACTIVO"
+              : "INACTIVO"
+            : (v.estado ?? "") as string,
+        chofer: (v.chofer ??
+          v.driverName ??
+          driver?.name ??
+          v.driverId ??
+          "Sin asignar") as string,
+        ultimaInspeccion: (v.updatedAt ?? v.updated_at ?? "") as string,
+      };
+    });
   },
 
  //Funcion para obtener el historial de una flota/unidad especifica, con paginacion
- async getHistorialUnidad(
+  async getHistorialUnidad(
     vehicleId: string,
     page: number,
     limit: number,
@@ -229,7 +307,24 @@ export const api = {
       throw new Error(await buildErrorMessage(response, "Error al cargar el historial de la unidad"));
     }
     const json = await response.json();
-    const events = unwrapList<{
+    const payload =
+      json && typeof json === "object" && "data" in json
+        ? ((json as { data?: unknown }).data as Record<string, unknown> | undefined)
+        : (json as Record<string, unknown>);
+    const events = Array.isArray(payload?.events) ? (payload?.events as any[]) : unwrapList<any>(json);
+    const vehicle =
+      payload && typeof payload === "object" && "vehicle" in payload
+        ? (payload as { vehicle?: Record<string, unknown> }).vehicle
+        : undefined;
+    return { events, vehicle };
+  },
+
+  async getHistorialChofer(
+    driverId: string,
+    page: number,
+    limit: number,
+  ): Promise<{
+    events: {
       id: string;
       event_datetime?: string;
       event_type?: string;
@@ -239,50 +334,111 @@ export const api = {
       updated_at?: string;
       driver?: { name?: string } | null;
       createdBy?: { name?: string } | null;
-    }>(json);
-    const vehicle =
+      vehicle_id?: string;
+    }[];
+    driver?: {
+      id?: string;
+      name?: string;
+      license_number?: string;
+    };
+  }> {
+    const response = await fetch(
+      `${API_ENDPOINTS.BASE}/events/driver/${encodeURIComponent(driverId)}/history?page=${page}&limit=${limit}`,
+      { headers: authHeaders() },
+    );
+    if (!response.ok) {
+      throw new Error(await buildErrorMessage(response, "Error al cargar el historial del chofer"));
+    }
+    const json = await response.json();
+    const payload =
       json && typeof json === "object" && "data" in json
-        ? (json as { data?: { vehicle?: Record<string, unknown> } }).data?.vehicle
+        ? ((json as { data?: unknown }).data as Record<string, unknown> | undefined)
+        : (json as Record<string, unknown>);
+    const events = Array.isArray(payload?.events) ? (payload?.events as any[]) : unwrapList<any>(json);
+    const driver =
+      payload && typeof payload === "object" && "driver" in payload
+        ? (payload as { driver?: Record<string, unknown> }).driver
         : undefined;
-    return { events, vehicle };
+    return { events, driver };
   },
 
   // funcion para obtener el historial completo de eventos, con paginacion y filtros
-  async getEvents(): Promise<RegistroHistorial[]> {
-    const response = await fetch(
-      `${API_ENDPOINTS.BASE}${API_ENDPOINTS.EVENTS}`,
-      { headers: authHeaders() },
-    );
+  async getEvents(
+    criterio: "idUnidad" | "idChofer",
+    valor: string,
+  ): Promise<RegistroHistorial[]> {
+    if (!valor.trim()) return [];
+    try {
+      if (criterio === "idUnidad") {
+        const { events, vehicle } = await this.getHistorialUnidad(valor, 1, 200);
+        eventsApiAvailable = true;
+        return events.map((e: any) => ({
+          idUnidad: String(vehicle?.unit_number ?? vehicle?.plate ?? valor ?? e.vehicle_id ?? ""),
+          idChofer: String(e.driver_id ?? e.driver?.id ?? ""),
+          fechaInspeccion: e.event_type === "INSPECTION" ? formatDate(e.event_datetime) : "",
+          fechaIncidente: e.event_type === "INCIDENT" ? formatDate(e.event_datetime) : "",
+          fechaMantenimiento: e.event_type === "MAINTENANCE" ? formatDate(e.event_datetime) : "",
+        }));
+      }
 
-    if (response.ok) {
+      const { events, driver } = await this.getHistorialChofer(valor, 1, 200);
       eventsApiAvailable = true;
-      const json = await response.json();
-      return json.data ?? json;
+      return events.map((e: any) => ({
+        idUnidad: String(e.vehicle_id ?? ""),
+        idChofer: String(driver?.id ?? valor ?? e.driver_id ?? ""),
+        fechaInspeccion: e.event_type === "INSPECTION" ? formatDate(e.event_datetime) : "",
+        fechaIncidente: e.event_type === "INCIDENT" ? formatDate(e.event_datetime) : "",
+        fechaMantenimiento: e.event_type === "MAINTENANCE" ? formatDate(e.event_datetime) : "",
+      }));
+    } catch (err) {
+      if (eventsApiAvailable !== true) return MOCK_HISTORIAL;
+      throw err;
     }
-
-    // Si el endpoint aun no existe, usar mock solo si nunca se confirmo disponible.
-    if (response.status === 404 && eventsApiAvailable !== true) return MOCK_HISTORIAL;
-
-    throw new Error(await buildErrorMessage(response, "Error al cargar el historial"));
   },
 
   // funcion para obtener el reporte completo de eventos de una unidad
 
   async getHistorialReporte(idUnidad: string): Promise<EventoReporte[]> {
-    const response = await fetch(
-      `${API_ENDPOINTS.BASE}${API_ENDPOINTS.EVENTS}/reporte/${encodeURIComponent(idUnidad)}`,
-      { headers: authHeaders() },
-    );
-
-    if (response.ok) {
+    if (!idUnidad) return [];
+    try {
+      const { events, vehicle } = await this.getHistorialUnidad(idUnidad, 1, 200);
       eventsReportApiAvailable = true;
-      const json = await response.json();
-      return json.data ?? json;
+      return events.map((e: any) => {
+        const rawDate = e.event_datetime ?? e.created_at ?? e.updated_at;
+        const context = e.context ?? e.typeInspection ?? e.inspection_type ?? e.inspectionType;
+        const eventoLabel =
+          context === "ARRIVAL"
+            ? "Inspeccion Llegada"
+            : context === "DEPARTURE"
+              ? "Inspeccion Salida"
+              : e.event_type ?? "Evento";
+        const tipoResultado =
+          e.general_result === "WITH_OBS"
+            ? "hallazgo"
+            : e.general_result === "WITHOUT_OBS"
+              ? "normal"
+              : "completado";
+        return {
+          fecha: formatDate(rawDate),
+          hora: formatTime(rawDate),
+          unidad: String(vehicle?.unit_number ?? vehicle?.plate ?? idUnidad),
+          evento: String(eventoLabel),
+          resultadoDetalle: String(
+            e.final_observations ??
+              (e.general_result === "WITH_OBS"
+                ? "Con observaciones"
+                : e.general_result === "WITHOUT_OBS"
+                  ? "Sin observaciones"
+                  : "Completado"),
+          ),
+          tipoResultado,
+          registradoPor: String(e.createdBy?.name ?? e.created_by_user_id ?? "Sistema"),
+        } as EventoReporte;
+      });
+    } catch (err) {
+      if (eventsReportApiAvailable !== true) return MOCK_HISTORIAL_REPORTE;
+      throw err;
     }
-
-    if (response.status === 404 && eventsReportApiAvailable !== true) return MOCK_HISTORIAL_REPORTE;
-
-    throw new Error(await buildErrorMessage(response, "Error al cargar el historial"));
   },
 
   /**
