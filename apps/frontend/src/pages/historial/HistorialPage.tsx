@@ -1,20 +1,19 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Input } from "../components/common/Input";
-import { Select } from "../components/common/Select";
-import { Button } from "../components/common/Button";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { ErrorMessage } from "../components/common/ErrorMessage";
+import { Input } from "@/src/components/common/Input";
+import { Select } from "@/src/components/common/Select";
+import { Button } from "@/src/components/common/Button";
+import { LoadingSpinner } from "@/src/components/common/LoadingSpinner";
+import { ErrorMessage } from "@/src/components/common/ErrorMessage";
 import {
   PageDataContainer,
   DataTable,
   Pagination,
   useDataPage,
-} from "../components/dataPage";
-import { useApi } from "../hooks/useApi";
-import { api } from "../services/api";
-import type { RegistroHistorial, CriterioHistorial } from "../types/dataPages";
+} from "@/src/components/dataPage";
+import type { RegistroHistorial, CriterioHistorial } from "@/src/types/dataPages";
 import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
+import useHistorialEvents from "@/src/hooks/useHistorialEvents";
 
 const PAGE_SIZE = 5;
 
@@ -62,14 +61,8 @@ const HistorialPage: React.FC = () => {
   const [inputVal, setInputVal] = useState("");
   const [filterVal, setFilterVal] = useState("");
 
-  const fetchHistorial = useCallback(() => api.getHistorial(), []);
-  const { data: apiData, loading, error, execute } = useApi<RegistroHistorial[]>(fetchHistorial);
 
-  useEffect(() => {
-    execute();
-  }, [execute]);
-
-  const historial: RegistroHistorial[] = apiData ?? [];
+  const { events, loading, error, refetch } = useHistorialEvents();
 
   const filterState: HistorialFilterState = { criterio, valor: filterVal };
 
@@ -82,7 +75,7 @@ const HistorialPage: React.FC = () => {
     sortDirection,
     handleSort,
   } = useDataPage<RegistroHistorial, HistorialFilterState>({
-    data: historial,
+    data: events,
     pageSize: PAGE_SIZE,
     filterState,
     filterFn: (data, state) => {
@@ -98,41 +91,14 @@ const HistorialPage: React.FC = () => {
     initialSortDirection: "asc",
   });
 
-  const handleBuscar = () => {
-    setFilterVal(inputVal);
-  };
+  const handleBuscar = () => setFilterVal(inputVal);
 
   const columns = [
-    {
-      id: "idUnidad",
-      label: "ID UNIDAD",
-      sortable: true,
-      accessor: "idUnidad" as keyof RegistroHistorial,
-    },
-    {
-      id: "idChofer",
-      label: "ID CHOFER",
-      sortable: true,
-      accessor: "idChofer" as keyof RegistroHistorial,
-    },
-    {
-      id: "fechaInspeccion",
-      label: "FECHA INSPECCION",
-      sortable: true,
-      accessor: "fechaInspeccion" as keyof RegistroHistorial,
-    },
-    {
-      id: "fechaIncidente",
-      label: "FECHA INCIDENTE",
-      sortable: true,
-      accessor: "fechaIncidente" as keyof RegistroHistorial,
-    },
-    {
-      id: "fechaMantenimiento",
-      label: "FECHA MANTENIMIENTO",
-      sortable: true,
-      accessor: "fechaMantenimiento" as keyof RegistroHistorial,
-    },
+    { id: "idUnidad", label: "ID UNIDAD", sortable: true, accessor: "idUnidad" as keyof RegistroHistorial },
+    { id: "idChofer", label: "ID CHOFER", sortable: true, accessor: "idChofer" as keyof RegistroHistorial },
+    { id: "fechaInspeccion", label: "FECHA INSPECCION", sortable: true, accessor: "fechaInspeccion" as keyof RegistroHistorial },
+    { id: "fechaIncidente", label: "FECHA INCIDENTE", sortable: true, accessor: "fechaIncidente" as keyof RegistroHistorial },
+    { id: "fechaMantenimiento", label: "FECHA MANTENIMIENTO", sortable: true, accessor: "fechaMantenimiento" as keyof RegistroHistorial },
   ];
 
   const filtersContent = (
@@ -187,7 +153,7 @@ const HistorialPage: React.FC = () => {
         }
       >
         {error && (
-          <ErrorMessage message={error} onRetry={execute} className="mb-4" />
+          <ErrorMessage message={error} onRetry={refetch} className="mb-4" />
         )}
         {loading ? (
           <LoadingSpinner message="Cargando..." inline />

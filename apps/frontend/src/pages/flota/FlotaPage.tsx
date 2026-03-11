@@ -32,15 +32,17 @@ const SearchIcon = () => (
   </svg>
 );
 
-function EstadoBadge({ estado }: { estado: string }) {
-  const isActivo = estado.toUpperCase() === "ACTIVO";
+function EstadoBadge({ estado }: { estado?: string | null }) {
+  const value = estado ?? "";
+  const isActivo = value.toUpperCase() === "ACTIVO";
+  const label = value || "—";
   return (
     <span
       className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
         isActivo ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"
       }`}
     >
-      {estado}
+      {label}
     </span>
   );
 }
@@ -56,7 +58,17 @@ const FlotaPage: React.FC = () => {
     execute();
   }, [execute]);
 
-  const flota: UnidadFlota[] = apiData ?? [];
+  // Normalizar datos del backend (id, unit_number, is_active, driver) al formato de la tabla
+  const flota: UnidadFlota[] = (apiData ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      ...row,
+      idUnidad: (r.idUnidad ?? r.unit_number ?? r.plate ?? r.id ?? "") as string,
+      estado: (r.estado ?? (r.is_active === true ? "Activo" : r.is_active === false ? "Inactivo" : "")) as string,
+      chofer: (r.chofer ?? (r.driver && typeof r.driver === "object" && "name" in r.driver ? (r.driver as { name: string }).name : "")) as string,
+      ultimaInspeccion: (r.ultimaInspeccion ?? "") as string,
+    };
+  });
 
   const {
     paginatedData,
@@ -73,7 +85,7 @@ const FlotaPage: React.FC = () => {
     filterFn: (data, term) => {
       if (!term.trim()) return data;
       const lower = term.trim().toLowerCase();
-      return data.filter((row) => row.idUnidad.toLowerCase().includes(lower));
+      return data.filter((row) => String(row.idUnidad ?? "").toLowerCase().includes(lower));
     },
     initialSortColumn: "idUnidad",
     initialSortDirection: "asc",
@@ -144,7 +156,7 @@ const FlotaPage: React.FC = () => {
             onSort={handleSort}
             renderAction={(row) => (
               <a
-                href={`/flota/${row.idUnidad}/historial`}
+                href={`/flota/${String((row as Record<string, unknown>).id ?? row.idUnidad)}/historial`}
                 className="text-accent hover:opacity-90 font-medium transition-colors"
               >
                 Ver historial

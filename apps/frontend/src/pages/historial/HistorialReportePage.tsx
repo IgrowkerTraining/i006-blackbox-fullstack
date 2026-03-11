@@ -1,16 +1,16 @@
 import React, { useCallback, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { LoadingSpinner } from "../components/common/LoadingSpinner";
-import { ErrorMessage } from "../components/common/ErrorMessage";
+import { LoadingSpinner } from "@/src/components/common/LoadingSpinner";
+import { ErrorMessage } from "@/src/components/common/ErrorMessage";
 import {
   PageDataContainer,
   DataTable,
   Pagination,
   useDataPage,
-} from "../components/dataPage";
-import { useApi } from "../hooks/useApi";
-import { api } from "../services/api";
-import type { EventoReporte } from "../types/dataPages";
+} from "@/src/components/dataPage";
+import { useApi } from "@/src/hooks/useApi";
+import { api } from "@/src/services/api";
+import type { EventoReporte } from "@/src/types/dataPages";
 import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
 
 const PAGE_SIZE = 5;

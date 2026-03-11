@@ -6,6 +6,7 @@ import type {
   EventoReporte,
 } from "../types/dataPages";
 
+
 /**
  * Mock de choferes. Se usa cuando el backend no tiene aún el endpoint /api/choferes.
  */
