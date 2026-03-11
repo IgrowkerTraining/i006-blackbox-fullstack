@@ -1,6 +1,6 @@
 import express from "express";
-import { DriverController } from "../controllers/driverController.js"; // Añadí .js por tu migración a ESM
-import { authMiddleware } from "../middleware/auth.js"; // Añadí .js por tu migración a ESM
+import { DriverController } from "../controllers/driverController";
+import { authMiddleware } from "../middleware/auth";
 const router = express.Router();
 
 // Todas las rutas de conductores requieren estar autenticado

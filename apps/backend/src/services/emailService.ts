@@ -1,8 +1,16 @@
-import { Resend } from "resend";
+import { createTransport } from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
 
-const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@resend.dev";
+const FROM_EMAIL = process.env.FROM_EMAIL;
 
 interface SendPasswordResetEmailParams {
   to: string;
@@ -17,7 +25,7 @@ const sendPasswordResetEmail = async ({
 }: SendPasswordResetEmailParams) => {
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
-  const { error } = await resend.emails.send({
+  await transporter.sendMail({
     from: FROM_EMAIL,
     to,
     subject: "Recuperación de contraseña",
@@ -30,11 +38,6 @@ const sendPasswordResetEmail = async ({
       <p>Saludos,<br>El equipo de BlackBox</p>
     `,
   });
-
-  if (error) {
-    console.error("Error sending email:", error);
-    throw new Error("Failed to send email");
-  }
 };
 
 export const EmailService = {
