@@ -64,18 +64,80 @@ export const useFlota = (idUnidad?: string, { pageSize = 10 }: UseFlotaProps = {
       setLoading(true);
 
       // ✅ Usa api.getHistorialUnidad en vez de fetch directo
-      const events = await api.getHistorialUnidad(vehicleId, nextPage, pageSize);
+      const { events, vehicle } = await api.getHistorialUnidad(vehicleId, nextPage, pageSize);
 
-      const mapped: TimelineItem[] = events.map((e) => ({
-        id: e.id,
-        timeLabel: new Date(e.timestamp).toLocaleString('es-MX', {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        }),
-        title: e.type,
-        description: e.description,
-        status: e.type,
-      }));
+      if (vehicle && nextPage === 1) {
+        const driverName =
+          (events[0] && events[0].driver && events[0].driver.name) ||
+          "Sin asignar";
+        setUnit({
+          idUnidad: vehicle.id ?? vehicleId,
+          name: vehicle.unit_number ?? vehicle.plate ?? vehicleId,
+          driver: driverName,
+          status: vehicle.is_active ? "ACTIVO" : "INACTIVO",
+        });
+      }
+
+      const mapped: TimelineItem[] = events.map((e: any, index: number) => {
+        const rawDate =
+          e.event_datetime ??
+          e.created_at ??
+          e.updated_at ??
+          e.timestamp ??
+          e.createdAt ??
+          e.updatedAt ??
+          e.date ??
+          e.eventDate ??
+          e.occurredAt ??
+          e.time;
+        const timeLabel = rawDate
+          ? new Date(rawDate).toLocaleString('es-MX', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            })
+          : 'Sin fecha';
+        const inspectionContext =
+          e.context ?? e.typeInspection ?? e.inspection_type ?? e.inspectionType;
+        const inspectionLabel =
+          inspectionContext === "ARRIVAL"
+            ? "Inspección de Llegada"
+            : inspectionContext === "DEPARTURE"
+              ? "Inspección de Salida"
+              : undefined;
+        const title =
+          inspectionLabel ??
+          (e.event_type === "INSPECTION" ? "Inspección" : e.event_type) ??
+          e.type ??
+          e.eventType ??
+          e.name ??
+          e.title ??
+          'Evento';
+        const resultLabel =
+          e.general_result === "WITH_OBS"
+            ? "Con observaciones"
+            : e.general_result === "WITHOUT_OBS"
+              ? "Sin observaciones"
+              : undefined;
+        const description =
+          e.final_observations ??
+          resultLabel ??
+          e.description ??
+          e.details ??
+          e.notes ??
+          e.observations ??
+          'Sin descripción';
+        const status =
+          e.general_result ?? e.status ?? e.result ?? e.outcome ?? e.event_type ?? e.type ?? 'Estado';
+        const id = e.id ?? e.eventId ?? `${vehicleId}-${nextPage}-${index}`;
+
+        return {
+          id,
+          timeLabel,
+          title,
+          description,
+          status,
+        };
+      });
 
       if (nextPage === 1) {
         setTimeline(mapped);

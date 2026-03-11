@@ -34,7 +34,7 @@ export const useAuth = () => {
       setError(err.message || 'Error al iniciar sesión');
       throw err;
     } finally {
-      await ensureMinDelay(startedAt, 800);
+      await ensureMinDelay(startedAt, 2000);
       setLoading(false);
     }
 
@@ -66,7 +66,7 @@ export const useAuth = () => {
     setError(null);
   };
 
-  
+
   return {
     user: authState.user,
     isAuthenticated: authState.isAuthenticated,
