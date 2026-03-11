@@ -22,13 +22,13 @@ model Company {
   id          String   @id @default(uuid())
   name        String
   usdotNumber String?
-  state       String? //faltaba este campo
+  state       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // relaciones
-  vehicles           Vehicle[] // una compañía tiene muchos vehículos
-  drivers            Driver[] // una compañía tiene muchos drivers
+  vehicles           Vehicle[]
+  drivers            Driver[]
   users              User[]
   operational_events OperationalEvent[]
 }
@@ -45,10 +45,8 @@ model Vehicle {
   updatedAt DateTime @updatedAt
 
   // relaciones
-  company Company @relation(fields: [companyId], references: [id]) // relacion 1:M por companyId
-  
-  driver   Driver? @relation(fields: [driverId], references: [id]) // relacion 1:1 por driverId
-
+  company            Company            @relation(fields: [companyId], references: [id])
+  driver             Driver?            @relation(fields: [driverId], references: [id])
   operational_events OperationalEvent[]
 }
 
@@ -62,9 +60,8 @@ model Driver {
   updated_at     DateTime @updatedAt
 
   // relaciones
-  company Company  @relation(fields: [companyId], references: [id])
-  vehicle Vehicle?
-
+  company            Company            @relation(fields: [companyId], references: [id])
+  vehicle            Vehicle?
   operational_events OperationalEvent[]
 }
 
@@ -86,7 +83,7 @@ model User {
   @@unique([id, companyId])
 }
 
-// Enums para eventos operacionales. Ajustar valores según dominio.
+// Enums para eventos operacionales
 enum EventType {
   UNKNOWN
   ACCIDENT
@@ -113,6 +110,15 @@ enum GeneralResult {
   WITHOUT_OBS
 }
 
+// Severidad de eventos usado principalmente para accidentes y mantenimiento crítico
+// Permite filtrar eventos por gravedad para reportes de compliance y alertas
+enum EventSeverity {
+  MINOR     // Incidentes menores, mantenimiento rutinario
+  MODERATE  // Requiere atención pero no es urgente
+  SEVERE    // Requiere atención inmediata
+  CRITICAL  // Emergencia, peligro inminente
+}
+
 model OperationalEvent {
   id                 String         @id @default(uuid())
   company_id         String
@@ -123,12 +129,23 @@ model OperationalEvent {
   location           LocationType?
   context            ContextType?
   general_result     GeneralResult?
+
+  // Estos campos permiten generar reportes de compliance, filtrar eventos críticos,
+  // y crear alertas automáticas sin necesidad de parsear JSON
+  
+  severity           EventSeverity? // Gravedad del evento para filtrar accidentes graves y priorizar atención
+  cost               Decimal?       // Costo del evento (mantenimiento/reparación) necesario para reportes financieros
+  mileage            Int?           // Kilometraje al momento del evento tracking de mantenimiento preventivo (en millas supongo)
+  next_service_date  DateTime?      // Próxima fecha de servicio para generar alertas de mantenimiento vencido
+  injuries_reported  Boolean?       // Si hubo lesiones, para compliance y reportes regulatorios
+
+
   e_signature        String?
-  final_observations String?
+  final_observations String? // JSON con detalles adicionales específicos por tipo de evento
   is_confirmed       Boolean?
   created_by_user_id String
-  created_at         DateTime       @default(now())
-  updated_at         DateTime       @updatedAt
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
 
   company   Company  @relation(fields: [company_id], references: [id])
   vehicle   Vehicle? @relation(fields: [vehicle_id], references: [id])
@@ -136,6 +153,14 @@ model OperationalEvent {
   createdBy User     @relation(fields: [created_by_user_id], references: [id])
 
   inspection_details InspectionDetail[]
+
+  // Índices para mejorar performance en queries de reportes
+  @@index([company_id, event_type])
+  @@index([company_id, event_datetime])
+  @@index([company_id, severity])
+  @@index([vehicle_id])
+  @@index([driver_id])
+  @@index([next_service_date])
 }
 
 enum TypeInspection {
