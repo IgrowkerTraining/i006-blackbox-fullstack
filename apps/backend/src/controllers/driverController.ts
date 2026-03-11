@@ -1,5 +1,5 @@
 import express from "express";
-import { DriverService } from "../services/driverServices.js";
+import { DriverService } from "../services/driverServices";
 import { AuthRequest } from "../types/auth";
 import { UserRole } from "../../generated/prisma/enums";
 
