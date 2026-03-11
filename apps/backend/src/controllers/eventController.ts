@@ -394,10 +394,6 @@ const getCurrentDriver = async (req: AuthRequest, res: Response) => {
  *                 type: string
  *                 description: Stored in final_observations JSON
  *                 example: "Rear-end collision at traffic light"
- *               policeReportNumber:
- *                 type: string
- *                 description: Stored in final_observations JSON
- *                 example: "DPD-2025-001234"
  *               finalObservations:
  *                 type: string
  *                 description: Additional notes
