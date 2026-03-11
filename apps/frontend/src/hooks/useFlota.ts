@@ -43,10 +43,15 @@ export const useFlota = (idUnidad?: string, { pageSize = 10 }: UseFlotaProps = {
       if (data.length < pageSize) setHasMoreUnits(false);
 
       const vehicles: Unit[] = data.map((v: any) => ({
-        idUnidad: v.id,
-        name: v.name,
-        driver: v.driver,
-        status: v.status,
+        idUnidad: String(v.id ?? v.vehicleId ?? v.vehicle_id ?? v.idUnidad ?? ""),
+        name: String(v.unit_number ?? v.plate ?? v.idUnidad ?? v.id ?? ""),
+        driver: String(v.chofer ?? v.driver?.name ?? v.driverId ?? "Sin asignar"),
+        status:
+          typeof v.is_active === "boolean"
+            ? v.is_active
+              ? "ACTIVO"
+              : "INACTIVO"
+            : String(v.estado ?? v.status ?? ""),
       }));
 
       setAllUnits(prev => [...prev, ...vehicles]);
