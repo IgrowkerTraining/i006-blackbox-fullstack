@@ -55,7 +55,6 @@ const createAccident = async (
       final_observations: JSON.stringify({
         locationDetails: data.locationDetails,
         description: data.description,
-        policeReportNumber: data.policeReportNumber,
         additionalNotes: data.finalObservations,
       }),
       e_signature: data.eSignature,
