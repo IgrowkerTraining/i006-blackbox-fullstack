@@ -3,7 +3,58 @@ import { DriverService } from "../services/driverServices";
 import { AuthRequest } from "../types/auth";
 import { UserRole } from "../../generated/prisma/enums";
 
-// OBTENER TODOS LOS CONDUCTORES DE UNA COMPAÑIA
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Driver:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         companyId:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *           example: "Mario Hernández"
+ *         license_number:
+ *           type: string
+ *           example: "TX-DL-001234"
+ *         is_active:
+ *           type: boolean
+ *           example: true
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
+ * /api/drivers:
+ *   get:
+ *     summary: Get all drivers for the authenticated company
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all drivers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Driver'
+ *       401:
+ *         description: Not authorized
+ *       500:
+ *         description: Internal Server Error
+ */
 const getAll = async (req: AuthRequest, res: Response) => {
   try {
     const companyId = req.user?.companyId;
@@ -17,7 +68,28 @@ const getAll = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// SOLO CONDUCTORES ACTIVOS
+/**
+ * @swagger
+ * /api/drivers/active:
+ *   get:
+ *     summary: Get only active drivers for the authenticated company
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of active drivers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Driver'
+ *       401:
+ *         description: Not authorized
+ *       500:
+ *         description: Internal Server Error
+ */
 const getAllActive = async (req: AuthRequest, res: Response) => {
   try {
     const companyId = req.user?.companyId;
@@ -31,7 +103,36 @@ const getAllActive = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// OBTENER UN CONDUCTOR
+/**
+ * @swagger
+ * /api/drivers/{id}:
+ *   get:
+ *     summary: Get a specific driver by ID
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Driver ID
+ *     responses:
+ *       200:
+ *         description: Driver details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Driver'
+ *       401:
+ *         description: Not authorized
+ *       404:
+ *         description: Driver not found
+ *       500:
+ *         description: Error fetching driver
+ */
 const getDriverById = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -48,7 +149,56 @@ const getDriverById = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// CREAR CONDUCTOR
+/**
+ * @swagger
+ * /api/drivers:
+ *   post:
+ *     summary: Create a new driver (Admin only)
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - license_number
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Mario Hernández"
+ *               license_number:
+ *                 type: string
+ *                 example: "TX-DL-001234"
+ *     responses:
+ *       201:
+ *         description: Driver created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Driver'
+ *       400:
+ *         description: Name and License Number are required
+ *       401:
+ *         description: Not authorized
+ *       403:
+ *         description: Only Admins can create drivers
+ *       409:
+ *         description: License number already exists or driver is inactive
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "A driver with this license number already exists in your company."
+ *       500:
+ *         description: Error creating driver
+ */
 const createDriver = async (req: AuthRequest, res: Response) => {
   try {
     const companyId = req.user?.companyId;
@@ -94,7 +244,54 @@ const createDriver = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// ACTUALIZAR CONDUCTOR
+/**
+ * @swagger
+ * /api/drivers/{id}:
+ *   put:
+ *     summary: Update a driver
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Driver ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Mario Hernández"
+ *               license_number:
+ *                 type: string
+ *                 example: "TX-DL-001234"
+ *               is_active:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: Driver updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Driver'
+ *       401:
+ *         description: Not authorized
+ *       404:
+ *         description: Driver not found
+ *       409:
+ *         description: License number already in use by another driver
+ *       500:
+ *         description: Error updating driver
+ */
 const updateDriver = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -125,7 +322,34 @@ const updateDriver = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// ELIMINAR CONDUCTOR (SOFT DELETE)
+/**
+ * @swagger
+ * /api/drivers/{id}:
+ *   delete:
+ *     summary: Delete a driver (soft delete - Admin only)
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Driver ID
+ *     responses:
+ *       204:
+ *         description: Driver deleted successfully (no content)
+ *       401:
+ *         description: Not authorized
+ *       403:
+ *         description: Only Admins can delete drivers
+ *       404:
+ *         description: Driver not found
+ *       500:
+ *         description: Error deleting driver
+ */
 const deleteDriver = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;

@@ -13,5 +13,10 @@ router.get(
   "/vehicle/:vehicleId/current-driver",
   EventController.getCurrentDriver,
 );
+router.post("/accident", EventController.createAccident);
+router.post("/maintenance", EventController.createMaintenance);
+router.post("/other", EventController.createOtherEvent);
+router.get("/", EventController.getAllEvents);
+router.get("/:id", EventController.getEventById);
 
 export default router;

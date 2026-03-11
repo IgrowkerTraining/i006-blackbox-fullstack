@@ -1,3 +1,4 @@
+import { Prisma } from "../../generated/prisma/client";
 import { prisma } from "../../prisma";
 import {
   CreateAccidentDto,
@@ -24,7 +25,7 @@ const createInspection = (
       is_confirmed: data.isConfirmed,
       inspection_details: {
         create: {
-          type_inspection: data.typeInspection,
+          type_inspection: data.typeInspection as any,
           documentation_verified: data.documentationVerified,
           lights_ok: data.lightsOk,
           safety_elements_ok: data.safetyElementsOk,
@@ -34,96 +35,6 @@ const createInspection = (
   });
 };
 
-const getVehicleHistory = async (vehicleId: string, companyId: string) => {
-  // Verificar que el vehículo pertenezca a la empresa
-  const vehicle = await prisma.vehicle.findFirst({
-    where: { id: vehicleId, companyId },
-  });
-
-  if (!vehicle) {
-    return null;
-  }
-
-  // Obtener eventos del vehículo
-  const events = await prisma.operationalEvent.findMany({
-    where: {
-      vehicle_id: vehicleId,
-      company_id: companyId,
-    },
-    include: {
-      driver: true,
-      createdBy: {
-        select: { name: true, email: true },
-      },
-    },
-    orderBy: { event_datetime: "desc" },
-  });
-
-  return {
-    vehicle,
-    events,
-  };
-};
-
-const getDriverHistory = async (driverId: string, companyId: string) => {
-  // Verificar que el conductor pertenezca a la empresa
-  const driver = await prisma.driver.findFirst({
-    where: { id: driverId, companyId },
-  });
-
-  if (!driver) {
-    return null;
-  }
-
-  // Obtener eventos del conductor
-  const events = await prisma.operationalEvent.findMany({
-    where: {
-      driver_id: driverId,
-      company_id: companyId,
-    },
-    include: {
-      vehicle: true,
-      createdBy: {
-        select: { name: true, email: true },
-      },
-    },
-    orderBy: { event_datetime: "desc" },
-  });
-
-  return {
-    driver,
-    events,
-  };
-};
-
-const getCurrentDriver = async (vehicleId: string, companyId: string) => {
-  // Buscar último evento con conductor asignado
-  const lastEvent = await prisma.operationalEvent.findFirst({
-    where: {
-      vehicle_id: vehicleId,
-      company_id: companyId,
-      driver_id: { not: null },
-    },
-    include: {
-      driver: true,
-    },
-    orderBy: { event_datetime: "desc" },
-  });
-
-  if (!lastEvent) {
-    return {
-      currentDriver: null,
-      message: "No driver assigned to this vehicle",
-    };
-  }
-
-  return {
-    currentDriver: lastEvent.driver,
-    lastEventDate: lastEvent.event_datetime,
-  };
-};
-
-// Evento de accidente
 const createAccident = async (
   data: CreateAccidentDto,
   companyId: string,
@@ -137,11 +48,13 @@ const createAccident = async (
       event_type: "ACCIDENT",
       event_datetime: new Date(data.eventDatetime),
       location: data.location as any,
+      severity: data.severity as any,
+      injuries_reported: data.injuriesReported,
+      cost: data.cost ? new Prisma.Decimal(data.cost) : null,
+      mileage: data.mileage,
       final_observations: JSON.stringify({
         locationDetails: data.locationDetails,
-        severity: data.severity,
         description: data.description,
-        injuriesReported: data.injuriesReported,
         policeReportNumber: data.policeReportNumber,
         additionalNotes: data.finalObservations,
       }),
@@ -159,7 +72,6 @@ const createAccident = async (
   });
 };
 
-// evento de mantenimiento
 const createMaintenance = async (
   data: CreateMaintenanceDto,
   companyId: string,
@@ -172,13 +84,16 @@ const createMaintenance = async (
       driver_id: data.driverId || null,
       event_type: "MAINTENANCE",
       event_datetime: new Date(data.eventDatetime),
+      severity: data.severity as any,
+      cost: data.cost ? new Prisma.Decimal(data.cost) : null,
+      mileage: data.mileage,
+      next_service_date: data.nextServiceDate
+        ? new Date(data.nextServiceDate)
+        : null,
       final_observations: JSON.stringify({
         maintenanceType: data.maintenanceType,
         serviceType: data.serviceType,
-        mileage: data.mileage,
-        cost: data.cost,
         serviceProvider: data.serviceProvider,
-        nextServiceDue: data.nextServiceDue,
         additionalNotes: data.finalObservations,
       }),
       e_signature: data.eSignature,
@@ -195,7 +110,6 @@ const createMaintenance = async (
   });
 };
 
-// evento genérico
 const createOtherEvent = async (
   data: CreateOtherEventDto,
   companyId: string,
@@ -227,28 +141,28 @@ const createOtherEvent = async (
   });
 };
 
-// Obtener todos los eventos con filtros
 const getAllEvents = async (companyId: string, filters: EventFilters) => {
   const where: any = {
     company_id: companyId,
   };
 
-  // Filtro por tipo de evento
   if (filters.eventType) {
     where.event_type = filters.eventType;
   }
 
-  // Filtro por vehículo
+  // ✅ NUEVO: Filtro por severidad
+  if (filters.severity) {
+    where.severity = filters.severity;
+  }
+
   if (filters.vehicleId) {
     where.vehicle_id = filters.vehicleId;
   }
 
-  // Filtro por conductor
   if (filters.driverId) {
     where.driver_id = filters.driverId;
   }
 
-  // Filtro por rango de fechas
   if (filters.startDate || filters.endDate) {
     where.event_datetime = {};
     if (filters.startDate) {
@@ -285,7 +199,6 @@ const getAllEvents = async (companyId: string, filters: EventFilters) => {
   };
 };
 
-// ✅ NUEVO: Obtener evento por ID
 const getEventById = async (id: string, companyId: string) => {
   return prisma.operationalEvent.findFirst({
     where: {
@@ -303,14 +216,98 @@ const getEventById = async (id: string, companyId: string) => {
   });
 };
 
+const getVehicleHistory = async (vehicleId: string, companyId: string) => {
+  const vehicle = await prisma.vehicle.findFirst({
+    where: { id: vehicleId, companyId },
+  });
+
+  if (!vehicle) {
+    return null;
+  }
+
+  const events = await prisma.operationalEvent.findMany({
+    where: {
+      vehicle_id: vehicleId,
+      company_id: companyId,
+    },
+    include: {
+      driver: true,
+      createdBy: {
+        select: { name: true, email: true },
+      },
+    },
+    orderBy: { event_datetime: "desc" },
+  });
+
+  return {
+    vehicle,
+    events,
+  };
+};
+
+const getDriverHistory = async (driverId: string, companyId: string) => {
+  const driver = await prisma.driver.findFirst({
+    where: { id: driverId, companyId },
+  });
+
+  if (!driver) {
+    return null;
+  }
+
+  const events = await prisma.operationalEvent.findMany({
+    where: {
+      driver_id: driverId,
+      company_id: companyId,
+    },
+    include: {
+      vehicle: true,
+      createdBy: {
+        select: { name: true, email: true },
+      },
+    },
+    orderBy: { event_datetime: "desc" },
+  });
+
+  return {
+    driver,
+    events,
+  };
+};
+
+const getCurrentDriver = async (vehicleId: string, companyId: string) => {
+  const lastEvent = await prisma.operationalEvent.findFirst({
+    where: {
+      vehicle_id: vehicleId,
+      company_id: companyId,
+      driver_id: { not: null },
+    },
+    include: {
+      driver: true,
+    },
+    orderBy: { event_datetime: "desc" },
+  });
+
+  if (!lastEvent) {
+    return {
+      currentDriver: null,
+      message: "No driver assigned to this vehicle",
+    };
+  }
+
+  return {
+    currentDriver: lastEvent.driver,
+    lastEventDate: lastEvent.event_datetime,
+  };
+};
+
 export const EventServices = {
   createInspection,
+  createAccident,
+  createMaintenance,
+  createOtherEvent,
+  getAllEvents,
+  getEventById,
   getVehicleHistory,
   getDriverHistory,
   getCurrentDriver,
-  getEventById,
-  getAllEvents,
-  createOtherEvent,
-  createMaintenance,
-  createAccident,
 };
