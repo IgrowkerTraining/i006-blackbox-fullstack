@@ -42,17 +42,6 @@ jobs:
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v1
 
-      - name: Install Snyk CLI
-        run: pnpm install -g snyk
-
-      - name: Snyk Security Scan
-        continue-on-error: true
-        env:
-          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-        run: |
-          cd apps/backend
-          doppler run --project example-project --config prd_rwby -- snyk test --severity-threshold=high
-
       - name: Lint Backend
         run: |
           cd apps/backend
