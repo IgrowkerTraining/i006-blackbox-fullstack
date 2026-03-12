@@ -152,44 +152,44 @@ const getDriverById = async (req: AuthRequest, res: express.Response) => {
 /**
  * @swagger
  * /api/drivers:
- * post:
- * summary: Create a new driver (Admin only)
- * tags: [Drivers]
- * security:
- * - bearerAuth: []
- * requestBody:
- * required: true
- * content:
- * application/json:
- * schema:
- * type: object
- * required:
- * - name
- * - license_number
- * properties:
- * name:
- * type: string
- * example: "Mario Hernández"
- * license_number:
- * type: string
- * example: "TX-DL-001234"
- * responses:
- * 201:
- * description: Driver created successfully
- * content:
- * application/json:
- * schema:
- * $ref: '#/components/schemas/Driver'
- * 400:
- * description: Name and License Number are required
- * 401:
- * description: Not authorized
- * 403:
- * description: Only Admins can create drivers
- * 409:
- * description: License number already exists or driver is inactive
- * 500:
- * description: Error creating driver
+ *   post:
+ *     summary: Create a new driver (Admin only)
+ *     tags: [Drivers]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - license_number
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Mario Hernández"
+ *               license_number:
+ *                 type: string
+ *                 example: "TX-DL-001234"
+ *     responses:
+ *       201:
+ *         description: Driver created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Driver'
+ *       400:
+ *         description: Name and License Number are required
+ *       401:
+ *         description: Not authorized
+ *       403:
+ *         description: Only Admins can create drivers
+ *       409:
+ *         description: License number already exists or driver is inactive
+ *       500:
+ *         description: Error creating driver
  */
 const createDriver = async (req: AuthRequest, res: express.Response) => {
   try {
