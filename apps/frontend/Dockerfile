@@ -1,54 +1,45 @@
 # Use Node.js 18 Alpine as base image
 FROM node:18-alpine AS base
 
-# Set working directory
-WORKDIR /app
+WORKDIR /app/frontend
 
-# Copy package files
 COPY package*.json pnpm-lock.yaml* ./
 
-# Install pnpm
 RUN npm install -g pnpm
 
-# Install dependencies
 RUN pnpm install --frozen-lockfile && pnpm store prune
 
 # Development stage
 FROM base AS development
 
-# Copy source code
 COPY . .
 
-# Expose port
 EXPOSE 5173
 
-# Start the development server
 CMD ["pnpm", "run", "dev"]
 
 # Build stage
 FROM base AS build
 
-# Copy source code
 COPY . .
-
-# Build the application
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+RUN pnpm run build
 RUN pnpm run build
 
 # Production stage
 FROM nginx:alpine AS production
 
-# Copy built application to nginx
-COPY --from=build /app/dist /usr/share/nginx/html
+#  Ruta corregida
+COPY --from=build /app/frontend/dist /usr/share/nginx/html
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+#  Copiar como template
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
-# Expose port
 EXPOSE 80
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Sustituir solo $PORT y arrancar nginx
+CMD ["/bin/sh", "-c", "envsubst '$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
