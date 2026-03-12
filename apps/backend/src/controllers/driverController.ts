@@ -189,7 +189,7 @@ const getDriverById = async (req: AuthRequest, res: express.Response) => {
  *       409:
  *         description: License number already exists or driver is inactive
  *       500:
- * description: Error creating driver
+ *         description: Error creating driver
  */
 const createDriver = async (req: AuthRequest, res: express.Response) => {
   try {

@@ -134,3 +134,4 @@ export const getVehiclesById = async (req: Request, res: Response) => {
     pagination: result.pagination,
   });
 };
+``;
