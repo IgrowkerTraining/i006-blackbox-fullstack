@@ -59,5 +59,5 @@ jobs:
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
-          DEPLOY_HOOK=$(doppler secrets get RENDER_DEPLOY_HOOK_URL --project rwby --config prd_rwby --plain)
+          DEPLOY_HOOK=$(doppler secrets get RENDER_DEPLOY_HOOK_URL --project example-project --config prd_rwby --plain)
           curl -sS "$DEPLOY_HOOK"
