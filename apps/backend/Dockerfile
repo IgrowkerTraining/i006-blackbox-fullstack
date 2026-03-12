@@ -35,6 +35,10 @@ CMD ["pnpm", "run", "dev"]
 # Production stage
 FROM base AS production
 
+# Argument for Sentry Auth Token (provided by Render during build)
+ARG SENTRY_AUTH_TOKEN
+ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
+
 # Install all dependencies to build
 RUN pnpm install --frozen-lockfile
 

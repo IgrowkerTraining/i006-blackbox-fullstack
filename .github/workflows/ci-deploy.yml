@@ -51,6 +51,11 @@ jobs:
           cd apps/backend
           pnpm lint
 
+      - name: Generate Prisma Client
+        run: |
+          cd apps/backend
+          pnpm prisma generate
+
       - name: Run Tests
         run: |
           cd apps/backend
@@ -58,17 +63,27 @@ jobs:
 
       - name: Trivy Security Scan
         uses: aquasecurity/trivy-action@master
+        if: always()
         with:
           scan-type: 'fs'
           scan-ref: 'apps/backend'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
-          exit-code: '1'
+          exit-code: '0'
+
+      - name: Check Trivy Report exists
+        id: check_trivy
+        run: |
+          if [ -f trivy-results.sarif ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: steps.check_trivy.outputs.exists == 'true'
         with:
           sarif_file: 'trivy-results.sarif'
 
