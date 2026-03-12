@@ -1,10 +1,32 @@
 import { z } from 'zod';
+import { Decimal as PrismaDecimal, DecimalJsLike } from '@prisma/client/runtime/library';
 import type { Prisma } from '../prisma/client';
 
 /////////////////////////////////////////
 // HELPER FUNCTIONS
 /////////////////////////////////////////
 
+// DECIMAL
+//------------------------------------------------------
+
+export const DecimalJsLikeSchema: z.ZodType<Prisma.DecimalJsLike> = z.object({
+  d: z.array(z.number()),
+  e: z.number(),
+  s: z.number(),
+  toFixed: z.any(),
+})
+
+export const DECIMAL_STRING_REGEX = /^(?:-?Infinity|NaN|-?(?:0[bB][01]+(?:\.[01]+)?(?:[pP][-+]?\d+)?|0[oO][0-7]+(?:\.[0-7]+)?(?:[pP][-+]?\d+)?|0[xX][\da-fA-F]+(?:\.[\da-fA-F]+)?(?:[pP][-+]?\d+)?|(?:\d+|\d*\.\d+)(?:[eE][-+]?\d+)?))$/;
+
+export const isValidDecimalInput =
+  (v?: null | string | number | Prisma.DecimalJsLike): v is string | number | Prisma.DecimalJsLike => {
+    if (v === undefined || v === null) return false;
+    return (
+      (typeof v === 'object' && 'd' in v && 'e' in v && 's' in v && 'toFixed' in v) ||
+      (typeof v === 'string' && DECIMAL_STRING_REGEX.test(v)) ||
+      typeof v === 'number'
+    )
+  };
 
 /////////////////////////////////////////
 // ENUMS
@@ -20,7 +42,7 @@ export const DriverScalarFieldEnumSchema = z.enum(['id','companyId','name','lice
 
 export const UserScalarFieldEnumSchema = z.enum(['id','companyId','name','email','passwordHash','role','isActive','resetPasswordToken','resetPasswordExpires','createdAt']);
 
-export const OperationalEventScalarFieldEnumSchema = z.enum(['id','company_id','vehicle_id','driver_id','event_type','event_datetime','location','context','general_result','e_signature','final_observations','is_confirmed','created_by_user_id','created_at','updated_at']);
+export const OperationalEventScalarFieldEnumSchema = z.enum(['id','company_id','vehicle_id','driver_id','event_type','event_datetime','location','context','general_result','severity','cost','mileage','next_service_date','injuries_reported','e_signature','final_observations','is_confirmed','created_by_user_id','created_at','updated_at']);
 
 export const InspectionDetailScalarFieldEnumSchema = z.enum(['id','event_id','type_inspection','documentation_verified','vehicle_condition','lights_ok','tires_ok','brakes_ok','safety_elements_ok']);
 
@@ -45,6 +67,10 @@ export type ContextTypeType = `${z.infer<typeof ContextTypeSchema>}`
 export const GeneralResultSchema = z.enum(['WITH_OBS','WITHOUT_OBS']);
 
 export type GeneralResultType = `${z.infer<typeof GeneralResultSchema>}`
+
+export const EventSeveritySchema = z.enum(['MINOR','MODERATE','SEVERE','CRITICAL']);
+
+export type EventSeverityType = `${z.infer<typeof EventSeveritySchema>}`
 
 export const TypeInspectionSchema = z.enum(['ARRIVAL','DEPARTURE']);
 
@@ -138,11 +164,16 @@ export const OperationalEventSchema = z.object({
   location: LocationTypeSchema.nullable(),
   context: ContextTypeSchema.nullable(),
   general_result: GeneralResultSchema.nullable(),
+  severity: EventSeveritySchema.nullable(),
   id: z.uuid(),
   company_id: z.string(),
   vehicle_id: z.string().nullable(),
   driver_id: z.string().nullable(),
   event_datetime: z.coerce.date(),
+  cost: z.instanceof(PrismaDecimal, { message: "Field 'cost' must be a Decimal. Location: ['Models', 'OperationalEvent']"}).nullable(),
+  mileage: z.number().int().nullable(),
+  next_service_date: z.coerce.date().nullable(),
+  injuries_reported: z.boolean().nullable(),
   e_signature: z.string().nullable(),
   final_observations: z.string().nullable(),
   is_confirmed: z.boolean().nullable(),
@@ -364,6 +395,11 @@ export const OperationalEventSelectSchema: z.ZodType<Prisma.OperationalEventSele
   location: z.boolean().optional(),
   context: z.boolean().optional(),
   general_result: z.boolean().optional(),
+  severity: z.boolean().optional(),
+  cost: z.boolean().optional(),
+  mileage: z.boolean().optional(),
+  next_service_date: z.boolean().optional(),
+  injuries_reported: z.boolean().optional(),
   e_signature: z.boolean().optional(),
   final_observations: z.boolean().optional(),
   is_confirmed: z.boolean().optional(),
@@ -767,6 +803,11 @@ export const OperationalEventWhereInputSchema: z.ZodType<Prisma.OperationalEvent
   location: z.union([ z.lazy(() => EnumLocationTypeNullableFilterSchema), z.lazy(() => LocationTypeSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => EnumContextTypeNullableFilterSchema), z.lazy(() => ContextTypeSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => EnumGeneralResultNullableFilterSchema), z.lazy(() => GeneralResultSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EnumEventSeverityNullableFilterSchema), z.lazy(() => EventSeveritySchema) ]).optional().nullable(),
+  cost: z.union([ z.lazy(() => DecimalNullableFilterSchema), z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional().nullable(),
+  mileage: z.union([ z.lazy(() => IntNullableFilterSchema), z.number() ]).optional().nullable(),
+  next_service_date: z.union([ z.lazy(() => DateTimeNullableFilterSchema), z.coerce.date() ]).optional().nullable(),
+  injuries_reported: z.union([ z.lazy(() => BoolNullableFilterSchema), z.boolean() ]).optional().nullable(),
   e_signature: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   final_observations: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   is_confirmed: z.union([ z.lazy(() => BoolNullableFilterSchema), z.boolean() ]).optional().nullable(),
@@ -790,6 +831,11 @@ export const OperationalEventOrderByWithRelationInputSchema: z.ZodType<Prisma.Op
   location: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   context: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   general_result: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  severity: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  cost: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  mileage: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  next_service_date: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  injuries_reported: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   e_signature: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   final_observations: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   is_confirmed: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
@@ -819,6 +865,11 @@ export const OperationalEventWhereUniqueInputSchema: z.ZodType<Prisma.Operationa
   location: z.union([ z.lazy(() => EnumLocationTypeNullableFilterSchema), z.lazy(() => LocationTypeSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => EnumContextTypeNullableFilterSchema), z.lazy(() => ContextTypeSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => EnumGeneralResultNullableFilterSchema), z.lazy(() => GeneralResultSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EnumEventSeverityNullableFilterSchema), z.lazy(() => EventSeveritySchema) ]).optional().nullable(),
+  cost: z.union([ z.lazy(() => DecimalNullableFilterSchema), z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional().nullable(),
+  mileage: z.union([ z.lazy(() => IntNullableFilterSchema), z.number().int() ]).optional().nullable(),
+  next_service_date: z.union([ z.lazy(() => DateTimeNullableFilterSchema), z.coerce.date() ]).optional().nullable(),
+  injuries_reported: z.union([ z.lazy(() => BoolNullableFilterSchema), z.boolean() ]).optional().nullable(),
   e_signature: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   final_observations: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   is_confirmed: z.union([ z.lazy(() => BoolNullableFilterSchema), z.boolean() ]).optional().nullable(),
@@ -842,6 +893,11 @@ export const OperationalEventOrderByWithAggregationInputSchema: z.ZodType<Prisma
   location: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   context: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   general_result: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  severity: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  cost: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  mileage: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  next_service_date: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
+  injuries_reported: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   e_signature: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   final_observations: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
   is_confirmed: z.union([ z.lazy(() => SortOrderSchema), z.lazy(() => SortOrderInputSchema) ]).optional(),
@@ -849,8 +905,10 @@ export const OperationalEventOrderByWithAggregationInputSchema: z.ZodType<Prisma
   created_at: z.lazy(() => SortOrderSchema).optional(),
   updated_at: z.lazy(() => SortOrderSchema).optional(),
   _count: z.lazy(() => OperationalEventCountOrderByAggregateInputSchema).optional(),
+  _avg: z.lazy(() => OperationalEventAvgOrderByAggregateInputSchema).optional(),
   _max: z.lazy(() => OperationalEventMaxOrderByAggregateInputSchema).optional(),
   _min: z.lazy(() => OperationalEventMinOrderByAggregateInputSchema).optional(),
+  _sum: z.lazy(() => OperationalEventSumOrderByAggregateInputSchema).optional(),
 });
 
 export const OperationalEventScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.OperationalEventScalarWhereWithAggregatesInput> = z.strictObject({
@@ -866,6 +924,11 @@ export const OperationalEventScalarWhereWithAggregatesInputSchema: z.ZodType<Pri
   location: z.union([ z.lazy(() => EnumLocationTypeNullableWithAggregatesFilterSchema), z.lazy(() => LocationTypeSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => EnumContextTypeNullableWithAggregatesFilterSchema), z.lazy(() => ContextTypeSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => EnumGeneralResultNullableWithAggregatesFilterSchema), z.lazy(() => GeneralResultSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EnumEventSeverityNullableWithAggregatesFilterSchema), z.lazy(() => EventSeveritySchema) ]).optional().nullable(),
+  cost: z.union([ z.lazy(() => DecimalNullableWithAggregatesFilterSchema), z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional().nullable(),
+  mileage: z.union([ z.lazy(() => IntNullableWithAggregatesFilterSchema), z.number() ]).optional().nullable(),
+  next_service_date: z.union([ z.lazy(() => DateTimeNullableWithAggregatesFilterSchema), z.coerce.date() ]).optional().nullable(),
+  injuries_reported: z.union([ z.lazy(() => BoolNullableWithAggregatesFilterSchema), z.boolean() ]).optional().nullable(),
   e_signature: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   final_observations: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema), z.string() ]).optional().nullable(),
   is_confirmed: z.union([ z.lazy(() => BoolNullableWithAggregatesFilterSchema), z.boolean() ]).optional().nullable(),
@@ -1288,6 +1351,11 @@ export const OperationalEventCreateInputSchema: z.ZodType<Prisma.OperationalEven
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -1310,6 +1378,11 @@ export const OperationalEventUncheckedCreateInputSchema: z.ZodType<Prisma.Operat
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -1326,6 +1399,11 @@ export const OperationalEventUpdateInputSchema: z.ZodType<Prisma.OperationalEven
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -1348,6 +1426,11 @@ export const OperationalEventUncheckedUpdateInputSchema: z.ZodType<Prisma.Operat
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -1367,6 +1450,11 @@ export const OperationalEventCreateManyInputSchema: z.ZodType<Prisma.Operational
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -1382,6 +1470,11 @@ export const OperationalEventUpdateManyMutationInputSchema: z.ZodType<Prisma.Ope
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -1399,6 +1492,11 @@ export const OperationalEventUncheckedUpdateManyInputSchema: z.ZodType<Prisma.Op
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -1858,6 +1956,35 @@ export const EnumGeneralResultNullableFilterSchema: z.ZodType<Prisma.EnumGeneral
   not: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NestedEnumGeneralResultNullableFilterSchema) ]).optional().nullable(),
 });
 
+export const EnumEventSeverityNullableFilterSchema: z.ZodType<Prisma.EnumEventSeverityNullableFilter> = z.strictObject({
+  equals: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  in: z.lazy(() => EventSeveritySchema).array().optional().nullable(),
+  notIn: z.lazy(() => EventSeveritySchema).array().optional().nullable(),
+  not: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NestedEnumEventSeverityNullableFilterSchema) ]).optional().nullable(),
+});
+
+export const DecimalNullableFilterSchema: z.ZodType<Prisma.DecimalNullableFilter> = z.strictObject({
+  equals: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  in: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional().nullable(),
+  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional().nullable(),
+  lt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  lte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalNullableFilterSchema) ]).optional().nullable(),
+});
+
+export const IntNullableFilterSchema: z.ZodType<Prisma.IntNullableFilter> = z.strictObject({
+  equals: z.number().optional().nullable(),
+  in: z.number().array().optional().nullable(),
+  notIn: z.number().array().optional().nullable(),
+  lt: z.number().optional(),
+  lte: z.number().optional(),
+  gt: z.number().optional(),
+  gte: z.number().optional(),
+  not: z.union([ z.number(),z.lazy(() => NestedIntNullableFilterSchema) ]).optional().nullable(),
+});
+
 export const BoolNullableFilterSchema: z.ZodType<Prisma.BoolNullableFilter> = z.strictObject({
   equals: z.boolean().optional().nullable(),
   not: z.union([ z.boolean(),z.lazy(() => NestedBoolNullableFilterSchema) ]).optional().nullable(),
@@ -1888,12 +2015,22 @@ export const OperationalEventCountOrderByAggregateInputSchema: z.ZodType<Prisma.
   location: z.lazy(() => SortOrderSchema).optional(),
   context: z.lazy(() => SortOrderSchema).optional(),
   general_result: z.lazy(() => SortOrderSchema).optional(),
+  severity: z.lazy(() => SortOrderSchema).optional(),
+  cost: z.lazy(() => SortOrderSchema).optional(),
+  mileage: z.lazy(() => SortOrderSchema).optional(),
+  next_service_date: z.lazy(() => SortOrderSchema).optional(),
+  injuries_reported: z.lazy(() => SortOrderSchema).optional(),
   e_signature: z.lazy(() => SortOrderSchema).optional(),
   final_observations: z.lazy(() => SortOrderSchema).optional(),
   is_confirmed: z.lazy(() => SortOrderSchema).optional(),
   created_by_user_id: z.lazy(() => SortOrderSchema).optional(),
   created_at: z.lazy(() => SortOrderSchema).optional(),
   updated_at: z.lazy(() => SortOrderSchema).optional(),
+});
+
+export const OperationalEventAvgOrderByAggregateInputSchema: z.ZodType<Prisma.OperationalEventAvgOrderByAggregateInput> = z.strictObject({
+  cost: z.lazy(() => SortOrderSchema).optional(),
+  mileage: z.lazy(() => SortOrderSchema).optional(),
 });
 
 export const OperationalEventMaxOrderByAggregateInputSchema: z.ZodType<Prisma.OperationalEventMaxOrderByAggregateInput> = z.strictObject({
@@ -1906,6 +2043,11 @@ export const OperationalEventMaxOrderByAggregateInputSchema: z.ZodType<Prisma.Op
   location: z.lazy(() => SortOrderSchema).optional(),
   context: z.lazy(() => SortOrderSchema).optional(),
   general_result: z.lazy(() => SortOrderSchema).optional(),
+  severity: z.lazy(() => SortOrderSchema).optional(),
+  cost: z.lazy(() => SortOrderSchema).optional(),
+  mileage: z.lazy(() => SortOrderSchema).optional(),
+  next_service_date: z.lazy(() => SortOrderSchema).optional(),
+  injuries_reported: z.lazy(() => SortOrderSchema).optional(),
   e_signature: z.lazy(() => SortOrderSchema).optional(),
   final_observations: z.lazy(() => SortOrderSchema).optional(),
   is_confirmed: z.lazy(() => SortOrderSchema).optional(),
@@ -1924,12 +2066,22 @@ export const OperationalEventMinOrderByAggregateInputSchema: z.ZodType<Prisma.Op
   location: z.lazy(() => SortOrderSchema).optional(),
   context: z.lazy(() => SortOrderSchema).optional(),
   general_result: z.lazy(() => SortOrderSchema).optional(),
+  severity: z.lazy(() => SortOrderSchema).optional(),
+  cost: z.lazy(() => SortOrderSchema).optional(),
+  mileage: z.lazy(() => SortOrderSchema).optional(),
+  next_service_date: z.lazy(() => SortOrderSchema).optional(),
+  injuries_reported: z.lazy(() => SortOrderSchema).optional(),
   e_signature: z.lazy(() => SortOrderSchema).optional(),
   final_observations: z.lazy(() => SortOrderSchema).optional(),
   is_confirmed: z.lazy(() => SortOrderSchema).optional(),
   created_by_user_id: z.lazy(() => SortOrderSchema).optional(),
   created_at: z.lazy(() => SortOrderSchema).optional(),
   updated_at: z.lazy(() => SortOrderSchema).optional(),
+});
+
+export const OperationalEventSumOrderByAggregateInputSchema: z.ZodType<Prisma.OperationalEventSumOrderByAggregateInput> = z.strictObject({
+  cost: z.lazy(() => SortOrderSchema).optional(),
+  mileage: z.lazy(() => SortOrderSchema).optional(),
 });
 
 export const EnumEventTypeWithAggregatesFilterSchema: z.ZodType<Prisma.EnumEventTypeWithAggregatesFilter> = z.strictObject({
@@ -1970,6 +2122,48 @@ export const EnumGeneralResultNullableWithAggregatesFilterSchema: z.ZodType<Pris
   _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
   _min: z.lazy(() => NestedEnumGeneralResultNullableFilterSchema).optional(),
   _max: z.lazy(() => NestedEnumGeneralResultNullableFilterSchema).optional(),
+});
+
+export const EnumEventSeverityNullableWithAggregatesFilterSchema: z.ZodType<Prisma.EnumEventSeverityNullableWithAggregatesFilter> = z.strictObject({
+  equals: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  in: z.lazy(() => EventSeveritySchema).array().optional().nullable(),
+  notIn: z.lazy(() => EventSeveritySchema).array().optional().nullable(),
+  not: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NestedEnumEventSeverityNullableWithAggregatesFilterSchema) ]).optional().nullable(),
+  _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _min: z.lazy(() => NestedEnumEventSeverityNullableFilterSchema).optional(),
+  _max: z.lazy(() => NestedEnumEventSeverityNullableFilterSchema).optional(),
+});
+
+export const DecimalNullableWithAggregatesFilterSchema: z.ZodType<Prisma.DecimalNullableWithAggregatesFilter> = z.strictObject({
+  equals: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  in: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional().nullable(),
+  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional().nullable(),
+  lt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  lte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalNullableWithAggregatesFilterSchema) ]).optional().nullable(),
+  _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _avg: z.lazy(() => NestedDecimalNullableFilterSchema).optional(),
+  _sum: z.lazy(() => NestedDecimalNullableFilterSchema).optional(),
+  _min: z.lazy(() => NestedDecimalNullableFilterSchema).optional(),
+  _max: z.lazy(() => NestedDecimalNullableFilterSchema).optional(),
+});
+
+export const IntNullableWithAggregatesFilterSchema: z.ZodType<Prisma.IntNullableWithAggregatesFilter> = z.strictObject({
+  equals: z.number().optional().nullable(),
+  in: z.number().array().optional().nullable(),
+  notIn: z.number().array().optional().nullable(),
+  lt: z.number().optional(),
+  lte: z.number().optional(),
+  gt: z.number().optional(),
+  gte: z.number().optional(),
+  not: z.union([ z.number(),z.lazy(() => NestedIntNullableWithAggregatesFilterSchema) ]).optional().nullable(),
+  _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _avg: z.lazy(() => NestedFloatNullableFilterSchema).optional(),
+  _sum: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _min: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _max: z.lazy(() => NestedIntNullableFilterSchema).optional(),
 });
 
 export const BoolNullableWithAggregatesFilterSchema: z.ZodType<Prisma.BoolNullableWithAggregatesFilter> = z.strictObject({
@@ -2517,6 +2711,26 @@ export const NullableEnumGeneralResultFieldUpdateOperationsInputSchema: z.ZodTyp
   set: z.lazy(() => GeneralResultSchema).optional().nullable(),
 });
 
+export const NullableEnumEventSeverityFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableEnumEventSeverityFieldUpdateOperationsInput> = z.strictObject({
+  set: z.lazy(() => EventSeveritySchema).optional().nullable(),
+});
+
+export const NullableDecimalFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableDecimalFieldUpdateOperationsInput> = z.strictObject({
+  set: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  increment: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  decrement: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  multiply: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  divide: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+});
+
+export const NullableIntFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableIntFieldUpdateOperationsInput> = z.strictObject({
+  set: z.number().optional().nullable(),
+  increment: z.number().optional(),
+  decrement: z.number().optional(),
+  multiply: z.number().optional(),
+  divide: z.number().optional(),
+});
+
 export const NullableBoolFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableBoolFieldUpdateOperationsInput> = z.strictObject({
   set: z.boolean().optional().nullable(),
 });
@@ -2799,6 +3013,24 @@ export const NestedEnumGeneralResultNullableFilterSchema: z.ZodType<Prisma.Neste
   not: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NestedEnumGeneralResultNullableFilterSchema) ]).optional().nullable(),
 });
 
+export const NestedEnumEventSeverityNullableFilterSchema: z.ZodType<Prisma.NestedEnumEventSeverityNullableFilter> = z.strictObject({
+  equals: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  in: z.lazy(() => EventSeveritySchema).array().optional().nullable(),
+  notIn: z.lazy(() => EventSeveritySchema).array().optional().nullable(),
+  not: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NestedEnumEventSeverityNullableFilterSchema) ]).optional().nullable(),
+});
+
+export const NestedDecimalNullableFilterSchema: z.ZodType<Prisma.NestedDecimalNullableFilter> = z.strictObject({
+  equals: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  in: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional().nullable(),
+  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional().nullable(),
+  lt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  lte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalNullableFilterSchema) ]).optional().nullable(),
+});
+
 export const NestedBoolNullableFilterSchema: z.ZodType<Prisma.NestedBoolNullableFilter> = z.strictObject({
   equals: z.boolean().optional().nullable(),
   not: z.union([ z.boolean(),z.lazy(() => NestedBoolNullableFilterSchema) ]).optional().nullable(),
@@ -2842,6 +3074,59 @@ export const NestedEnumGeneralResultNullableWithAggregatesFilterSchema: z.ZodTyp
   _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
   _min: z.lazy(() => NestedEnumGeneralResultNullableFilterSchema).optional(),
   _max: z.lazy(() => NestedEnumGeneralResultNullableFilterSchema).optional(),
+});
+
+export const NestedEnumEventSeverityNullableWithAggregatesFilterSchema: z.ZodType<Prisma.NestedEnumEventSeverityNullableWithAggregatesFilter> = z.strictObject({
+  equals: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  in: z.lazy(() => EventSeveritySchema).array().optional().nullable(),
+  notIn: z.lazy(() => EventSeveritySchema).array().optional().nullable(),
+  not: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NestedEnumEventSeverityNullableWithAggregatesFilterSchema) ]).optional().nullable(),
+  _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _min: z.lazy(() => NestedEnumEventSeverityNullableFilterSchema).optional(),
+  _max: z.lazy(() => NestedEnumEventSeverityNullableFilterSchema).optional(),
+});
+
+export const NestedDecimalNullableWithAggregatesFilterSchema: z.ZodType<Prisma.NestedDecimalNullableWithAggregatesFilter> = z.strictObject({
+  equals: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  in: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional().nullable(),
+  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional().nullable(),
+  lt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  lte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalNullableWithAggregatesFilterSchema) ]).optional().nullable(),
+  _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _avg: z.lazy(() => NestedDecimalNullableFilterSchema).optional(),
+  _sum: z.lazy(() => NestedDecimalNullableFilterSchema).optional(),
+  _min: z.lazy(() => NestedDecimalNullableFilterSchema).optional(),
+  _max: z.lazy(() => NestedDecimalNullableFilterSchema).optional(),
+});
+
+export const NestedIntNullableWithAggregatesFilterSchema: z.ZodType<Prisma.NestedIntNullableWithAggregatesFilter> = z.strictObject({
+  equals: z.number().optional().nullable(),
+  in: z.number().array().optional().nullable(),
+  notIn: z.number().array().optional().nullable(),
+  lt: z.number().optional(),
+  lte: z.number().optional(),
+  gt: z.number().optional(),
+  gte: z.number().optional(),
+  not: z.union([ z.number(),z.lazy(() => NestedIntNullableWithAggregatesFilterSchema) ]).optional().nullable(),
+  _count: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _avg: z.lazy(() => NestedFloatNullableFilterSchema).optional(),
+  _sum: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _min: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+  _max: z.lazy(() => NestedIntNullableFilterSchema).optional(),
+});
+
+export const NestedFloatNullableFilterSchema: z.ZodType<Prisma.NestedFloatNullableFilter> = z.strictObject({
+  equals: z.number().optional().nullable(),
+  in: z.number().array().optional().nullable(),
+  notIn: z.number().array().optional().nullable(),
+  lt: z.number().optional(),
+  lte: z.number().optional(),
+  gt: z.number().optional(),
+  gte: z.number().optional(),
+  not: z.union([ z.number(),z.lazy(() => NestedFloatNullableFilterSchema) ]).optional().nullable(),
 });
 
 export const NestedBoolNullableWithAggregatesFilterSchema: z.ZodType<Prisma.NestedBoolNullableWithAggregatesFilter> = z.strictObject({
@@ -2993,6 +3278,11 @@ export const OperationalEventCreateWithoutCompanyInputSchema: z.ZodType<Prisma.O
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -3013,6 +3303,11 @@ export const OperationalEventUncheckedCreateWithoutCompanyInputSchema: z.ZodType
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -3152,6 +3447,11 @@ export const OperationalEventScalarWhereInputSchema: z.ZodType<Prisma.Operationa
   location: z.union([ z.lazy(() => EnumLocationTypeNullableFilterSchema), z.lazy(() => LocationTypeSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => EnumContextTypeNullableFilterSchema), z.lazy(() => ContextTypeSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => EnumGeneralResultNullableFilterSchema), z.lazy(() => GeneralResultSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EnumEventSeverityNullableFilterSchema), z.lazy(() => EventSeveritySchema) ]).optional().nullable(),
+  cost: z.union([ z.lazy(() => DecimalNullableFilterSchema), z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional().nullable(),
+  mileage: z.union([ z.lazy(() => IntNullableFilterSchema), z.number() ]).optional().nullable(),
+  next_service_date: z.union([ z.lazy(() => DateTimeNullableFilterSchema), z.coerce.date() ]).optional().nullable(),
+  injuries_reported: z.union([ z.lazy(() => BoolNullableFilterSchema), z.boolean() ]).optional().nullable(),
   e_signature: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   final_observations: z.union([ z.lazy(() => StringNullableFilterSchema), z.string() ]).optional().nullable(),
   is_confirmed: z.union([ z.lazy(() => BoolNullableFilterSchema), z.boolean() ]).optional().nullable(),
@@ -3223,6 +3523,11 @@ export const OperationalEventCreateWithoutVehicleInputSchema: z.ZodType<Prisma.O
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -3243,6 +3548,11 @@ export const OperationalEventUncheckedCreateWithoutVehicleInputSchema: z.ZodType
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -3409,6 +3719,11 @@ export const OperationalEventCreateWithoutDriverInputSchema: z.ZodType<Prisma.Op
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -3429,6 +3744,11 @@ export const OperationalEventUncheckedCreateWithoutDriverInputSchema: z.ZodType<
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -3568,6 +3888,11 @@ export const OperationalEventCreateWithoutCreatedByInputSchema: z.ZodType<Prisma
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -3589,6 +3914,11 @@ export const OperationalEventUncheckedCreateWithoutCreatedByInputSchema: z.ZodTy
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -3980,6 +4310,11 @@ export const OperationalEventCreateWithoutInspection_detailsInputSchema: z.ZodTy
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -4001,6 +4336,11 @@ export const OperationalEventUncheckedCreateWithoutInspection_detailsInputSchema
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -4032,6 +4372,11 @@ export const OperationalEventUpdateWithoutInspection_detailsInputSchema: z.ZodTy
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4053,6 +4398,11 @@ export const OperationalEventUncheckedUpdateWithoutInspection_detailsInputSchema
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4101,6 +4451,11 @@ export const OperationalEventCreateManyCompanyInputSchema: z.ZodType<Prisma.Oper
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -4217,6 +4572,11 @@ export const OperationalEventUpdateWithoutCompanyInputSchema: z.ZodType<Prisma.O
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4237,6 +4597,11 @@ export const OperationalEventUncheckedUpdateWithoutCompanyInputSchema: z.ZodType
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4255,6 +4620,11 @@ export const OperationalEventUncheckedUpdateManyWithoutCompanyInputSchema: z.Zod
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4272,6 +4642,11 @@ export const OperationalEventCreateManyVehicleInputSchema: z.ZodType<Prisma.Oper
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -4287,6 +4662,11 @@ export const OperationalEventUpdateWithoutVehicleInputSchema: z.ZodType<Prisma.O
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4307,6 +4687,11 @@ export const OperationalEventUncheckedUpdateWithoutVehicleInputSchema: z.ZodType
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4325,6 +4710,11 @@ export const OperationalEventUncheckedUpdateManyWithoutVehicleInputSchema: z.Zod
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4342,6 +4732,11 @@ export const OperationalEventCreateManyDriverInputSchema: z.ZodType<Prisma.Opera
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -4357,6 +4752,11 @@ export const OperationalEventUpdateWithoutDriverInputSchema: z.ZodType<Prisma.Op
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4377,6 +4777,11 @@ export const OperationalEventUncheckedUpdateWithoutDriverInputSchema: z.ZodType<
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4395,6 +4800,11 @@ export const OperationalEventUncheckedUpdateManyWithoutDriverInputSchema: z.ZodT
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4413,6 +4823,11 @@ export const OperationalEventCreateManyCreatedByInputSchema: z.ZodType<Prisma.Op
   location: z.lazy(() => LocationTypeSchema).optional().nullable(),
   context: z.lazy(() => ContextTypeSchema).optional().nullable(),
   general_result: z.lazy(() => GeneralResultSchema).optional().nullable(),
+  severity: z.lazy(() => EventSeveritySchema).optional().nullable(),
+  cost: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional().nullable(),
+  mileage: z.number().int().optional().nullable(),
+  next_service_date: z.coerce.date().optional().nullable(),
+  injuries_reported: z.boolean().optional().nullable(),
   e_signature: z.string().optional().nullable(),
   final_observations: z.string().optional().nullable(),
   is_confirmed: z.boolean().optional().nullable(),
@@ -4427,6 +4842,11 @@ export const OperationalEventUpdateWithoutCreatedByInputSchema: z.ZodType<Prisma
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4448,6 +4868,11 @@ export const OperationalEventUncheckedUpdateWithoutCreatedByInputSchema: z.ZodTy
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -4466,6 +4891,11 @@ export const OperationalEventUncheckedUpdateManyWithoutCreatedByInputSchema: z.Z
   location: z.union([ z.lazy(() => LocationTypeSchema), z.lazy(() => NullableEnumLocationTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   context: z.union([ z.lazy(() => ContextTypeSchema), z.lazy(() => NullableEnumContextTypeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   general_result: z.union([ z.lazy(() => GeneralResultSchema), z.lazy(() => NullableEnumGeneralResultFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  severity: z.union([ z.lazy(() => EventSeveritySchema), z.lazy(() => NullableEnumEventSeverityFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  cost: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NullableDecimalFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  mileage: z.union([ z.number().int(),z.lazy(() => NullableIntFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  next_service_date: z.union([ z.coerce.date(),z.lazy(() => NullableDateTimeFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  injuries_reported: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   e_signature: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   final_observations: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   is_confirmed: z.union([ z.boolean(),z.lazy(() => NullableBoolFieldUpdateOperationsInputSchema) ]).optional().nullable(),

@@ -17,21 +17,22 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
 
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  try {
-    await login(email, password); 
-    navigate("/dashboard");
-  } catch(err) {
-    console.error("Error al iniciar sesión:", err);
-  }
-}
-
-
-
+    const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Error al iniciar sesión:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white overflow-hidden flex items-center justify-center gap-12 p-8 md:p-6 md:gap-8 lg:gap-8 font-['DM_Sans',sans-serif]">
@@ -131,12 +132,12 @@ const handleSubmit = async (e: React.FormEvent) => {
 
           <button
             type="submit"
-            disabled={loading}
-            className={`w-full py-2.5 bg-blackbox-yellow text-blackbox-white font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-lato ${loading
+            disabled={loading || submitting}
+            className={`w-full py-2.5 bg-blackbox-yellow text-blackbox-white font-bold rounded-lg border-none cursor-pointer tracking-wider transition-all duration-200 text-sm font-lato ${loading || submitting
                 ? "bg-blackbox-yellow cursor-not-allowed"
                 : "hover:bg-blackbox-yellow/90 shadow-lg shadow-blackbox-yellow/30 hover:shadow-blackblox-yellow/50"
               }`}>
-            {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+            {loading || submitting ? "Iniciando sesión..." : "Iniciar sesión"}
           </button>
 
         </form>
@@ -146,3 +147,9 @@ const handleSubmit = async (e: React.FormEvent) => {
 };
 
 export default Login;
+
+
+
+
+
+

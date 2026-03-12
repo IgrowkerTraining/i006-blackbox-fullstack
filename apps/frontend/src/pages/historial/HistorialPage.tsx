@@ -91,7 +91,12 @@ const HistorialPage: React.FC = () => {
     initialSortDirection: "asc",
   });
 
-  const handleBuscar = () => setFilterVal(inputVal);
+  const handleBuscar = () => {
+    setFilterVal(inputVal);
+    if (criterio === "idUnidad" || criterio === "idChofer") {
+      refetch(criterio, inputVal);
+    }
+  };
 
   const columns = [
     { id: "idUnidad", label: "ID UNIDAD", sortable: true, accessor: "idUnidad" as keyof RegistroHistorial },

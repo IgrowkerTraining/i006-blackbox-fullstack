@@ -24,7 +24,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       return {
         user: action.payload,
         isAuthenticated: true,
-        loading: false,
+        loading: state.loading,
         error: null,
       };
     case "SET_ERROR":
@@ -61,6 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const savedUser = storage.getUser();
     if (savedUser) {
       dispatch({ type: "SET_USER", payload: savedUser });
+      dispatch({ type: "SET_LOADING", payload: false });
     } else {
       dispatch({ type: "SET_LOADING", payload: false });
     }
