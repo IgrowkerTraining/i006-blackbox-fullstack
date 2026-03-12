@@ -2,12 +2,19 @@ name: CI and Deploy to Render
 
 on:
   push:
-    branches:
-      - feat/monitoring
-      - develop
+    branches: [develop]
+    paths: ["apps/backend/**", ".github/workflows/ci-deploy.yml"]
   pull_request:
-    branches:
-      - develop
+    branches: [develop]
+    paths: ["apps/backend/**"]
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ci-backend:
@@ -44,11 +51,35 @@ jobs:
           cd apps/backend
           pnpm lint
 
+      - name: Run Tests
+        run: |
+          cd apps/backend
+          pnpm test -- --passWithNoTests
+
+      - name: Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'apps/backend'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
   deploy:
     needs: ci-backend
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/feat/monitoring' || github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v1
 
