@@ -45,8 +45,10 @@ model Vehicle {
   updatedAt DateTime @updatedAt
 
   // relaciones
-  company            Company            @relation(fields: [companyId], references: [id])
-  driver             Driver?            @relation(fields: [driverId], references: [id])
+  company Company @relation(fields: [companyId], references: [id]) // relacion 1:M por companyId
+
+  driver Driver? @relation(fields: [driverId], references: [id]) // relacion 1:1 por driverId
+
   operational_events OperationalEvent[]
 }
 

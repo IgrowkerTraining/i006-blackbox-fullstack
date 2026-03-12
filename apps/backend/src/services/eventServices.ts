@@ -24,12 +24,14 @@ const createInspection = (
       e_signature: data.eSignature,
       is_confirmed: data.isConfirmed,
       inspection_details: {
-        create: {
-          type_inspection: data.typeInspection as any,
-          documentation_verified: data.documentationVerified,
-          lights_ok: data.lightsOk,
-          safety_elements_ok: data.safetyElementsOk,
-        },
+        create: [
+          {
+            type_inspection: data.typeInspection,
+            documentation_verified: data.documentationVerified,
+            lights_ok: data.lightsOk,
+            safety_elements_ok: data.safetyElementsOk,
+          },
+        ],
       },
     },
   });
