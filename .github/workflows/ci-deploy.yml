@@ -39,9 +39,6 @@ jobs:
           cd apps/backend
           pnpm audit --audit-level=high
 
-      - name: Install Doppler CLI
-        uses: dopplerhq/cli-action@v1
-
       - name: Lint Backend
         run: |
           cd apps/backend

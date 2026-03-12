@@ -60,6 +60,8 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=production /app/dist ./dist
 # Prisma folder is needed for the client
 COPY --from=production /app/prisma ./prisma
+# Copy src folder so swagger-jsdoc can read annotations from .ts files in production
+COPY --from=production /app/src ./src
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \

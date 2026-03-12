@@ -40,12 +40,8 @@ const options: swaggerJsdoc.Options = {
     ],
   },
   // Rutas donde buscar comentarios con anotaciones de Swagger
-  apis: [
-    "./src/routes/*.ts",
-    "./src/controllers/*.ts",
-    "./dist/src/routes/*.js",
-    "./dist/src/controllers/*.js",
-  ],
+  // Usamos rutas relativas que funcionen tanto en src (dev) como cuando src se copia a la raiz (prod Docker)
+  apis: ["./src/routes/*.ts", "./src/controllers/*.ts", "./src/**/*.ts"],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
