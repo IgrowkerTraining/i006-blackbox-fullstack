@@ -35,6 +35,9 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: apps/backend/pnpm-lock.yaml
 
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v1
+
       - name: Install dependencies
         run: |
           cd apps/backend
@@ -58,9 +61,11 @@ jobs:
 
       - name: Run Tests
         continue-on-error: true
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
         run: |
           cd apps/backend
-          pnpm test -- --passWithNoTests
+          doppler run --project example-project --config prd_rwby -- pnpm test -- --passWithNoTests
 
       - name: Trivy Security Scan
         uses: aquasecurity/trivy-action@master
