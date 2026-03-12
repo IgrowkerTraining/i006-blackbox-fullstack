@@ -2,10 +2,10 @@ name: CI and Deploy to Render
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, feat/monitoring]
     paths: ["apps/backend/**", ".github/workflows/ci-deploy.yml"]
   pull_request:
-    branches: [develop]
+    branches: [develop, feat/monitoring]
     paths: ["apps/backend/**"]
 
 permissions:
@@ -88,14 +88,14 @@ jobs:
           fi
 
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: steps.check_trivy.outputs.exists == 'true'
         with:
           sarif_file: 'trivy-results.sarif'
 
   deploy:
     needs: ci-backend
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/feat/monitoring')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
