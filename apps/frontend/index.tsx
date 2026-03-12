@@ -2,6 +2,15 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./src/styles/theme.css";
 import App from "./App";
+import { PostHogProvider } from "posthog-js/react";
+
+const posthogOptions = {
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+  // Descomentar esto durante el desarrollo si quieres ver los logs de PostHog en consola:
+  // loaded: (posthog) => {
+  //   if (import.meta.env.DEV) posthog.debug()
+  // }
+};
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -11,6 +20,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <PostHogProvider apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY} options={posthogOptions}>
+      <App />
+    </PostHogProvider>
   </React.StrictMode>,
 );
