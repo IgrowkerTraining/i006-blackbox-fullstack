@@ -20,7 +20,7 @@ const options: swaggerJsdoc.Options = {
         description: "Development server",
       },
       {
-        url: "https://api.blackbox.com",
+        url: "https://i006-blackbox-fullstack.onrender.com",
         description: "Production server",
       },
     ],
