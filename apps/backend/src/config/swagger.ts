@@ -40,7 +40,12 @@ const options: swaggerJsdoc.Options = {
     ],
   },
   // Rutas donde buscar comentarios con anotaciones de Swagger
-  apis: ["./src/routes/*.ts", "./src/controllers/*.ts"],
+  apis: [
+    "./src/routes/*.ts",
+    "./src/controllers/*.ts",
+    "./dist/src/routes/*.js",
+    "./dist/src/controllers/*.js",
+  ],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
