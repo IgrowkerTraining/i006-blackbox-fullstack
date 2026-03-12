@@ -54,6 +54,14 @@ template-react-node-fullstack/
 - **CORS**: Middleware para cross-origin
 - **body-parser**: Middleware para parsear JSON
 
+### DevOps & Monitoreo
+
+- **Doppler**: Gestión centralizada de secretos
+- **Sentry**: Monitoreo de errores y rendimiento
+- **Posthog**: Análisis de producto y eventos
+- **Trivy**: Escaneo de seguridad y vulnerabilidades
+- **GitHub Actions**: Pipeline de CI/CD para despliegue en **Render**
+
 ## 🐋 Docker (Opcional)
 
 ### Usar Docker Compose para Desarrollo

@@ -1,11 +1,8 @@
 name: CI and Deploy to Render
 
 on:
-  push:
-    branches: [develop, feat/monitoring]
-    paths: ["apps/backend/**", ".github/workflows/ci-deploy.yml"]
   pull_request:
-    branches: [develop, feat/monitoring]
+    branches: [develop]
     paths: ["apps/backend/**"]
 
 permissions:
@@ -95,7 +92,7 @@ jobs:
 
   deploy:
     needs: ci-backend
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/feat/monitoring')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
