@@ -3,7 +3,7 @@ services:
     build:
       context: ./apps/backend
       target: development
-    command: sh -c "pnpm prisma generate && pnpm prisma migrate deploy && pnpm prisma db seed && pnpm run dev"
+    command: sh -c "pnpm install --config.store-dir=/app/node_modules/.pnpm-store --node-linker=hoisted && pnpm prisma generate && pnpm prisma migrate deploy && pnpm prisma db seed && pnpm run dev"
     ports:
       - "3000:3000"
     env_file:
@@ -11,7 +11,8 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3000
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      - CI=true
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@database:5432/${POSTGRES_DB:-blackbox_db}
     depends_on:
       database:
         condition: service_healthy
@@ -20,11 +21,17 @@ services:
       - /app/node_modules
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:3000/api', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" ]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/api', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 180s
 
   frontend:
     build:
@@ -34,6 +41,8 @@ services:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:3000/api
+      - CI=true
+    command: sh -c "pnpm install --config.store-dir=/app/node_modules/.pnpm-store --node-linker=hoisted && pnpm run dev"
     volumes:
       - ./apps/frontend:/app
       - /app/node_modules
@@ -46,17 +55,18 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-blackbox_db}
     ports:
       - 5434:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+
   # Production services (uncomment for production)
   # backend-prod:
   #   build:
