@@ -159,8 +159,8 @@ class AuthController {
       console.error("Registration error:", error);
       return res.status(500).json({
         message: "Registration failed",
-        error: error.message,
-        code: error.code,
+        error: error?.message,
+        code: error?.code,
       });
     }
   };
@@ -287,6 +287,8 @@ class AuthController {
       console.error("Login error:", error);
       return res.status(500).json({
         message: "Login failed",
+        error: error?.message,
+        code: error?.code,
       });
     }
   };
@@ -357,7 +359,10 @@ class AuthController {
       });
     } catch (error: any) {
       console.error("Forgot password error:", error);
-      res.status(500).json({ error: "Failed to process request" });
+      res.status(500).json({
+        error: error?.message,
+        code: error?.code,
+      });
     }
   }
 

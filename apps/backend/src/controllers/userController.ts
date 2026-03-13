@@ -65,9 +65,13 @@ const getAll = async (req: AuthRequest, res: Response) => {
 
     const users = await UserService.getAll(companyId);
     res.json(users);
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -111,9 +115,13 @@ const getByUserId = async (req: AuthRequest, res: Response) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     res.json(user);
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ error: "Error fetching user" });
+    res.status(500).json({
+      message: "Error fetching user",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -207,9 +215,13 @@ const createUser = async (req: AuthRequest, res: Response) => {
     ); // esto deberia ser validado
 
     res.status(201).json(newUser);
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ error: "Error creating new user" });
+    res.status(500).json({
+      message: "Error creating new user",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -280,9 +292,13 @@ const updateUser = async (req: AuthRequest, res: Response) => {
     );
 
     res.status(200).json(updatedUser);
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ error: "Error updating user" });
+    res.status(500).json({
+      message: "Error updating user",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 

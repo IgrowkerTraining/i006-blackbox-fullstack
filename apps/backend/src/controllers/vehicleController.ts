@@ -99,7 +99,11 @@ export const createVehicle = async (req: AuthRequest, res: Response) => {
     res.status(201).json({ success: true, data: vehicle });
   } catch (error: any) {
     console.error(error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -139,7 +143,11 @@ export const getVehicles = async (req: AuthRequest, res: Response) => {
     const vehicles = await VehicleService.getAll(companyId);
     res.json({ success: true, data: vehicles });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -204,7 +212,11 @@ export const getVehicleById = async (req: AuthRequest, res: Response) => {
     }
     res.json({ success: true, data: vehicle });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
