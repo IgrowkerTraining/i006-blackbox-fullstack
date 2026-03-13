@@ -1,6 +1,14 @@
 import { Response } from "express";
 import { EventServices } from "../services/eventServices";
 import { AuthRequest } from "../types/auth";
+import {
+  CreateAccidentSchema,
+  CreateInspectionSchema,
+  CreateMaintenanceSchema,
+  CreateOtherEventSchema,
+  GetEventsFilterSchema,
+} from "../validations/eventSchema";
+import { ZodError } from "zod";
 
 /**
  * @swagger
@@ -141,6 +149,10 @@ import { AuthRequest } from "../types/auth";
  *               documentationVerified:
  *                 type: boolean
  *                 example: true
+ *               vehicleCondition:
+ *                 type: string
+ *                 enum: [ACCEPTABLE, NOT_ACCEPTABLE]
+ *                 example: "ACCEPTABLE"
  *               lightsOk:
  *                 type: boolean
  *                 example: true
@@ -163,7 +175,7 @@ import { AuthRequest } from "../types/auth";
  *       201:
  *         description: Inspection created successfully
  *       400:
- *         description: Failed to create inspection
+ *         description: Validation failed
  *       401:
  *         description: Not authorized
  *       500:
@@ -176,20 +188,36 @@ export const createInspection = async (req: AuthRequest, res: Response) => {
     if (!companyId || !userId) {
       return res.status(401).json({ error: "Not authorized" });
     }
+
+    const validatedInspection = CreateInspectionSchema.parse(req.body);
+
     const newInspection = await EventServices.createInspection(
-      req.body,
+      validatedInspection,
       companyId,
       userId,
     );
+
     if (!newInspection) {
       return res.status(400).json({ error: "Failed to create inspection" });
     }
+
     return res.status(201).json({
       success: true,
       message: "Inspection created successfully",
       data: newInspection,
     });
   } catch (error: any) {
+    // Manejo de errores de Zod
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        issues: error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     console.error("Create inspection error:", error);
     return res.status(500).json({
       message: "Failed to create inspection",
@@ -232,13 +260,16 @@ const getVehicleHistory = async (req: AuthRequest, res: Response) => {
     if (!companyId) {
       return res.status(401).json({ error: "Not authorized" });
     }
+
     const history = await EventServices.getVehicleHistory(
       vehicleId as string,
       companyId,
     );
+
     if (!history) {
       return res.status(404).json({ error: "Vehicle not found" });
     }
+
     res.json({
       success: true,
       data: history,
@@ -286,13 +317,16 @@ const getDriverHistory = async (req: AuthRequest, res: Response) => {
     if (!companyId) {
       return res.status(401).json({ error: "Not authorized" });
     }
+
     const history = await EventServices.getDriverHistory(
       driverId as string,
       companyId,
     );
+
     if (!history) {
       return res.status(404).json({ error: "Driver not found" });
     }
+
     res.json({
       success: true,
       data: history,
@@ -338,10 +372,12 @@ const getCurrentDriver = async (req: AuthRequest, res: Response) => {
     if (!companyId) {
       return res.status(401).json({ error: "Not authorized" });
     }
+
     const currentDriver = await EventServices.getCurrentDriver(
       vehicleId as string,
       companyId,
     );
+
     res.json({
       success: true,
       data: currentDriver,
@@ -398,9 +434,11 @@ const getCurrentDriver = async (req: AuthRequest, res: Response) => {
  *                 example: false
  *               cost:
  *                 type: number
+ *                 minimum: 0
  *                 example: 2500.00
  *               mileage:
  *                 type: integer
+ *                 minimum: 0
  *                 example: 45000
  *               locationDetails:
  *                 type: string
@@ -418,6 +456,8 @@ const getCurrentDriver = async (req: AuthRequest, res: Response) => {
  *     responses:
  *       201:
  *         description: Accident event created successfully
+ *       400:
+ *         description: Validation failed
  *       401:
  *         description: Not authorized
  *       500:
@@ -432,8 +472,10 @@ const createAccident = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: "Not authorized" });
     }
 
+    const validatedAccident = CreateAccidentSchema.parse(req.body);
+
     const accident = await EventServices.createAccident(
-      req.body,
+      validatedAccident,
       companyId,
       userId,
     );
@@ -448,6 +490,17 @@ const createAccident = async (req: AuthRequest, res: Response) => {
       data: accident,
     });
   } catch (error: any) {
+    // Manejo de errores de Zod
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        issues: error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     console.error("Create accident error:", error);
     return res.status(500).json({
       message: "Failed to create accident event",
@@ -492,9 +545,11 @@ const createAccident = async (req: AuthRequest, res: Response) => {
  *                 example: "MINOR"
  *               cost:
  *                 type: number
+ *                 minimum: 0
  *                 example: 350.50
  *               mileage:
  *                 type: integer
+ *                 minimum: 0
  *                 example: 45000
  *               nextServiceDate:
  *                 type: string
@@ -521,6 +576,8 @@ const createAccident = async (req: AuthRequest, res: Response) => {
  *     responses:
  *       201:
  *         description: Maintenance event created successfully
+ *       400:
+ *         description: Validation failed
  *       401:
  *         description: Not authorized
  *       500:
@@ -535,8 +592,10 @@ const createMaintenance = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: "Not authorized" });
     }
 
+    const validatedMaintenance = CreateMaintenanceSchema.parse(req.body);
+
     const maintenance = await EventServices.createMaintenance(
-      req.body,
+      validatedMaintenance,
       companyId,
       userId,
     );
@@ -553,6 +612,17 @@ const createMaintenance = async (req: AuthRequest, res: Response) => {
       data: maintenance,
     });
   } catch (error: any) {
+    // Manejo de errores de Zod
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        issues: error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     console.error("Create maintenance error:", error);
     return res.status(500).json({
       message: "Failed to create maintenance event",
@@ -578,6 +648,7 @@ const createMaintenance = async (req: AuthRequest, res: Response) => {
  *             type: object
  *             required:
  *               - eventDatetime
+ *               - eventTitle
  *             properties:
  *               vehicleId:
  *                 type: string
@@ -597,7 +668,8 @@ const createMaintenance = async (req: AuthRequest, res: Response) => {
  *                 example: "GPS"
  *               eventTitle:
  *                 type: string
- *                 description: Stored in final_observations JSON
+ *                 minLength: 1
+ *                 description: Stored in final_observations JSON (REQUIRED)
  *                 example: "Fuel purchase"
  *               eventDescription:
  *                 type: string
@@ -610,6 +682,8 @@ const createMaintenance = async (req: AuthRequest, res: Response) => {
  *     responses:
  *       201:
  *         description: Event created successfully
+ *       400:
+ *         description: Validation failed
  *       401:
  *         description: Not authorized
  *       500:
@@ -624,8 +698,10 @@ const createOtherEvent = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: "Not authorized" });
     }
 
+    const validatedOtherEvent = CreateOtherEventSchema.parse(req.body);
+
     const event = await EventServices.createOtherEvent(
-      req.body,
+      validatedOtherEvent,
       companyId,
       userId,
     );
@@ -640,6 +716,17 @@ const createOtherEvent = async (req: AuthRequest, res: Response) => {
       data: event,
     });
   } catch (error: any) {
+    // Manejo de errores de Zod
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        issues: error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     console.error("Create other event error:", error);
     return res.status(500).json({
       message: "Failed to create event",
@@ -688,27 +775,34 @@ const createOtherEvent = async (req: AuthRequest, res: Response) => {
  *           type: string
  *           format: date
  *         description: Start date (YYYY-MM-DD)
+ *         example: "2025-01-01"
  *       - in: query
  *         name: endDate
  *         schema:
  *           type: string
  *           format: date
  *         description: End date (YYYY-MM-DD)
+ *         example: "2025-12-31"
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
+ *           minimum: 1
+ *           maximum: 100
  *           default: 50
  *         description: Number of results per page
  *       - in: query
  *         name: offset
  *         schema:
  *           type: integer
+ *           minimum: 0
  *           default: 0
  *         description: Offset for pagination
  *     responses:
  *       200:
  *         description: List of events with pagination info
+ *       400:
+ *         description: Validation failed
  *       401:
  *         description: Not authorized
  *       500:
@@ -721,24 +815,29 @@ const getAllEvents = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: "Not authorized" });
     }
 
-    const filters = {
-      eventType: req.query.eventType as string,
-      severity: req.query.severity as string,
-      vehicleId: req.query.vehicleId as string,
-      driverId: req.query.driverId as string,
-      startDate: req.query.startDate as string,
-      endDate: req.query.endDate as string,
-      limit: parseInt(req.query.limit as string) || 50,
-      offset: parseInt(req.query.offset as string) || 0,
-    };
+    const validatedFilters = GetEventsFilterSchema.parse(req.query);
 
-    const events = await EventServices.getAllEvents(companyId, filters);
+    const events = await EventServices.getAllEvents(
+      companyId,
+      validatedFilters,
+    );
 
     res.json({
       success: true,
       data: events,
     });
   } catch (error: any) {
+    // Manejo de errores de Zod
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        issues: error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     console.error("Get all events error:", error);
     res.status(500).json({
       message: "Failed to fetch events",

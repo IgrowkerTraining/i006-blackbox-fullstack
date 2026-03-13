@@ -1,15 +1,22 @@
-import { Prisma } from "../../generated/prisma/client";
+import {
+  EventSeverity,
+  EventType,
+  LocationType,
+  Prisma,
+  TypeInspection as PrismaInspectionType,
+  InspectionStatus as PrismaVehicleCondition,
+} from "../../generated/prisma/client";
 import { prisma } from "../../prisma";
 import {
-  CreateAccidentDto,
-  CreateInspectionDto,
-  CreateMaintenanceDto,
-  CreateOtherEventDto,
-  EventFilters,
-} from "../types/events";
+  CreateInspectionDTO,
+  CreateAccidentDTO,
+  CreateMaintenanceDTO,
+  CreateOtherEventDTO,
+  GetEventsFilterDTO,
+} from "../validations/eventSchema";
 
 const createInspection = (
-  data: CreateInspectionDto,
+  data: CreateInspectionDTO,
   companyId: string,
   userId: string,
 ) => {
@@ -26,10 +33,13 @@ const createInspection = (
       inspection_details: {
         create: [
           {
-            type_inspection: data.typeInspection,
+            type_inspection: data.typeInspection as PrismaInspectionType,
             documentation_verified: data.documentationVerified,
             lights_ok: data.lightsOk,
+            tires_ok: data.tiresOk,
+            brakes_ok: data.brakesOk,
             safety_elements_ok: data.safetyElementsOk,
+            vehicle_condition: data.vehicleCondition as PrismaVehicleCondition,
           },
         ],
       },
@@ -38,7 +48,7 @@ const createInspection = (
 };
 
 const createAccident = async (
-  data: CreateAccidentDto,
+  data: CreateAccidentDTO,
   companyId: string,
   userId: string,
 ) => {
@@ -48,9 +58,9 @@ const createAccident = async (
       vehicle_id: data.vehicleId,
       driver_id: data.driverId,
       event_type: "ACCIDENT",
-      event_datetime: new Date(data.eventDatetime),
-      location: data.location as any,
-      severity: data.severity as any,
+      event_datetime: data.eventDatetime,
+      location: data.location,
+      severity: data.severity,
       injuries_reported: data.injuriesReported,
       cost: data.cost ? new Prisma.Decimal(data.cost) : null,
       mileage: data.mileage,
@@ -74,7 +84,7 @@ const createAccident = async (
 };
 
 const createMaintenance = async (
-  data: CreateMaintenanceDto,
+  data: CreateMaintenanceDTO,
   companyId: string,
   userId: string,
 ) => {
@@ -84,13 +94,11 @@ const createMaintenance = async (
       vehicle_id: data.vehicleId,
       driver_id: data.driverId || null,
       event_type: "MAINTENANCE",
-      event_datetime: new Date(data.eventDatetime),
-      severity: data.severity as any,
+      event_datetime: data.eventDatetime,
+      severity: data.severity as EventSeverity,
       cost: data.cost ? new Prisma.Decimal(data.cost) : null,
       mileage: data.mileage,
-      next_service_date: data.nextServiceDate
-        ? new Date(data.nextServiceDate)
-        : null,
+      next_service_date: data.nextServiceDate ? data.nextServiceDate : null,
       final_observations: JSON.stringify({
         maintenanceType: data.maintenanceType,
         serviceType: data.serviceType,
@@ -112,7 +120,7 @@ const createMaintenance = async (
 };
 
 const createOtherEvent = async (
-  data: CreateOtherEventDto,
+  data: CreateOtherEventDTO,
   companyId: string,
   userId: string,
 ) => {
@@ -122,8 +130,8 @@ const createOtherEvent = async (
       vehicle_id: data.vehicleId || null,
       driver_id: data.driverId || null,
       event_type: "OTHER",
-      event_datetime: new Date(data.eventDatetime),
-      location: data.location as any,
+      event_datetime: data.eventDatetime,
+      location: data.location,
       final_observations: JSON.stringify({
         title: data.eventTitle,
         description: data.eventDescription,
@@ -142,26 +150,15 @@ const createOtherEvent = async (
   });
 };
 
-const getAllEvents = async (companyId: string, filters: EventFilters) => {
-  const where: any = {
+const getAllEvents = async (companyId: string, filters: GetEventsFilterDTO) => {
+  const where: Prisma.OperationalEventWhereInput = {
     company_id: companyId,
   };
 
-  if (filters.eventType) {
-    where.event_type = filters.eventType;
-  }
-
-  if (filters.severity) {
-    where.severity = filters.severity;
-  }
-
-  if (filters.vehicleId) {
-    where.vehicle_id = filters.vehicleId;
-  }
-
-  if (filters.driverId) {
-    where.driver_id = filters.driverId;
-  }
+  if (filters.eventType) where.event_type = filters.eventType as EventType;
+  if (filters.severity) where.severity = filters.severity as EventSeverity;
+  if (filters.vehicleId) where.vehicle_id = filters.vehicleId;
+  if (filters.driverId) where.driver_id = filters.driverId;
 
   if (filters.startDate || filters.endDate) {
     where.event_datetime = {};
@@ -172,6 +169,9 @@ const getAllEvents = async (companyId: string, filters: EventFilters) => {
       where.event_datetime.lte = new Date(filters.endDate);
     }
   }
+
+  const limit = filters.limit ?? 50;
+  const offset = filters.offset ?? 0;
 
   const [events, total] = await Promise.all([
     prisma.operationalEvent.findMany({
@@ -185,8 +185,8 @@ const getAllEvents = async (companyId: string, filters: EventFilters) => {
         inspection_details: true,
       },
       orderBy: { event_datetime: "desc" },
-      take: filters.limit,
-      skip: filters.offset,
+      take: limit,
+      skip: offset,
     }),
     prisma.operationalEvent.count({ where }),
   ]);
@@ -194,8 +194,8 @@ const getAllEvents = async (companyId: string, filters: EventFilters) => {
   return {
     events,
     total,
-    limit: filters.limit,
-    offset: filters.offset,
+    limit,
+    offset,
   };
 };
 

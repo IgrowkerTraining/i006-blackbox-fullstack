@@ -29,6 +29,5 @@ export const UpdateUserSchema = z.object({
 });
 
 // Exportar los tipos inferidos
-
 export type CreateUserDTO = z.infer<typeof CreateUserSchema>;
 export type UpdateUserDTO = z.infer<typeof UpdateUserSchema>;
