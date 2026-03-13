@@ -2,6 +2,11 @@ import express from "express";
 import { DriverService } from "../services/driverServices";
 import { AuthRequest } from "../types/auth";
 import { UserRole } from "../../generated/prisma/enums";
+import {
+  CreateDriverSchema,
+  UpdateDriverSchema,
+} from "../validations/driverSchema";
+import { ZodError } from "zod";
 
 /**
  * @swagger
@@ -169,9 +174,14 @@ const getDriverById = async (req: AuthRequest, res: express.Response) => {
  *             properties:
  *               name:
  *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
  *                 example: "Mario Hernández"
  *               license_number:
  *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 50
+ *                 pattern: "^[A-Z0-9-]+$"
  *                 example: "TX-DL-001234"
  *     responses:
  *       201:
@@ -181,7 +191,7 @@ const getDriverById = async (req: AuthRequest, res: express.Response) => {
  *             schema:
  *               $ref: '#/components/schemas/Driver'
  *       400:
- *         description: Name and License Number are required
+ *         description: Validation error
  *       401:
  *         description: Not authorized
  *       403:
@@ -200,20 +210,25 @@ const createDriver = async (req: AuthRequest, res: express.Response) => {
     if (userRole !== UserRole.ADMIN)
       return res.status(403).json({ error: "Only Admins can create drivers" });
 
-    const { name, license_number } = req.body;
-    if (!name || !license_number) {
-      return res
-        .status(400)
-        .json({ message: "Name and License Number are required" });
-    }
+    // Validación con Zod
+    const validatedData = CreateDriverSchema.parse(req.body);
 
-    const newDriver = await DriverService.create(
-      { name, license_number },
-      companyId,
-    );
+    const newDriver = await DriverService.create(validatedData, companyId);
 
     res.status(201).json(newDriver);
   } catch (error: any) {
+    // Manejo de errores de Zod
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        issues: error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
+    // Manejo de errores del servicio
     if (error.message === "LICENSE_EXISTS") {
       return res.status(409).json({
         message:
@@ -227,6 +242,7 @@ const createDriver = async (req: AuthRequest, res: express.Response) => {
           "This driver exists but is inactive. Please reactivate them instead of creating a new one.",
       });
     }
+
     console.error(error);
     res.status(500).json({ error: "Error creating driver" });
   }
@@ -257,9 +273,14 @@ const createDriver = async (req: AuthRequest, res: express.Response) => {
  *             properties:
  *               name:
  *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 100
  *                 example: "Mario Hernández"
  *               license_number:
  *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 50
+ *                 pattern: "^[A-Z0-9-]+$"
  *                 example: "TX-DL-001234"
  *               is_active:
  *                 type: boolean
@@ -271,6 +292,8 @@ const createDriver = async (req: AuthRequest, res: express.Response) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Driver'
+ *       400:
+ *         description: Validation error
  *       401:
  *         description: Not authorized
  *       404:
@@ -287,25 +310,40 @@ const updateDriver = async (req: AuthRequest, res: express.Response) => {
 
     if (!companyId) return res.status(401).json({ error: "Not authorized" });
 
-    const dataToUpdate = req.body;
+    // Validación con Zod
+    const validatedData = UpdateDriverSchema.parse(req.body);
 
     const updatedDriver = await DriverService.update(
       id as string,
-      dataToUpdate,
+      validatedData,
       companyId,
     );
 
     res.status(200).json(updatedDriver);
   } catch (error: any) {
+    // Manejo de errores de Zod
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        issues: error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
+    // Manejo de errores del servicio
     if (error.message === "LICENSE_EXISTS") {
       return res
         .status(409)
         .json({ message: "License number already in use by another driver." });
     }
+
     console.error(error);
     if (error.message.includes("not found")) {
       return res.status(404).json({ error: "Driver not found" });
     }
+
     res.status(500).json({
       message: "Error updating driver",
       error: error?.message,
