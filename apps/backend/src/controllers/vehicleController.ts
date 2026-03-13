@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
 import { VehicleService } from "../services/vehicleServices";
 import { AuthRequest } from "../types/auth";
+import {
+  CreateVehicleSchema,
+  UpdateVehicleSchema,
+} from "../validations/vehicleSchema";
+import { ZodError } from "zod";
 
 /**
  * @swagger
@@ -55,13 +60,19 @@ import { AuthRequest } from "../types/auth";
  *             properties:
  *               unit_number:
  *                 type: string
+ *                 maxLength: 50
  *                 example: "TRUCK-042"
  *               plate:
  *                 type: string
+ *                 maxLength: 20
+ *                 pattern: "^[A-Z0-9-]+$"
  *                 example: "TX-ABC-1234"
  *               is_active:
  *                 type: boolean
  *                 default: true
+ *               driverId:
+ *                 type: string
+ *                 format: uuid
  *     responses:
  *       201:
  *         description: Vehicle created successfully
@@ -75,6 +86,8 @@ import { AuthRequest } from "../types/auth";
  *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Vehicle'
+ *       400:
+ *         description: Validation error
  *       401:
  *         description: Not authorized
  *         content:
@@ -93,11 +106,25 @@ export const createVehicle = async (req: AuthRequest, res: Response) => {
     const companyId = req.user?.companyId;
     if (!companyId) return res.status(401).json({ error: "Not authorized" });
 
-    const vehicleData = { ...req.body, companyId };
+    // Validación con Zod
+    const validatedData = CreateVehicleSchema.parse(req.body);
+
+    const vehicleData = { ...validatedData, companyId };
     const vehicle = await VehicleService.create(vehicleData);
 
     res.status(201).json({ success: true, data: vehicle });
   } catch (error: any) {
+    // Manejo de errores de Zod
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        issues: error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     console.error(error);
     res.status(500).json({
       success: false,
@@ -245,13 +272,19 @@ export const getVehicleById = async (req: AuthRequest, res: Response) => {
  *             properties:
  *               unit_number:
  *                 type: string
+ *                 maxLength: 50
  *                 example: "TRUCK-042-UPDATED"
  *               plate:
  *                 type: string
+ *                 maxLength: 20
+ *                 pattern: "^[A-Z0-9-]+$"
  *                 example: "TX-NEW-9999"
  *               is_active:
  *                 type: boolean
  *                 example: true
+ *               driverId:
+ *                 type: string
+ *                 format: uuid
  *     responses:
  *       200:
  *         description: Vehicle updated successfully
@@ -265,6 +298,8 @@ export const getVehicleById = async (req: AuthRequest, res: Response) => {
  *                   example: true
  *                 data:
  *                   $ref: '#/components/schemas/Vehicle'
+ *       400:
+ *         description: Validation error
  *       401:
  *         description: Not authorized
  *       404:
@@ -278,13 +313,27 @@ export const updateVehicle = async (req: AuthRequest, res: Response) => {
     const companyId = req.user?.companyId;
     if (!companyId) return res.status(401).json({ error: "Not authorized" });
 
+    // Validación con Zod
+    const validatedData = UpdateVehicleSchema.parse(req.body);
+
     const updated = await VehicleService.update(
       String(id),
       companyId,
-      req.body,
+      validatedData,
     );
     res.json({ success: true, data: updated });
   } catch (error: any) {
+    // Manejo de errores de Zod
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        error: "Validation failed",
+        issues: error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     res.status(500).json({ success: false, error: error.message });
   }
 };

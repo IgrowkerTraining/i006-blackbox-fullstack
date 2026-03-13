@@ -6,7 +6,7 @@ import { z } from "zod";
 import { prisma } from "../../prisma";
 import { generateToken } from "../utils/generateToken";
 import { UserRole } from "../../generated/prisma/enums";
-import { RegisterSchema, LoginSchema } from "../utils/authSchema";
+import { RegisterSchema, LoginSchema } from "../validations/authSchema";
 import crypto from "crypto";
 
 class AuthController {
