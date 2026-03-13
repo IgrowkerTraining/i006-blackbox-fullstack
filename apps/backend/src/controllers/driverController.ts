@@ -306,7 +306,11 @@ const updateDriver = async (req: AuthRequest, res: express.Response) => {
     if (error.message.includes("not found")) {
       return res.status(404).json({ error: "Driver not found" });
     }
-    res.status(500).json({ error: "Error updating driver" });
+    res.status(500).json({
+      message: "Error updating driver",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -357,7 +361,11 @@ const deleteDriver = async (req: AuthRequest, res: express.Response) => {
     if (error.message.includes("not found")) {
       return res.status(404).json({ error: "Driver not found" });
     }
-    res.status(500).json({ error: "Error deleting driver" });
+    res.status(500).json({
+      message: "Error deleting driver",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 

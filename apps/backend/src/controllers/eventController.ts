@@ -189,9 +189,13 @@ export const createInspection = async (req: AuthRequest, res: Response) => {
       message: "Inspection created successfully",
       data: newInspection,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Create inspection error:", error);
-    return res.status(500).json({ error: "Failed to create inspection" });
+    return res.status(500).json({
+      message: "Failed to create inspection",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -239,9 +243,13 @@ const getVehicleHistory = async (req: AuthRequest, res: Response) => {
       success: true,
       data: history,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get vehicle history error:", error);
-    res.status(500).json({ error: "Failed to fetch vehicle history" });
+    res.status(500).json({
+      message: "Failed to fetch vehicle history",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -289,9 +297,13 @@ const getDriverHistory = async (req: AuthRequest, res: Response) => {
       success: true,
       data: history,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get driver history error:", error);
-    res.status(500).json({ error: "Failed to fetch driver history" });
+    res.status(500).json({
+      message: "Failed to fetch driver history",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -334,9 +346,13 @@ const getCurrentDriver = async (req: AuthRequest, res: Response) => {
       success: true,
       data: currentDriver,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get current driver error:", error);
-    res.status(500).json({ error: "Failed to fetch current driver" });
+    res.status(500).json({
+      message: "Failed to fetch current driver",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -431,9 +447,13 @@ const createAccident = async (req: AuthRequest, res: Response) => {
       message: "Accident event created successfully",
       data: accident,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Create accident error:", error);
-    return res.status(500).json({ error: "Failed to create accident event" });
+    return res.status(500).json({
+      message: "Failed to create accident event",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -532,11 +552,13 @@ const createMaintenance = async (req: AuthRequest, res: Response) => {
       message: "Maintenance event created successfully",
       data: maintenance,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Create maintenance error:", error);
-    return res
-      .status(500)
-      .json({ error: "Failed to create maintenance event" });
+    return res.status(500).json({
+      message: "Failed to create maintenance event",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -617,9 +639,13 @@ const createOtherEvent = async (req: AuthRequest, res: Response) => {
       message: "Event created successfully",
       data: event,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Create other event error:", error);
-    return res.status(500).json({ error: "Failed to create event" });
+    return res.status(500).json({
+      message: "Failed to create event",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -712,9 +738,13 @@ const getAllEvents = async (req: AuthRequest, res: Response) => {
       success: true,
       data: events,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get all events error:", error);
-    res.status(500).json({ error: "Failed to fetch events" });
+    res.status(500).json({
+      message: "Failed to fetch events",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
@@ -762,9 +792,13 @@ const getEventById = async (req: AuthRequest, res: Response) => {
       success: true,
       data: event,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get event error:", error);
-    res.status(500).json({ error: "Failed to fetch event" });
+    res.status(500).json({
+      message: "Failed to fetch event",
+      error: error?.message,
+      code: error?.code,
+    });
   }
 };
 
