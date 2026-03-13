@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// ==================== VEHICLE SCHEMAS ====================
+// Schema para crear un driver
 export const CreateVehicleSchema = z.object({
   unit_number: z
     .string()
@@ -22,6 +22,7 @@ export const CreateVehicleSchema = z.object({
   driverId: z.uuid("Driver ID must be a valid UUID").optional(),
 });
 
+// Schema para actualizar un driver
 export const UpdateVehicleSchema = z.object({
   unit_number: z
     .string()
