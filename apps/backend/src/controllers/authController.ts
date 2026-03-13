@@ -159,6 +159,8 @@ class AuthController {
       console.error("Registration error:", error);
       return res.status(500).json({
         message: "Registration failed",
+        error: error.message,
+        code: error.code,
       });
     }
   };
