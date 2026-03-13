@@ -1,13 +1,16 @@
 # Use Node.js 18 Alpine as base image
 FROM node:18-alpine AS base
 
-WORKDIR /app/frontend
+# Enable corepack for pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
 
 COPY package*.json pnpm-lock.yaml* ./
 
-RUN npm install -g pnpm
-
-RUN pnpm install --frozen-lockfile && pnpm store prune
+RUN --mount=type=cache,id=pnpm-front,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Development stage
 FROM base AS development
@@ -25,13 +28,12 @@ COPY . .
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN pnpm run build
-RUN pnpm run build
 
 # Production stage
 FROM nginx:alpine AS production
 
 #  Ruta corregida
-COPY --from=build /app/frontend/dist /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 #  Copiar como template
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template

@@ -1,8 +1,10 @@
 # Use Node.js 24 Alpine as base image
 FROM node:24-alpine AS base
 
-# Install pnpm
-RUN npm install -g pnpm
+# Enable corepack for pnpm (Best Practice)
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Set working directory
 WORKDIR /app
@@ -10,14 +12,14 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile --prod
+# Install dependencies using BuildKit Cache Mount (CI/CD Best Practice)
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
 
 # Development stage
 FROM base AS development
 
-# Install all dependencies including devDependencies
-RUN pnpm install --frozen-lockfile
+# Install all dependencies including devDependencies with Cache Mount
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
@@ -39,8 +41,8 @@ FROM base AS production
 ARG SENTRY_AUTH_TOKEN
 ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
 
-# Install all dependencies to build
-RUN pnpm install --frozen-lockfile
+# Install all dependencies to build with Cache Mount
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
@@ -55,15 +57,17 @@ RUN pnpm build
 FROM node:24-alpine AS runner
 
 WORKDIR /app
-RUN npm install -g pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy only production dependencies and built files
 COPY --from=production /app/package.json /app/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
 
 COPY --from=production /app/dist ./dist
 # Prisma folder is needed for the client
 COPY --from=production /app/prisma ./prisma
+# Copy generated folder (Client and Zod types)
+COPY --from=production /app/generated ./generated
 # Copy src folder so swagger-jsdoc can read annotations from .ts files in production
 COPY --from=production /app/src ./src
 
