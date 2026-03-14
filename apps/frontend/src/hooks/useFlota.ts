@@ -63,13 +63,43 @@ export const useFlota = (idUnidad?: string, { pageSize = 10 }: UseFlotaProps = {
     }
   };
 
+  const resolveVehicleId = async (value: string): Promise<string | null> => {
+    const list = await api.getFlota();
+    const match = list.find((v: any) => {
+      const unit = v.unit_number ?? v.unitNumber ?? v.idUnidad ?? v.plate ?? v.id;
+      return (
+        String(v.id ?? "") === value ||
+        String(v.vehicleId ?? "") === value ||
+        String(v.vehicle_id ?? "") === value ||
+        String(unit ?? "") === value
+      );
+    });
+    const resolved = (match?.id ?? match?.vehicleId ?? match?.vehicle_id) as string | undefined;
+    return resolved ? String(resolved) : null;
+  };
+
   const fetchUnitDetails = async (vehicleId: string, nextPage: number = 1) => {
     if (!hasMoreEventsRef.current) return;
     try {
       setLoading(true);
 
       // ✅ Usa api.getHistorialUnidad en vez de fetch directo
-      const { events, vehicle } = await api.getHistorialUnidad(vehicleId, nextPage, pageSize);
+      let events: any[] = [];
+      let vehicle: any | undefined;
+      try {
+        const result = await api.getHistorialUnidad(vehicleId, nextPage, pageSize);
+        events = result.events;
+        vehicle = result.vehicle;
+      } catch {
+        const resolvedId = await resolveVehicleId(vehicleId);
+        if (resolvedId && resolvedId !== vehicleId) {
+          const result = await api.getHistorialUnidad(resolvedId, nextPage, pageSize);
+          events = result.events;
+          vehicle = result.vehicle;
+        } else {
+          throw new Error("No se pudo resolver la unidad");
+        }
+      }
 
       if (vehicle && nextPage === 1) {
         const driverName =
@@ -101,38 +131,81 @@ export const useFlota = (idUnidad?: string, { pageSize = 10 }: UseFlotaProps = {
               timeStyle: 'short',
             })
           : 'Sin fecha';
-        const inspectionContext =
-          e.context ?? e.typeInspection ?? e.inspection_type ?? e.inspectionType;
+        const inspectionType =
+          e.inspection_details?.[0]?.type_inspection ??
+          e.typeInspection ??
+          e.inspection_type ??
+          e.inspectionType ??
+          e.context;
         const inspectionLabel =
-          inspectionContext === "ARRIVAL"
-            ? "Inspección de Llegada"
-            : inspectionContext === "DEPARTURE"
-              ? "Inspección de Salida"
+          inspectionType === "ARRIVAL"
+            ? "Inspeccion de Llegada"
+            : inspectionType === "DEPARTURE"
+              ? "Inspeccion de Salida"
               : undefined;
+
+        const eventType = e.event_type ?? e.type ?? e.eventType ?? e.name ?? e.title;
         const title =
           inspectionLabel ??
-          (e.event_type === "INSPECTION" ? "Inspección" : e.event_type) ??
-          e.type ??
-          e.eventType ??
-          e.name ??
-          e.title ??
-          'Evento';
+          (eventType === "INSPECTION"
+            ? "Inspeccion"
+            : eventType === "MAINTENANCE"
+              ? "Mantenimiento"
+              : eventType === "ACCIDENT"
+                ? "Accidente"
+                : eventType === "OTHER"
+                  ? "Evento"
+                  : eventType) ??
+          "Evento";
+
+        let parsedObs: Record<string, unknown> | null = null;
+        if (typeof e.final_observations === "string") {
+          try {
+            parsedObs = JSON.parse(e.final_observations);
+          } catch {
+            parsedObs = null;
+          }
+        }
+
         const resultLabel =
           e.general_result === "WITH_OBS"
             ? "Con observaciones"
             : e.general_result === "WITHOUT_OBS"
               ? "Sin observaciones"
               : undefined;
+
+        const registeredBy =
+          e.createdBy?.name ??
+          e.created_by_user_id ??
+          e.createdByUserId ??
+          undefined;
+        const driverName = e.driver?.name ?? e.driverName ?? undefined;
+        const signatureName = e.e_signature ? "Firma registrada" : undefined;
+
         const description =
+          (parsedObs?.description as string | undefined) ??
+          (parsedObs?.eventDescription as string | undefined) ??
+          (parsedObs?.serviceType as string | undefined) ??
+          (parsedObs?.maintenanceType as string | undefined) ??
+          (parsedObs?.locationDetails as string | undefined) ??
           e.final_observations ??
           resultLabel ??
           e.description ??
           e.details ??
           e.notes ??
           e.observations ??
-          'Sin descripción';
+          (registeredBy
+            ? `Registrado por ${registeredBy}`
+            : driverName
+              ? `Conductor: ${driverName}${signatureName ? ` (${signatureName})` : ""}`
+              : signatureName ?? "Sin descripcion");
+
         const status =
-          e.general_result ?? e.status ?? e.result ?? e.outcome ?? e.event_type ?? e.type ?? 'Estado';
+          e.general_result ??
+          e.status ??
+          e.result ??
+          e.outcome ??
+          (eventType === "INSPECTION" ? "WITHOUT_OBS" : "COMPLETED");
         const id = e.id ?? e.eventId ?? `${vehicleId}-${nextPage}-${index}`;
 
         return {
