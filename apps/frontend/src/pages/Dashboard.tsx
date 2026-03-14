@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { useDocumentTitle } from "@/src/hooks/useDocumentTitle";
+import { api, type OperationalEvent } from "@/src/services/api";
+import LoadingSpinner from "@/src/components/common/LoadingSpinner";
+import ErrorMessage from "@/src/components/common/ErrorMessage";
 
 const IconPlus = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-[#3F51B5]">
@@ -34,34 +37,212 @@ const LogoHexagon = () => (
   </svg>
 );
 
-const activities = [
-  {
-    type: "success" as const,
-    title: "Inspección de Salida: Unidad 505",
-    detail: "Chofer: Mario Hernandez (Sin observaciones)",
-    time: "Hace 15 min",
-  },
-  {
-    type: "warning" as const,
-    title: "Inspección de Llegada: Unidad 302",
-    detail: "Chofer: Julio Fernandez (",
-    detailHighlight: "Exit trasera rota",
-    detailSuffix: ")",
-    time: "Hace 1 hora",
-  },
-  {
-    type: "info" as const,
-    title: "Mantenimiento Registrado: Unidad 505",
-    detail: "Cambio de aceite y filtros (Agendado)",
-    time: "Hace 3 horas",
-  },
-];
+type ActivityItem = {
+  type: "success" | "warning" | "info";
+  title: string;
+  detail: string;
+  detailHighlight?: string;
+  detailSuffix?: string;
+  time: string;
+};
+
+const toDateString = (value: Date) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const timeAgo = (value?: string | null) => {
+  if (!value) return "Hace un momento";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Hace un momento";
+  const diffMs = Date.now() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "Hace menos de 1 min";
+  if (diffMin < 60) return `Hace ${diffMin} min`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `Hace ${diffHours} h`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `Hace ${diffDays} d`;
+};
+
+const getInspectionType = (event: OperationalEvent) => {
+  const inspection = event.inspection_details?.[0];
+  if (inspection?.type_inspection === "ARRIVAL") return "Inspeccion de Llegada";
+  if (inspection?.type_inspection === "DEPARTURE") return "Inspeccion de Salida";
+  return "Inspeccion";
+};
+
+const getUnitLabel = (event: OperationalEvent) => {
+  const vehicle = event.vehicle ?? undefined;
+  return String(
+    vehicle?.unit_number ??
+      vehicle?.plate ??
+      event.vehicle_id ??
+      "Sin unidad",
+  );
+};
+
+const hasFinding = (event: OperationalEvent) => {
+  if (event.general_result === "WITH_OBS") return true;
+  const inspection = event.inspection_details?.[0];
+  if (!inspection) return false;
+  const flags = [
+    inspection.documentation_verified,
+    inspection.vehicle_condition === "NOT_ACCEPTABLE",
+    inspection.lights_ok,
+    inspection.tires_ok,
+    inspection.brakes_ok,
+    inspection.safety_elements_ok,
+  ];
+  return flags.some((flag) => flag === false);
+};
+
+const buildActivity = (event: OperationalEvent): ActivityItem => {
+  const unit = getUnitLabel(event);
+  const driverName = event.driver?.name ?? "Sin chofer";
+  const when = timeAgo(event.event_datetime ?? null);
+
+  if (event.event_type === "INSPECTION") {
+    const finding = hasFinding(event);
+    return {
+      type: finding ? "warning" : "success",
+      title: `${getInspectionType(event)}: Unidad ${unit}`,
+      detail: `Chofer: ${driverName}${finding ? " (" : ""}`,
+      detailHighlight: finding ? "Con observaciones" : undefined,
+      detailSuffix: finding ? ")" : undefined,
+      time: when,
+    };
+  }
+
+  if (event.event_type === "MAINTENANCE") {
+    return {
+      type: "info",
+      title: `Mantenimiento registrado: Unidad ${unit}`,
+      detail: `Chofer: ${driverName}`,
+      time: when,
+    };
+  }
+
+  if (event.event_type === "ACCIDENT") {
+    return {
+      type: "warning",
+      title: `Accidente reportado: Unidad ${unit}`,
+      detail: `Chofer: ${driverName}`,
+      time: when,
+    };
+  }
+
+  return {
+    type: "info",
+    title: `Evento operativo: Unidad ${unit}`,
+    detail: `Chofer: ${driverName}`,
+    time: when,
+  };
+};
 
 const Dashboard: React.FC = () => {
   useDocumentTitle("Dashboard");
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [flotaActiva, setFlotaActiva] = useState(0);
+  const [flotaTotal, setFlotaTotal] = useState(0);
+  const [inspeccionesHoy, setInspeccionesHoy] = useState(0);
+  const [inspeccionesSalida, setInspeccionesSalida] = useState(0);
+  const [inspeccionesLlegada, setInspeccionesLlegada] = useState(0);
+  const [hallazgosAbiertos, setHallazgosAbiertos] = useState(0);
+  const [alertText, setAlertText] = useState("Sin alertas recientes.");
+
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const today = new Date();
+      const tomorrow = new Date();
+      tomorrow.setDate(today.getDate() + 1);
+      const startDate = toDateString(today);
+      const endDate = toDateString(tomorrow);
+
+      const [flota, inspectionsTodayRes, recentRes, inspectionsRes] = await Promise.all([
+        api.getFlota(),
+        api.getOperationalEvents({
+          eventType: "INSPECTION",
+          startDate,
+          endDate,
+          limit: 200,
+          offset: 0,
+        }),
+        api.getOperationalEvents({ limit: 8, offset: 0 }),
+        api.getOperationalEvents({ eventType: "INSPECTION", limit: 200, offset: 0 }),
+      ]);
+
+      const total = flota.length;
+      const active = flota.filter((item) => {
+        const anyItem = item as Record<string, unknown>;
+        const estado = String(item.estado ?? anyItem.status ?? "").toUpperCase();
+        const isActiveFlag =
+          typeof anyItem.is_active === "boolean" ? anyItem.is_active : undefined;
+        if (isActiveFlag === false) return false;
+        if (estado && estado !== "ACTIVO") return false;
+        return true;
+      }).length;
+      setFlotaTotal(total);
+      setFlotaActiva(active);
+
+      const todayEvents = inspectionsTodayRes.events ?? [];
+      const arrival = todayEvents.filter(
+        (event) => event.inspection_details?.[0]?.type_inspection === "ARRIVAL",
+      ).length;
+      const departure = todayEvents.filter(
+        (event) => event.inspection_details?.[0]?.type_inspection === "DEPARTURE",
+      ).length;
+      setInspeccionesHoy(todayEvents.length);
+      setInspeccionesLlegada(arrival);
+      setInspeccionesSalida(departure);
+
+      const inspections = inspectionsRes.events ?? [];
+      const now = Date.now();
+      const recentFindings = inspections.filter((event) => {
+        if (!event.event_datetime) return false;
+        const diffDays = (now - new Date(event.event_datetime).getTime()) / (1000 * 60 * 60 * 24);
+        return diffDays <= 7 && hasFinding(event);
+      });
+      setHallazgosAbiertos(recentFindings.length);
+      setAlertText(
+        recentFindings.length > 0
+          ? `Se registraron ${recentFindings.length} hallazgos en los ultimos 7 dias.`
+          : "Sin hallazgos recientes.",
+      );
+
+      const recent = recentRes.events ?? [];
+      setActivities(recent.map(buildActivity));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al cargar dashboard");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  const flotaOperativa = useMemo(() => {
+    if (flotaTotal <= 0) return "Operativa: 0%";
+    const pct = Math.round((flotaActiva / flotaTotal) * 100);
+    return `Operativa: ${pct}%`;
+  }, [flotaActiva, flotaTotal]);
+
+  if (loading) {
+    return <LoadingSpinner message="Cargando dashboard..." inline />;
+  }
+
   return (
     <div className="min-h-full">
+      {error && <ErrorMessage message={error} onRetry={loadDashboard} className="mb-6" />}
       <div className="mb-12">
         <button
           type="button"
@@ -71,25 +252,27 @@ const Dashboard: React.FC = () => {
           <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-accent">
             <IconPlus />
           </span>
-          Nueva Inspección
+          Nueva Inspeccion
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm pt-[22px] pb-[26px] pl-[27px]">
           <p className="text-sm font-medium text-slate-400">Flota Activa</p>
-          <p className="text-3xl font-bold text-slate-800 mt-1">42</p>
-          <p className="text-sm text-green-600 mt-1">↑ 100% Operativa</p>
+          <p className="text-3xl font-bold text-slate-800 mt-1">{flotaActiva}</p>
+          <p className="text-sm text-green-600 mt-1">{flotaOperativa}</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm pt-[22px] pb-[26px] pl-[27px]">
           <p className="text-sm font-medium text-slate-400">Inspecciones de hoy</p>
-          <p className="text-3xl font-bold text-accent mt-1">14</p>
-          <p className="text-sm text-slate-600 mt-1">8 Salidas / 6 Llegadas</p>
+          <p className="text-3xl font-bold text-accent mt-1">{inspeccionesHoy}</p>
+          <p className="text-sm text-slate-600 mt-1">
+            {inspeccionesSalida} Salidas / {inspeccionesLlegada} Llegadas
+          </p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm pt-[22px] pb-[26px] pl-[27px]">
           <p className="text-sm font-medium text-slate-400">Hallazgos Abiertos</p>
-          <p className="text-3xl font-bold text-amber-600 mt-1">3</p>
-          <p className="text-sm text-slate-600 mt-1">Requieren Atención</p>
+          <p className="text-3xl font-bold text-amber-600 mt-1">{hallazgosAbiertos}</p>
+          <p className="text-sm text-slate-600 mt-1">Requieren Atencion</p>
         </div>
       </div>
 
@@ -98,6 +281,11 @@ const Dashboard: React.FC = () => {
           <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
             <h2 className="text-lg font-semibold text-slate-800 pl-[27px] pr-5 pt-5 pb-4">Actividad reciente en Patio</h2>
             <div className="divide-y divide-slate-200">
+              {activities.length === 0 && (
+                <div className="pl-[35px] pr-5 py-[20px] text-sm text-slate-500">
+                  No hay actividad reciente.
+                </div>
+              )}
               {activities.map((item, i) => (
                 <div
                   key={i}
@@ -139,7 +327,7 @@ const Dashboard: React.FC = () => {
               <span className="text-white font-semibold text-[20px]">BlackBox Engine</span>
               <LogoHexagon />
             </div>
-            <p className="text-sm text-slate-400 mb-4">Análisis de patrones semanales disponible</p>
+            <p className="text-sm text-slate-400 mb-4">Analisis de patrones semanales disponible</p>
             <div
               className="rounded-[10px] mb-[30px] p-5"
               style={{
@@ -156,8 +344,7 @@ const Dashboard: React.FC = () => {
                 Alerta
               </span>
               <p className="text-[15px] leading-snug text-white">
-                Se detecta recurrencia en fallas de documentación en el turno de la tarde (14:00 -
-                18:00) en los últimos 7 días.
+                {alertText}
               </p>
             </div>
             <button

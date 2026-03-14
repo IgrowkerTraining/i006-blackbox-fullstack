@@ -51,7 +51,10 @@ const FlotaPage: React.FC = () => {
   useDocumentTitle("Inventario Flota");
   const [searchId, setSearchId] = useState("");
 
-  const fetchFlota = useCallback(() => api.getFlota(), []);
+  const fetchFlota = useCallback(
+    () => api.getFlota({ includeCurrentDriver: true, includeLastInspection: true }),
+    [],
+  );
   const { data: apiData, loading, error, execute } = useApi<UnidadFlota[]>(fetchFlota);
 
   useEffect(() => {
@@ -146,7 +149,7 @@ const FlotaPage: React.FC = () => {
           <ErrorMessage message={error} onRetry={execute} className="mb-4" />
         )}
         {loading ? (
-          <LoadingSpinner message="Cargando..." inline />
+          <LoadingSpinner message="Cargando Flota..." inline />
         ) : (
           <DataTable<UnidadFlota>
             columns={columns}

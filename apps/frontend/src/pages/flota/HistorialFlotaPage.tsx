@@ -145,7 +145,7 @@ const HistorialFlotaPage: React.FC = () => {
               disabled={loading}
               className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {loading ? 'Cargando...' : 'Cargar registros anteriores...'}
+              {loading ? 'Cargando Historial...' : 'Cargar registros anteriores...'}
             </button>
           ) : (
             <p className="text-xs text-slate-400">No hay más registros</p>

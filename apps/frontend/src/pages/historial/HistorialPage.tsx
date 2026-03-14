@@ -161,7 +161,7 @@ const HistorialPage: React.FC = () => {
           <ErrorMessage message={error} onRetry={refetch} className="mb-4" />
         )}
         {loading ? (
-          <LoadingSpinner message="Cargando..." inline />
+          <LoadingSpinner message="Cargando Historial..." inline />
         ) : (
           <DataTable<RegistroHistorial>
             columns={columns}

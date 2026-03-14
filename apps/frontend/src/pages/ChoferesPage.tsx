@@ -36,6 +36,7 @@ const SearchIcon = () => (
 const ChoferesPage: React.FC = () => {
   useDocumentTitle("Informacion de Choferes");
   const [searchId, setSearchId] = useState("");
+  const [driverUnitById, setDriverUnitById] = useState<Record<string, string>>({});
 
   const fetchChoferes = useCallback(() => api.getChoferes(), []);
   const { data: apiData, loading, error, execute } = useApi<Chofer[]>(fetchChoferes);
@@ -44,26 +45,68 @@ const ChoferesPage: React.FC = () => {
     execute();
   }, [execute]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [flota, events] = await Promise.all([
+          api.getFlota({ includeCurrentDriver: true }),
+          api.getAllEventsRaw(500, 0),
+        ]);
+        if (cancelled) return;
+
+        const vehicleIdToUnit: Record<string, string> = {};
+        for (const v of flota as Array<Record<string, unknown>>) {
+          const vehicleId = (v.id ?? v.vehicleId ?? v.vehicle_id) as string | undefined;
+          const unit =
+            (v.unit_number ?? v.unitNumber ?? v.plate ?? v.idUnidad ?? v.id ?? "") as string;
+          if (vehicleId && unit) vehicleIdToUnit[String(vehicleId)] = String(unit);
+        }
+
+        const latestByDriver: Record<string, { unit: string; time: number }> = {};
+        for (const e of events as Array<Record<string, unknown>>) {
+          const driverId = (e.driver_id ?? (e.driver as Record<string, unknown> | undefined)?.id) as string | undefined;
+          const vehicleId = (e.vehicle_id ?? (e.vehicle as Record<string, unknown> | undefined)?.id) as string | undefined;
+          const dt = (e.event_datetime ?? e.created_at ?? e.createdAt) as string | undefined;
+          if (!driverId || !vehicleId || !dt) continue;
+          const unit = vehicleIdToUnit[String(vehicleId)];
+          if (!unit) continue;
+          const time = new Date(dt).getTime();
+          const prev = latestByDriver[String(driverId)];
+          if (!prev || time > prev.time) {
+            latestByDriver[String(driverId)] = { unit: String(unit), time };
+          }
+        }
+
+        const map: Record<string, string> = {};
+        for (const [driverId, info] of Object.entries(latestByDriver)) {
+          map[driverId] = info.unit;
+        }
+        setDriverUnitById(map);
+      } catch {
+        if (!cancelled) setDriverUnitById({});
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   // Normalizar datos del backend (id, name, license_number, is_active) al formato de la tabla
   const choferes: Chofer[] = (apiData ?? []).map((row) => {
     const r = row as Record<string, unknown>;
     const vehicle = (r.vehicle as Record<string, unknown> | undefined) ?? (r.assignedVehicle as Record<string, unknown> | undefined);
+    const driverId = (r.id ?? r.idChofer) as string;
+    const unitFromMap = driverId ? driverUnitById[String(driverId)] : undefined;
+    const rawUnidad = (r.unidadAsignada ?? r.unit_number ?? r.unitNumber ?? r.plate ?? r.vehicleId ?? vehicle?.unit_number ?? vehicle?.unitNumber ?? vehicle?.plate ?? vehicle?.id ?? "") as string;
+    const normalizedRawUnidad =
+      String(rawUnidad || "").trim().toLowerCase() === "sin asignar" ? "" : String(rawUnidad || "");
+    const unidadAsignadaFinal = normalizedRawUnidad || unitFromMap || "Sin asignar";
     return {
       ...row,
       idChofer: (r.idChofer ?? r.id ?? "") as string,
       nombre: (r.nombre ?? r.name ?? "") as string,
       licencia: (r.licencia ?? r.license_number ?? "") as string,
       estadoOperativo: (r.estadoOperativo ?? (r.is_active === true ? "Activo" : r.is_active === false ? "Inactivo" : "")) as string,
-      unidadAsignada: (r.unidadAsignada ??
-        r.unit_number ??
-        r.unitNumber ??
-        r.plate ??
-        r.vehicleId ??
-        vehicle?.unit_number ??
-        vehicle?.unitNumber ??
-        vehicle?.plate ??
-        vehicle?.id ??
-        "") as string,
+      unidadAsignada: unidadAsignadaFinal,
     };
   });
 
@@ -153,7 +196,7 @@ const ChoferesPage: React.FC = () => {
           <ErrorMessage message={error} onRetry={execute} className="mb-4" />
         )}
         {loading ? (
-          <LoadingSpinner message="Cargando..." inline />
+          <LoadingSpinner message="Cargando Choferes..." inline />
         ) : (
           <>
             <DataTable<Chofer>
