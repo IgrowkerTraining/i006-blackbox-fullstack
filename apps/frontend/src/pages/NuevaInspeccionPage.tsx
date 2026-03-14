@@ -17,12 +17,17 @@ function toVehicleOption(v: Record<string, unknown>): OptionItem {
 }
 
 /** Backend driver: { id, name, license_number } | Chofer: idChofer, nombre, licencia */
-function toDriverOption(d: Record<string, unknown>): OptionItem & { name?: string } {
+function toDriverOption(d: Record<string, unknown>): OptionItem & { name?: string; assignedUnit?: string } {
   const id = (d.id ?? d.idChofer) as string;
   const name = (d.name ?? d.nombre) as string;
   const license = (d.license_number ?? d.licencia) as string;
   const label = name && license ? `${name} (Lic: ${license})` : String(name || id);
-  return { id, label, name };
+  const assignedUnit =
+    (d.unidadAsignada ??
+      d.unit_number ??
+      (d.vehicle as Record<string, unknown> | undefined)?.unit_number ??
+      "Sin asignar") as string;
+  return { id, label, name, assignedUnit: String(assignedUnit || "") };
 }
 
 type InspectionType = "SALIDA" | "LLEGADA" | null;
@@ -102,7 +107,9 @@ const NuevaInspeccionPage: React.FC = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [vehicles, setVehicles] = useState<OptionItem[]>([]);
-  const [drivers, setDrivers] = useState<(OptionItem & { name?: string })[]>([]);
+  const [drivers, setDrivers] = useState<(OptionItem & { name?: string; assignedUnit?: string })[]>([]);
+  const [flotaRaw, setFlotaRaw] = useState<Record<string, unknown>[]>([]);
+  const [currentDriverId, setCurrentDriverId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -114,6 +121,7 @@ const NuevaInspeccionPage: React.FC = () => {
       try {
         const [flota, choferes] = await Promise.all([api.getFlota(), api.getChoferes()]);
         if (!cancelled) {
+          setFlotaRaw(flota as Record<string, unknown>[]);
           setVehicles(flota.map((v) => toVehicleOption(v as Record<string, unknown>)));
           setDrivers(choferes.map((d) => toDriverOption(d as Record<string, unknown>)));
         }
@@ -128,6 +136,66 @@ const NuevaInspeccionPage: React.FC = () => {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  const selectedVehicle = React.useMemo(() => {
+    if (!vehicleId) return null;
+    return (
+      flotaRaw.find((v) => String(v.id ?? v.vehicleId ?? v.vehicle_id ?? v.idUnidad ?? "") === vehicleId) ??
+      null
+    );
+  }, [flotaRaw, vehicleId]);
+
+  const selectedVehicleDriverId =
+    (selectedVehicle?.driverId ??
+      (selectedVehicle?.driver as Record<string, unknown> | undefined)?.id) as string | undefined;
+
+  const selectedVehicleLabel = React.useMemo(() => {
+    if (!vehicleId) return "";
+    const found = vehicles.find((v) => v.id === vehicleId);
+    return found?.label ?? "";
+  }, [vehicleId, vehicles]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!vehicleId) {
+        setCurrentDriverId(null);
+        return;
+      }
+      if (selectedVehicleDriverId) {
+        setCurrentDriverId(String(selectedVehicleDriverId));
+        return;
+      }
+      try {
+        const current = await api.getCurrentDriver(vehicleId);
+        if (!cancelled) {
+          setCurrentDriverId(current?.id ? String(current.id) : null);
+        }
+      } catch {
+        if (!cancelled) setCurrentDriverId(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [vehicleId, selectedVehicleDriverId]);
+
+  const filteredDrivers = React.useMemo(() => {
+    if (selectedVehicleDriverId) {
+      return drivers.filter((d) => d.id === String(selectedVehicleDriverId));
+    }
+    if (currentDriverId) {
+      return drivers.filter((d) => d.id === String(currentDriverId));
+    }
+    return drivers.filter((d) => {
+      const unit = String(d.assignedUnit ?? "").trim().toLowerCase();
+      return !unit || unit === "sin asignar";
+    });
+  }, [drivers, selectedVehicleDriverId, currentDriverId]);
+
+  useEffect(() => {
+    if (!driverId) return;
+    const stillValid = filteredDrivers.some((d) => d.id === driverId);
+    if (!stillValid) setDriverId("");
+  }, [driverId, filteredDrivers]);
 
   const selectedDriver = drivers.find((d) => d.id === driverId);
 
@@ -297,7 +365,7 @@ const NuevaInspeccionPage: React.FC = () => {
                 className="select-dropdown w-full rounded-lg border border-slate-300 pl-3 py-2.5 text-slate-800 bg-white focus:ring-2 focus:ring-[#3F51B5] focus:border-[#3F51B5] disabled:opacity-60"
               >
                 <option value="">{loading ? "Cargando choferes..." : "Seleccionar chofer..."}</option>
-                {drivers.map((d) => (
+                {filteredDrivers.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.label}
                   </option>
