@@ -3,6 +3,8 @@ import { UserService } from "../services/userServices";
 import { UserRole } from "../../generated/prisma/enums";
 import bcrypt from "bcrypt";
 import { AuthRequest } from "../types/auth";
+import { CreateUserSchema, UpdateUserSchema } from "../validations/userSchema";
+import { ZodError } from "zod";
 
 /**
  * @swagger
@@ -191,32 +193,37 @@ const createUser = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ message: "Only Admins can create users" });
     }
 
-    const { name, email, password, role } = req.body;
+    const validatedData = CreateUserSchema.parse(req.body);
 
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const existingUser = await UserService.findByEmail(email);
+    const existingUser = await UserService.findByEmail(validatedData.email);
     if (existingUser) {
       return res.status(409).json({ message: "Email already exists" });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(validatedData.password, 10);
 
     const newUser = await UserService.create(
       {
-        name,
-        email,
-        passwordHash,
-        role: role as UserRole, // operador o compliance por ejemplo
+        name: validatedData.name,
+        email: validatedData.email,
+        passwordHash: passwordHash,
+        role: validatedData.role,
       },
       adminCompanyId,
-    ); // esto deberia ser validado
+    );
 
     res.status(201).json(newUser);
   } catch (error: any) {
-    console.error(error);
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+    console.error("User creation error", error);
     res.status(500).json({
       message: "Error creating new user",
       error: error?.message,
@@ -283,7 +290,7 @@ const updateUser = async (req: AuthRequest, res: Response) => {
 
     if (!companyId) return res.status(401).json({ error: "Not authorized" });
 
-    const dataToUpdate = req.body; // esto deberia ser validado
+    const dataToUpdate = UpdateUserSchema.parse(req.body);
 
     const updatedUser = await UserService.update(
       id as string,

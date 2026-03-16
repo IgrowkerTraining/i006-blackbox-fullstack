@@ -1,11 +1,19 @@
+import {
+  TypeInspection,
+  InspectionStatus,
+  EventSeverity,
+  LocationType,
+} from "../../generated/prisma/client";
+
 export interface CreateInspectionDto {
   vehicleId: string;
   driverId: string;
-  typeInspection?: string;
+  typeInspection?: TypeInspection;
   documentationVerified?: boolean;
   lightsOk?: boolean;
   tiresOk?: boolean;
   brakesOk?: boolean;
+  vehicleCondition?: InspectionStatus;
   safetyElementsOk?: boolean;
   eSignature?: string;
   isConfirmed?: boolean;
@@ -14,9 +22,9 @@ export interface CreateInspectionDto {
 export interface CreateAccidentDto {
   vehicleId: string;
   driverId: string;
-  eventDatetime: string;
-  location?: string;
-  severity?: string; // MINOR, MODERATE, SEVERE, CRITICAL
+  eventDatetime: Date;
+  location?: LocationType;
+  severity?: EventSeverity;
   injuriesReported?: boolean;
   cost?: number;
   mileage?: number;
@@ -30,12 +38,12 @@ export interface CreateAccidentDto {
 export interface CreateMaintenanceDto {
   vehicleId: string;
   driverId?: string;
-  eventDatetime: string;
-  severity?: string; // MINOR, MODERATE, SEVERE, CRITICAL
+  eventDatetime: Date;
+  severity?: EventSeverity;
   cost?: number;
   mileage?: number;
-  nextServiceDate?: string;
-  maintenanceType?: string; // PREVENTIVE, CORRECTIVE, EMERGENCY
+  nextServiceDate?: Date;
+  maintenanceType?: TypeInspection;
   serviceType?: string;
   serviceProvider?: string;
   finalObservations?: string;
@@ -45,8 +53,8 @@ export interface CreateMaintenanceDto {
 export interface CreateOtherEventDto {
   vehicleId?: string;
   driverId?: string;
-  eventDatetime: string;
-  location?: string;
+  eventDatetime: Date;
+  location?: LocationType;
   eventTitle?: string;
   eventDescription?: string;
   finalObservations?: string;
@@ -55,7 +63,7 @@ export interface CreateOtherEventDto {
 
 export interface EventFilters {
   eventType?: string;
-  severity?: string;
+  severity?: EventSeverity;
   vehicleId?: string;
   driverId?: string;
   startDate?: string;
